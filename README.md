@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-# CPSC471-InventoryManagement
-=======
 # CPSC471 Inventory Management System
 
 A full-stack web application for managing inventory with user authentication.
@@ -75,4 +72,4 @@ cpsc471project/
 - POST /api/inventory - Add new inventory item
 - PUT /api/inventory/:id - Update an inventory item
 - DELETE /api/inventory/:id - Delete an inventory item
->>>>>>> master
+
