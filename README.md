@@ -1,70 +1,74 @@
-# Getting Started with Create React App
+# CPSC471 Inventory Management System
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A full-stack web application for managing inventory with user authentication.
 
-## Available Scripts
+## Technology Stack
 
-In the project directory, you can run:
+### Frontend
+- **React.js** - UI library for building the user interface
+- **React Router** - For client-side routing
+- **Axios** - Promise-based HTTP client for API requests
+- **Context API** - For state management (authentication)
 
-### `npm start`
+### Backend
+- **Node.js** - JavaScript runtime environment
+- **Express.js** - Web application framework
+- **Supabase** - PostgreSQL database with built-in authentication
+- **JWT** - For secure user authentication and authorization
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Project Structure
+cpsc471project/
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+├── client/ # React frontend application
 
-### `npm test`
+├── server/ # Node.js backend application
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+│ └── server.js # Main server file
 
-### `npm run build`
+└── package.json # Root project config with scripts
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Getting Started
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Prerequisites
+- Node.js (v14 or newer)
+- npm (v6 or newer)
 
-### `npm run eject`
+### Installation & Setup
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/cpsc471project.git
+   cd cpsc471project
+   
+2. Install dependencies and start the application:
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+   ```bash
+    npm run start
+    ```
+    This command:
+- Installs all dependencies (root, client, and server)
+- Starts both client and server concurrently
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+3. For development (after dependencies are installed):
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+   ```bash
+    npm run dev
+    ```
+    This starts both client and server without reinstalling dependencies.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## Features
+- User Authentication : Register, login, and protected routes
+- Inventory Management : View, add, update, and delete inventory items
+- Responsive Design : Works across different screen sizes
 
-## Learn More
+## Access Points
+- Frontend : http://localhost:3000
+- Backend API : http://localhost:5000/api
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## API Endpoints
+- POST /api/auth/register - Register a new user
+- POST /api/auth/login - Login existing user
+- GET /api/inventory - Get all inventory items (requires authentication)
+- POST /api/inventory - Add new inventory item
+- PUT /api/inventory/:id - Update an inventory item
+- DELETE /api/inventory/:id - Delete an inventory item
