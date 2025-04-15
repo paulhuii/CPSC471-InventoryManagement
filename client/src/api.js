@@ -107,3 +107,37 @@ export const getUserProfile = async () => {
         throw error;
     }
 };
+
+export const getAllUsers = async () => {
+    try {
+        const url = `${API_URL}/users`; // Backend endpoint should be protected by isAdmin middleware
+        console.log('Fetching all users (admin) from:', url);
+        const response = await axios.get(url, getAuthHeader()); // Requires admin token
+        console.log('All users response:', response.data);
+        return response.data || []; // Return data or empty array
+    } catch (error) {
+        console.error('Error fetching all users:', error.response || error);
+        throw error; // Re-throw to be caught by the component
+    }
+};
+
+export const updateUserRole = async (userId, newRole) => {
+    // Basic client-side validation
+    if (newRole !== 'admin' && newRole !== 'user') {
+        console.error("Invalid role specified in API call:", newRole);
+        // Throw an error that the component can catch and display
+        throw new Error("Invalid role specified. Must be 'admin' or 'user'.");
+    }
+    try {
+        // Backend endpoint should be protected by isAdmin middleware
+        const url = `${API_URL}/users/${userId}/role`;
+        console.log(`Updating role for user ${userId} to ${newRole} at:`, url);
+        // Send the new role in the request body as expected by the backend
+        const response = await axios.put(url, { role: newRole }, getAuthHeader()); // Requires admin token
+        console.log('Update user role response:', response.data); // Should return the updated user object
+        return response.data;
+    } catch (error) {
+        console.error(`Error updating role for user ${userId}:`, error.response || error);
+        throw error; // Re-throw to be caught by the component
+    }
+};
