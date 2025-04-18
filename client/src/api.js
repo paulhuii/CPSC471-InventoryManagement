@@ -71,6 +71,29 @@ export const deleteItem = async (id) => {
     }
 };
 
+export const getOrders = async () => {
+    try {
+      const url = `${API_URL}/orders`;
+      const response = await axios.get(url, getAuthHeader());
+      return response.data || [];
+    } catch (error) {
+      console.error('Error fetching orders:', error.response || error);
+      throw error;
+    }
+  };
+  
+  export const placeOrder = async (order) => {
+    try {
+      const url = `${API_URL}/orders`;
+      const response = await axios.post(url, order, getAuthHeader());
+      return response.data;
+    } catch (error) {
+      console.error('Error placing order:', error.response || error);
+      throw error;
+    }
+  };
+  
+
 // Auth endpoints
 export const login = async (credentials) => {
     try {

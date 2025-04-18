@@ -10,11 +10,12 @@ app.use(express.json());
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const inventoryRoutes = require('./routes/inventory');
-
+const orderRoutes = require('./routes/orders');
 // Mount routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/inventory', inventoryRoutes);
+app.use('/api/orders', orderRoutes); 
 
 app.get('/api/test', (req, res) => res.json({ message: 'Server is running!' }));
 
