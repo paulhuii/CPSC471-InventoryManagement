@@ -318,8 +318,8 @@ app.post('/api/inventory', authenticateToken, isAdmin, async (req, res) => {
 
 app.put('/api/inventory/:id', authenticateToken, isAdmin, async (req, res) => {
     try {
-        const productId = parseInt(req.params.id, 10);
-        if (isNaN(productId)) {
+        const productid = parseInt(req.params.id, 10);
+        if (isNaN(productid)) {
              return res.status(400).json({ error: 'Invalid product ID format' });
         }
 
@@ -338,7 +338,7 @@ app.put('/api/inventory/:id', authenticateToken, isAdmin, async (req, res) => {
         } = req.body;
 
          // Check your products table schema for the primary key name (e.g., 'productID' or 'id')
-        const primaryKeyColumn = 'productID'; // <<< CHANGE THIS if your PK column name is different
+        const primaryKeyColumn = 'productid'; // <<< CHANGE THIS if your PK column name is different
 
         const { data, error } = await supabase
             .from('products') // Use consistent table name
@@ -355,11 +355,11 @@ app.put('/api/inventory/:id', authenticateToken, isAdmin, async (req, res) => {
                 supplierid,
                 
             })
-            .eq(primaryKeyColumn, productId) // Match on the correct primary key column
+            .eq(primaryKeyColumn, productid) // Match on the correct primary key column
             .select(); // Select updated data
 
         if (error) {
-            console.error(`Supabase error updating inventory ${productId}:`, error);
+            console.error(`Supabase error updating inventory ${productid}:`, error);
              if (error.code === 'PGRST116') { // Check if update affected 0 rows
                  return res.status(404).json({ error: 'Product not found' });
              }
@@ -378,29 +378,30 @@ app.put('/api/inventory/:id', authenticateToken, isAdmin, async (req, res) => {
 
 app.delete('/api/inventory/:id', authenticateToken, isAdmin, async (req, res) => {
     try {
-         const productId = parseInt(req.params.id, 10);
-         if (isNaN(productId)) {
-             return res.status(400).json({ error: 'Invalid product ID format' });
-         }
+        const productid = parseInt(req.params.id, 10);
+        if (isNaN(productid)) {
+            return res.status(400).json({ error: 'Invalid product ID format' });
+        }
 
-         // Check your products table schema for the primary key name
-        const primaryKeyColumn = 'productID'; // <<< CHANGE THIS if your PK column name is different
+        console.log('Deleting product with ID:', productid); // 👈 ADD THIS
 
         const { error, count } = await supabase
-            .from('products') // Use consistent table name
-            .delete({ count: 'exact' }) // Request the count of deleted rows
-            .eq(primaryKeyColumn, productId); // Match on the correct primary key column
+            .from('products')
+            .delete({ count: 'exact' })
+            .eq('productid', productid);
 
         if (error) {
-            console.error(`Supabase error deleting inventory ${productId}:`, error);
+            console.error(`Supabase error deleting inventory ${productid}:`, error); // 👈 ALREADY EXISTS
             return res.status(500).json({ error: error.message });
         }
 
         if (count === 0) {
+            console.warn(`Product with ID ${productid} not found.`); // 👈 ADD THIS
             return res.status(404).json({ error: 'Product not found' });
         }
 
-        res.status(200).json({ message: 'Product deleted successfully' }); // Send 200 OK
+        console.log(`Successfully deleted product with ID ${productid}`); // 👈 ADD THIS
+        res.status(200).json({ message: 'Product deleted successfully' });
     } catch (error) {
         console.error(`Server error deleting inventory ${req.params.id}:`, error);
         res.status(500).json({ error: error.message });
