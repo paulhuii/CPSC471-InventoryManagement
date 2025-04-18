@@ -10,6 +10,12 @@ import {
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Inventory from "./Main/Inventory";
+import Order from './Main/Order';
+import OrderRestock from './Main/Order/Restock';
+import OrderList from './Main/Order/List';
+import OrderPending from './Main/Order/Pending';
+import OrderHistory from './Main/Order/History';
+
 import Home from "./Home";
 import Login from "./Login/Login";
 import Register from "./Login/Register";
@@ -56,6 +62,11 @@ const Navigation = () => {
             {user && (
               <StyledLink to="/inventory">Inventory</StyledLink>
             )}
+
+            {user && (
+              <StyledLink to="/orders">Orders</StyledLink>
+            )}
+
 
             {user?.role?.toLowerCase() === "admin" && (
               <StyledLink to="/admin/users">Manage Users</StyledLink>
@@ -108,8 +119,17 @@ function App() {
 
             {/* Protected (any logged‑in user) */}
             <Route element={<ProtectedRoute />}>
-              <Route path="/inventory" element={<Inventory />} />
-            </Route>
+                <Route path="/inventory" element={<Inventory />} />
+                <Route path="/orders" element={<Order />}>
+                  <Route path="restock" element={<OrderRestock />} />
+                  <Route path="list" element={<OrderList />} />
+                  <Route path="pending" element={<OrderPending />} />
+                  <Route path="history" element={<OrderHistory />} />
+                </Route>
+              </Route>
+            
+
+            
 
             {/* Admin‑only */}
             <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>

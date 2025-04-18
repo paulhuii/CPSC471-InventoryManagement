@@ -70,7 +70,8 @@ function Inventory() {
     try {
       setLoading(true);
       if (isEditing) {
-        await updateItem(currentItem[primaryKey], formData);
+        const updatedData = { ...formData, [primaryKey]: currentItem[primaryKey] };
+        await updateItem(currentItem[primaryKey], updatedData);
       } else {
         await addItem(formData);
       }
@@ -117,10 +118,9 @@ function Inventory() {
 
   const getStockStatus = (stock, minQty) => {
     if (stock === 0) return { text: 'Out of Stock', color: 'bg-[#D99292] text-red-800' };
-    if (stock <= minQty) return { text: 'Low Stock', color: 'bg-[#F4D98E] text-yellow-800', style: { backgroundColor: '#F4D98E' } };
+    if (stock <= minQty) return { text: 'Low Stock', color: 'bg-[#F4D98E] text-yellow-800' };
     return { text: 'In Stock', color: 'bg-[#A3C18F] text-green-800' };
   };
-  
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -128,8 +128,8 @@ function Inventory() {
         <h2 className="text-2xl font-bold text-green-900">Product List</h2>
         {user?.role === 'admin' && (
           <button onClick={handleOpenAddModal} className="text-black px-4 py-2 rounded shadow" style={{ backgroundColor: '#8DACE5' }}>
-          + Add products
-        </button>
+            + Add products
+          </button>
         )}
       </div>
 
@@ -154,7 +154,7 @@ function Inventory() {
           </thead>
           <tbody>
             {items.map((item) => {
-              const { text: statusText, color: statusColor, style: statusStyle } = getStockStatus(item.current_stock, item.min_quantity);
+              const { text: statusText, color: statusColor } = getStockStatus(item.current_stock, item.min_quantity);
               return (
                 <tr key={item.productid} className="border-t">
                   <td className="px-4 py-2">{item.product_name}</td>
