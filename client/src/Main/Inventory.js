@@ -1,18 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getInventory, addItem, updateItem, deleteItem } from './api';
-import { useAuth } from './context/AuthContext';
-import './styles.css'; 
+import { getInventory, addItem, updateItem, deleteItem } from '../api';
+import { useAuth } from '../context/AuthContext';
 
-// --- Modal Component ---
-// (Put this in the same file for simplicity, or move to its own file)
 function InventoryItemModal({ item, onClose, onSubmit, initialError }) {
     // Determine if we are editing (item exists) or adding (item is null)
     const isEditing = item !== null;
 
     const [formData, setFormData] = useState({
-        Product_name: item?.product_name || '',
-        case_quantity: item?.case_quantity ?? '', // Use ?? for nullish coalescing
+        product_name: item?.product_name || '',
+        case_quantity: item?.case_quantity ?? '', 
         order_unit: item?.order_unit || '',
         case_price: item?.case_price ?? '',
         current_stock: item?.current_stock ?? '',
@@ -20,9 +17,9 @@ function InventoryItemModal({ item, onClose, onSubmit, initialError }) {
         min_quantity: item?.min_quantity ?? '',
         // Format date for input type="date" (YYYY-MM-DD)
         expiration: item?.expiration ? new Date(item.expiration).toISOString().split('T')[0] : '',
-        categoryID: item?.categoryID ?? '', // Allow empty string for optional fields
-        supplierID: item?.supplierID ?? '',
-        // UserID removed
+        categoryid: item?.categoryid ?? '',
+        supplierid: item?.supplierid ?? '',
+
     });
     const [error, setError] = useState(initialError); // Local error state for the modal
 
@@ -31,7 +28,7 @@ function InventoryItemModal({ item, onClose, onSubmit, initialError }) {
         // Handle number inputs appropriately
         const val = type === 'number' ? (value === '' ? '' : parseFloat(value)) : value;
         // Allow empty strings for optional number fields during input
-        const finalValue = (name === 'categoryID' || name === 'supplierID' || name === 'case_quantity' || name === 'case_price' || name === 'current_stock' || name === 'max_quantity' || name === 'min_quantity') && val === '' ? '' : val;
+        const finalValue = (name === 'categoryid' || name === 'supplierid' || name === 'case_quantity' || name === 'case_price' || name === 'current_stock' || name === 'max_quantity' || name === 'min_quantity') && val === '' ? '' : val;
 
         setFormData(prev => ({ ...prev, [name]: finalValue }));
         setError(null); // Clear error on change
@@ -49,7 +46,7 @@ function InventoryItemModal({ item, onClose, onSubmit, initialError }) {
 
         // Prepare data for submission: convert empty strings for optional numbers/IDs to null
         const dataToSubmit = { ...formData };
-        for (const key of ['case_quantity', 'case_price', 'current_stock', 'max_quantity', 'min_quantity', 'categoryID', 'supplierID']) {
+        for (const key of ['case_quantity', 'case_price', 'current_stock', 'max_quantity', 'min_quantity', 'categoryid', 'supplierid']) {
             if (dataToSubmit[key] === '') {
                 dataToSubmit[key] = null;
             }
@@ -70,33 +67,53 @@ function InventoryItemModal({ item, onClose, onSubmit, initialError }) {
     };
 
     return (
-        <div className="modal-backdrop" onClick={onClose}> {/* Close on backdrop click */}
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}> {/* Prevent backdrop click from closing when clicking inside modal */}
-                <h3>{isEditing ? 'Edit Item' : 'Add New Item'}</h3>
-                {error && <div className="error-message">{error} <button onClick={() => setError(null)} className="close-button simple">×</button></div>}
-                <form onSubmit={handleSubmit}>
-                    <div className="form-grid modal-form"> {/* Add modal-form class for specific styling */}
-                        <input type="text" placeholder="Product Name *" name="Product_name" value={formData.product_name} onChange={handleChange} required />
-                        <input type="number" placeholder="Case Quantity" name="case_quantity" value={formData.case_quantity} onChange={handleChange} min="0" />
-                        <input type="text" placeholder="Order Unit" name="order_unit" value={formData.order_unit} onChange={handleChange} />
-                        <input type="number" placeholder="Case Price *" name="case_price" value={formData.case_price} onChange={handleChange} step="0.01" min="0" required />
-                        <input type="number" placeholder="Current Stock *" name="current_stock" value={formData.current_stock} onChange={handleChange} min="0" required/>
-                        <input type="number" placeholder="Max Quantity" name="max_quantity" value={formData.max_quantity} onChange={handleChange} min="0" />
-                        <input type="number" placeholder="Min Quantity" name="min_quantity" value={formData.min_quantity} onChange={handleChange} min="0" />
-                        <input type="date" placeholder="Expiration Date" name="expiration" value={formData.expiration} onChange={handleChange} />
-                        <input type="number" placeholder="Category ID" name="categoryID" value={formData.categoryID} onChange={handleChange} min="1" />
-                        <input type="number" placeholder="Supplier ID" name="supplierID" value={formData.supplierID} onChange={handleChange} min="1" />
-                        {/* UserID Input Removed */}
-                    </div>
-
-                    <div className="modal-actions">
-                        <button type="submit" className="btn-primary">{isEditing ? 'Update Item' : 'Add Item'}</button>
-                        <button type="button" onClick={onClose} className="btn-secondary">Cancel</button>
-                    </div>
-                </form>
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50" onClick={onClose}>
+        <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+          <h3 className="text-xl font-semibold text-gray-800">{isEditing ? 'Edit Item' : 'Add New Item'}</h3>
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+              {error}
+              <button onClick={() => setError(null)} className="absolute top-0 right-0 px-2 py-1 text-red-500">×</button>
             </div>
-        </div>
-    );
+          )}
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[
+              { label: 'Product Name *', name: 'product_name', type: 'text' },
+              { label: 'Case Quantity', name: 'case_quantity', type: 'number' },
+              { label: 'Order Unit', name: 'order_unit', type: 'text' },
+              { label: 'Case Price *', name: 'case_price', type: 'number', step: '0.01' },
+              { label: 'Current Stock *', name: 'current_stock', type: 'number' },
+              { label: 'Max Quantity', name: 'max_quantity', type: 'number' },
+              { label: 'Min Quantity', name: 'min_quantity', type: 'number' },
+              { label: 'Expiration Date', name: 'expiration', type: 'date' },
+              { label: 'Category ID', name: 'categoryid', type: 'number' },
+              { label: 'Supplier ID', name: 'supplierid', type: 'number' },
+            ].map(({ label, name, type, step }) => (
+              <input
+                key={name}
+                className="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder={label}
+                name={name}
+                type={type}
+                step={step}
+                value={formData[name]}
+                onChange={handleChange}
+                required={label.includes('*')}
+              />
+            ))}
+
+            <div className="col-span-2 flex justify-end gap-3">
+              <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded">
+                {isEditing ? 'Update Item' : 'Add Item'}
+              </button>
+              <button type="button" onClick={onClose} className="bg-gray-300 hover:bg-gray-400 text-black font-semibold px-4 py-2 rounded">
+                Cancel
+              </button>
+            </div>
+          </form>
+      </div>
+    </div>
+  );
 }
 
 
@@ -112,7 +129,7 @@ function Inventory() {
 
     // Fetch inventory logic (using useCallback for stability)
     const fetchInventory = useCallback(async () => {
-        if (!user) { // Should be handled by ProtectedRoute, but good failsafe
+        if (!user) { 
             navigate('/login');
             return;
         }
@@ -144,7 +161,6 @@ function Inventory() {
         fetchInventory();
     }, [fetchInventory]); // fetchInventory is the dependency
 
-    // --- Modal Handlers ---
     const handleOpenAddModal = () => {
         setCurrentItem(null); // No item means "add mode"
         setError(null); // Clear errors when opening modal
@@ -199,7 +215,7 @@ function Inventory() {
 
 
     const handleDelete = async (id) => {
-         const primaryKey = 'productID'; // <<<--- CONFIRM YOUR PRIMARY KEY COLUMN NAME
+         const primaryKey = 'productID'; 
          const itemToDelete = items.find(item => item[primaryKey] === id);
 
         if (!itemToDelete) {
@@ -238,94 +254,58 @@ function Inventory() {
     }
 
     return (
-        <div className="inventory-container">
-            <div className="header">
-                {/* Consider moving NavLink to App.js Navigation component */}
-                {/* <NavLink to="/" className="nav-link">← Back to Home</NavLink> */}
-                <h2>Inventory Management</h2>
-                 {/* Show Add button only to admins */}
-                 {user?.role === 'admin' && (
-                    <button onClick={handleOpenAddModal} className="add-button main-add-btn">
-                        + Add New Item
-                    </button>
-                )}
-            </div>
+      <div className="p-6 max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-800">Inventory Management</h2>
+          {user?.role === 'admin' && (
+            <button onClick={handleOpenAddModal} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow">
+              + Add New Item
+            </button>
+          )}
+        </div>
 
-            {/* Display global errors (like fetch errors) */}
-            {error && (
-                <div className="error-message global-error">
-                    {error}
-                    <button onClick={() => setError(null)} className="close-button">×</button>
-                </div>
-            )}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+            <button onClick={() => setError(null)} className="float-right text-lg font-bold">×</button>
+          </div>
+        )}
 
             {/* Product List */}
-            <div className="product-list-section">
-                {/* Removed "Product List" h3 as it's implied */}
-                {/* Display loading indicator subtly during refreshes */}
-                 {loading && items.length > 0 && <div className="loading-inline">Refreshing...</div>}
+             <div className="overflow-x-auto bg-white shadow rounded-lg">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Product Name</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Stock</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Price</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Order Unit</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Expires</th>
+                    {user?.role === 'admin' && <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Actions</th>}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {items.map((item) => {
+                    const itemKey = item.productID || item.productid || item.id;
+                    return (
+                      <tr key={itemKey}>
+                        <td className="px-4 py-2">{item.product_name}</td>
+                        <td className="px-4 py-2">{item.current_stock ?? 'N/A'}</td>
+                        <td className="px-4 py-2">${item.case_price?.toFixed(2) ?? 'N/A'}</td>
+                        <td className="px-4 py-2">{item.order_unit || 'N/A'}</td>
+                        <td className="px-4 py-2">{item.expiration ? new Date(item.expiration).toLocaleDateString() : 'N/A'}</td>
+                        {user?.role === 'admin' && (
+                          <td className="px-4 py-2 flex space-x-2">
+                            <button onClick={() => handleOpenEditModal(item)} className="text-blue-600 hover:underline">Edit</button>
+                            <button onClick={() => handleDelete(itemKey)} className="text-red-600 hover:underline">Delete</button>
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })}
 
-                {items.length === 0 && !loading ? (
-                    <p className="no-items">No items in inventory.</p>
-                ) : (
-                    <table className="product-table">
-                        <thead>
-                            <tr>
-                                <th>Product Name</th>
-                                {/* Add/remove columns as needed */}
-                                <th>Stock</th>
-                                <th>Price</th>
-                                <th>Order Unit</th>
-                                <th>Expires</th>
-                                {/* Actions column only for admin */}
-                                {user?.role === 'admin' && <th>Actions</th>}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {items.map((item) => {
-                                // --- Determine the correct Primary Key ---
-                                // Adjust this based on what your API actually returns in the data array
-                                const itemKey = item.productID || item.productid || item.id;
-                                if (!itemKey) {
-                                    console.warn("Item found without a valid key:", item);
-                                    return null; // Skip rendering items without a key
-                                }
-                                // --- ---
-
-                                return (
-                                    <tr key={itemKey}>
-                                        {/* Use consistent field names matching DB/API */}
-                                        <td>{item.product_name}</td>
-                                        <td>{item.current_stock ?? 'N/A'}</td>
-                                        <td>${item.case_price?.toFixed(2) ?? 'N/A'}</td>
-                                        <td>{item.order_unit || 'N/A'}</td>
-                                        <td>{item.expiration ? new Date(item.expiration).toLocaleDateString() : 'N/A'}</td>
-
-                                        {/* Show Edit/Delete buttons only to admins */}
-                                        {user?.role === 'admin' && (
-                                            <td>
-                                                <div className="button-group">
-                                                    <button
-                                                        className="action-btn edit-btn"
-                                                        onClick={() => handleOpenEditModal(item)} // Pass the whole item
-                                                    >
-                                                        Edit
-                                                    </button>
-                                                    <button
-                                                        className="action-btn delete-btn"
-                                                        onClick={() => handleDelete(itemKey)} // Pass the primary key value
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        )}
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                )}
+                </tbody>
+              </table>
             </div>
 
             {/* Render Modal Conditionally */}
