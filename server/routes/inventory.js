@@ -4,7 +4,15 @@ const { supabase } = require('../utils/supabase');
 const { authenticateToken, isAdmin } = require('../middleware/auth');
 
 router.get('/', authenticateToken, async (req, res) => {
-  const { data, error } = await supabase.from('products').select('*');
+    const { data, error } = await supabase
+    .from('products')
+    .select(`
+      *,
+      supplier: supplierid (
+        supplier_name
+      )
+    `);
+  
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });

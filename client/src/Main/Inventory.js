@@ -163,7 +163,7 @@ function Inventory() {
                   <td className="px-4 py-2">
                     <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusColor}`}>{statusText}</span>
                   </td>
-                  <td className="px-4 py-2">Market</td>
+                  <td className="px-4 py-2">{item.supplier?.supplier_name || 'Unknown'}</td>
                   <td className="px-4 py-2 flex space-x-2">
                     <button onClick={() => handleOpenEditModal(item)} className="text-white text-sm font-semibold px-3 py-1 rounded" style={{ backgroundColor: '#7E82A4' }}>Edit</button>
                     <button onClick={() => handleDelete(item.productid)} className="text-white text-sm font-semibold px-3 py-1 rounded" style={{ backgroundColor: '#D99292' }}>Delete</button>
