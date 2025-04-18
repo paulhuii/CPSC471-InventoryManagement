@@ -274,7 +274,7 @@ app.post('/api/inventory', authenticateToken, isAdmin, async (req, res) => {
     try {
         // Destructure expected fields for a product
         const {
-            Product_name, // Check casing consistency with your DB schema
+            product_name, // Check casing consistency with your DB schema
             case_quantity,
             order_unit,
             case_price,
@@ -282,15 +282,15 @@ app.post('/api/inventory', authenticateToken, isAdmin, async (req, res) => {
             max_quantity,
             min_quantity,
             expiration,
-            categoryID,
-            supplierID,
+            categoryid,
+            supplierid,
             // UserID // Removed - not typically needed directly on product, maybe inferred?
         } = req.body;
 
         const { data, error } = await supabase
             .from('products') // Use consistent table name 'products'
             .insert([{
-                Product_name,
+                product_name,
                 case_quantity,
                 order_unit,
                 case_price,
@@ -298,8 +298,8 @@ app.post('/api/inventory', authenticateToken, isAdmin, async (req, res) => {
                 max_quantity,
                 min_quantity,
                 expiration,
-                categoryID,
-                supplierID,
+                categoryid,
+                supplierid,
                 // UserID, // Removed
             }])
             .select(); // Select inserted data to return
@@ -324,7 +324,7 @@ app.put('/api/inventory/:id', authenticateToken, isAdmin, async (req, res) => {
         }
 
         const {
-            Product_name, // Check casing
+            product_name, // Check casing
             case_quantity,
             order_unit,
             case_price,
@@ -332,8 +332,8 @@ app.put('/api/inventory/:id', authenticateToken, isAdmin, async (req, res) => {
             max_quantity,
             min_quantity,
             expiration,
-            categoryID,
-            supplierID,
+            categoryid,
+            supplierid,
             // UserID // Removed
         } = req.body;
 
@@ -343,7 +343,7 @@ app.put('/api/inventory/:id', authenticateToken, isAdmin, async (req, res) => {
         const { data, error } = await supabase
             .from('products') // Use consistent table name
             .update({
-                Product_name,
+                product_name,
                 case_quantity,
                 order_unit,
                 case_price,
@@ -351,9 +351,9 @@ app.put('/api/inventory/:id', authenticateToken, isAdmin, async (req, res) => {
                 max_quantity,
                 min_quantity,
                 expiration,
-                categoryID,
-                supplierID,
-                // UserID // Removed
+                categoryid,
+                supplierid,
+                
             })
             .eq(primaryKeyColumn, productId) // Match on the correct primary key column
             .select(); // Select updated data
