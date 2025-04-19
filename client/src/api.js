@@ -71,27 +71,39 @@ export const deleteItem = async (id) => {
     }
 };
 
-export const getOrderDetails = async () => {
+export const createOrder = async (order) => {
     try {
-      const url = `${API_URL}/order-detail`;
-      const response = await axios.get(url, getAuthHeader());
-      return response.data || [];
+      const url = `${API_URL}/orders`;
+      const response = await axios.post(url, order, getAuthHeader());
+      return response.data; // should return { orderid, ... }
     } catch (error) {
-      console.error('Error fetching order details:', error.response || error);
+      console.error('Error creating order:', error.response || error);
       throw error;
     }
   };
   
-  export const addOrderDetail = async (orderDetail) => {
+  export const addOrderDetails = async (orderDetailsArray) => {
     try {
-      const url = `${API_URL}/order-detail`;
-      const response = await axios.post(url, orderDetail, getAuthHeader());
-      return response.data;
+      const url = `${API_URL}/order-detail/bulk`;
+      const response = await axios.post(url, orderDetailsArray, getAuthHeader());
+      return response.data; // should return inserted rows
     } catch (error) {
-      console.error('Error adding order detail:', error.response || error);
+      console.error('Error inserting bulk order details:', error.response || error);
       throw error;
     }
   };
+
+export const getSuppliers = async () => {
+    try {
+      const url = `${API_URL}/suppliers`;
+      const response = await axios.get(url, getAuthHeader());
+      return response.data || [];
+    } catch (error) {
+      console.error('Error fetching suppliers:', error.response || error);
+      throw error;
+    }
+};
+  
   
 // Auth endpoints
 export const login = async (credentials) => {

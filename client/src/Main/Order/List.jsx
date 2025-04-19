@@ -1,34 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { getInventory, getOrderDetails, addOrderDetail } from '../../api';
-
-const supplierSuggestions = [
-  "GreenLeaf Suppliers",
-  "DairyDelight Inc.",
-  "BakeHouse Provisions",
-  "SnackWorld Distributors",
-  "FreshFarm Co."
-];
+import { getInventory, createOrder, addOrderDetails, getSuppliers } from '../../api';
+import { useAuth } from '../../context/AuthContext';
 
 const OrderList = () => {
-  const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [formData, setFormData] = useState({
-    productid: '',
-    requested_quantity: 1,
-    unit_price: '',
-    supplierid: ''
-  });
+  const [suppliers, setSuppliers] = useState([]);
+  const [items, setItems] = useState([]);
+  const [formData, setFormData] = useState({ productid: '', quantity: 1, price: '', supplierid: '' });
+  const { user } = useAuth();
 
-  const today = new Date().toLocaleDateString();
+  useEffect(() => {
+    getInventory().then(setProducts).catch(console.error);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const inventory = await getInventory();
         setProducts(inventory);
-        const orderDetails = await getOrderDetails();
-        setOrders(orderDetails);
+        const supplierList = await getSuppliers(); 
+        setSuppliers(supplierList);
       } catch (error) {
         console.error('Error loading data:', error);
       }
@@ -36,81 +27,119 @@ const OrderList = () => {
     fetchData();
   }, []);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const handleAddItem = () => {
+    const product = products.find(p => p.productid === parseInt(formData.productid));
+    const supplier = suppliers.find(s => s.supplier_name === formData.supplier_name);
+  
+    if (!product || !supplier) return;
+  
+    setItems(prev => [...prev, {
+      ...formData,
+      product_name: product.product_name,
+      supplierid: supplier.supplierid
+      
+    }]);
+  
+    setFormData({ productid: '', quantity: 1, price: '', supplier_name: '' });
   };
+  
 
-  const handleAddOrder = async () => {
+  const handlePlaceOrder = async () => {
+    const total_amount = items.reduce((sum, i) => sum + i.quantity * i.price, 0);
+    const supplierid = parseInt(items[0]?.supplierid); // assumes all items use same supplier
+  
+    if (!user?.userid) {
+      console.error("No userid found in AuthContext");
+      return;
+    }
+  
     try {
-      const added = await addOrderDetail(formData);
-      const product = products.find(p => p.productid === parseInt(formData.productid));
-      const product_name = product?.product_name || 'Unknown';
-
-      setOrders([{ ...added, product_name }, ...orders]);
-      setShowAddForm(false);
-      setFormData({ productid: '', requested_quantity: 1, unit_price: '', supplierid: '' });
+      const newOrder = await createOrder({
+        order_date: new Date().toISOString().split('T')[0],
+        total_amount,
+        supplierid,
+        userid: user.userid,
+        order_status: 'pending' // optionally set default status
+      });
+  
+      const orderid = newOrder.orderid;
+  
+      await addOrderDetails(
+        items.map(i => ({
+          orderid,
+          productid: parseInt(i.productid),
+          unit_price: parseFloat(i.price),
+          requested_quantity: parseInt(i.quantity),
+          supplierid: parseInt(i.supplierid)
+        }))
+      );
+  
+      setItems([]);
     } catch (err) {
-      console.error('Error adding order detail:', err);
+      console.error("Error placing order:", err);
     }
   };
+  
+  
 
-  const subtotal = orders.reduce((acc, item) => acc + item.requested_quantity * item.unit_price, 0);
+  const subtotal = items.reduce((sum, i) => sum + i.quantity * i.price, 0);
   const tax = subtotal * 0.05;
   const total = subtotal + tax;
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">{today}</h2>
-        <button onClick={() => setShowAddForm(!showAddForm)} className="bg-[#8DACE5] text-white px-4 py-2 rounded shadow">
-          + Add Product to Order
-        </button>
+        <h2 className="text-xl font-bold text-center w-full">{new Date().toLocaleDateString()}</h2>
       </div>
 
-      {showAddForm && (
-        <div className="bg-white p-4 mb-6 rounded shadow">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            <select name="productid" value={formData.productid} onChange={handleChange} className="border rounded px-3 py-2">
-              <option value="">Select Product</option>
-              {products.map(p => (
-                <option key={p.productid} value={p.productid}>{p.product_name}</option>
-              ))}
-            </select>
-            <input name="requested_quantity" type="number" min="1" value={formData.requested_quantity} onChange={handleChange} className="border rounded px-3 py-2" />
-            <input name="unit_price" type="number" min="0" step="0.01" value={formData.unit_price} onChange={handleChange} placeholder="$ per unit" className="border rounded px-3 py-2" />
-            <input
-              name="supplierid"
-              value={formData.supplierid}
-              onChange={handleChange}
-              placeholder="Supplier ID"
-              className="border rounded px-3 py-2"
-            />
-          </div>
-          <div className="text-right mt-4">
-            <button onClick={handleAddOrder} className="bg-[#7E82A4] text-white px-4 py-2 rounded">Add</button>
-          </div>
-        </div>
-      )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <select name="productid" value={formData.productid} onChange={e => setFormData({ ...formData, productid: e.target.value })} className="border rounded px-3 py-2">
+          <option value="">Select Product</option>
+          {products.map(p => <option key={p.productid} value={p.productid}>{p.product_name}</option>)}
+        </select>
+        <input type="number" name="quantity" value={formData.quantity} onChange={e => setFormData({ ...formData, quantity: e.target.value })} placeholder="Enter quantity" className="border rounded px-3 py-2" />
+        <input type="number" name="price" value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} placeholder="Enter price" className="border rounded px-3 py-2" />
+        <input
+            name="supplier_name"
+            list="supplier-options"
+            value={formData.supplier_name}
+            onChange={e => setFormData({ ...formData, supplier_name: e.target.value })}
+            placeholder="Enter Supplier Name"
+            className="border rounded px-3 py-2"
+        />
+
+        <datalist id="supplier-options">
+            {suppliers.map(s => (
+                <option key={s.supplierid} value={s.supplier_name} />
+            ))}
+        </datalist>
+
+        <button className="bg-[#7E82A4] text-white rounded px-4 py-2 shadow" onClick={handleAddItem}>Add</button>
+      </div>
 
       <table className="min-w-full bg-white shadow rounded-lg">
         <thead>
           <tr className="bg-gray-100">
             <th className="px-4 py-2">Product</th>
             <th className="px-4 py-2">Quantity</th>
-            <th className="px-4 py-2">Price</th>
-            <th className="px-4 py-2">Total</th>
+            <th className="px-4 py-2 underline">Price</th>
+            <th className="px-4 py-2">Total Cost</th>
             <th className="px-4 py-2">Supplier</th>
+            <th className="px-4 py-2">Action</th>
           </tr>
         </thead>
         <tbody>
-          {orders.map((item, index) => (
+          {items.map((item, index) => (
             <tr key={index} className="border-t">
-              <td className="px-4 py-2">{item.products?.product_name || item.product_name || 'Unknown'}</td>
-              <td className="px-4 py-2">{item.requested_quantity}</td>
-              <td className="px-4 py-2">${parseFloat(item.unit_price).toFixed(2)}</td>
-              <td className="px-4 py-2">${(item.requested_quantity * item.unit_price).toFixed(2)}</td>
-              <td className="px-4 py-2">{item.suppliers?.supplier_name || item.supplier_name || item.supplierid}</td>
+              <td className="px-4 py-2">{item.product_name}</td>
+              <td className="px-4 py-2">{item.quantity}</td>
+              <td className="px-4 py-2">${parseFloat(item.price).toFixed(2)}</td>
+              <td className="px-4 py-2">${(item.quantity * item.price).toFixed(2)}</td>
+              <td className="px-4 py-2">{item.supplier_name}</td>
+              <td className="px-4 py-2 space-x-2">
+                <button className="bg-[#7E82A4] text-white px-3 py-1 rounded text-sm">Edit</button>
+                <button className="bg-[#D99292] text-white px-3 py-1 rounded text-sm" onClick={() => setItems(items.filter((_, i) => i !== index))}>Delete</button>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -123,6 +152,10 @@ const OrderList = () => {
           <p>Tax: <span>${tax.toFixed(2)}</span></p>
           <p>Total: <span>${total.toFixed(2)}</span></p>
         </div>
+      </div>
+
+      <div className="text-center mt-6">
+        <button className="bg-[#7E82A4] text-white px-6 py-2 rounded shadow" onClick={handlePlaceOrder}>Place Order</button>
       </div>
     </div>
   );
