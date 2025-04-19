@@ -30,6 +30,31 @@ router.get('/pending', authenticateToken, async (req, res) => {
     res.json(data);
   });
 
+  // GET /api/orders/delivered
+router.get('/delivered', authenticateToken, async (req, res) => {
+    const { data, error } = await supabase
+      .from('orders')
+      .select(`
+        orderid,
+        order_date,
+        total_amount,
+        order_detail (
+          requested_quantity,
+          unit_price,
+          products (product_name)
+        )
+      `)
+      .eq('order_status', 'delivered')
+      .order('orderid', { ascending: false });
+  
+    if (error) {
+      console.error('Error fetching delivered orders:', error);
+      return res.status(500).json({ error: error.message });
+    }
+  
+    res.json(data);
+  });
+  
 // POST /api/orders
 router.post('/', authenticateToken, async (req, res) => {
     const { order_date, total_amount, supplierid, userid } = req.body;
@@ -58,5 +83,29 @@ router.post('/', authenticateToken, async (req, res) => {
   
     res.status(201).json(data[0]);
   });
+
+// PUT /api/orders/:orderid/status
+router.put('/:orderid/status', authenticateToken, async (req, res) => {
+    const { orderid } = req.params;
+    const { order_status } = req.body;
+  
+    if (!['pending', 'processing', 'delivered'].includes(order_status)) {
+      return res.status(400).json({ error: 'Invalid order status' });
+    }
+  
+    const { data, error } = await supabase
+      .from('orders')
+      .update({ order_status })
+      .eq('orderid', orderid)
+      .select();
+  
+    if (error) {
+      console.error('Error updating order status:', error);
+      return res.status(500).json({ error: error.message });
+    }
+  
+    res.json(data[0]);
+  });
+  
 
 module.exports = router;

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getPendingOrders } from '../../api';
+import { getPendingOrders, updateOrderStatus } from '../../api';
 
 const OrderPending = () => {
   const [orders, setOrders] = useState([]);
@@ -9,9 +9,10 @@ const OrderPending = () => {
   useEffect(() => {
     getPendingOrders()
       .then(data => {
-        setOrders(data);
+        const pendingOnly = data.filter(order => order.order_status !== 'delivered');
+        setOrders(pendingOnly);
         const defaults = {};
-        data.forEach(order => {
+        pendingOnly.forEach(order => {
           const defaultDate = new Date(new Date(order.order_date).getTime() + 7 * 24 * 60 * 60 * 1000)
             .toISOString()
             .split('T')[0];
@@ -33,15 +34,16 @@ const OrderPending = () => {
       order.orderid === orderid ? { ...order, order_status: newStatus } : order
     );
     setOrders(updated);
-    // TODO: add API call to update status if necessary
+    await updateOrderStatus(orderid, newStatus);
   };
 
   const handleDateChange = (orderid, newDate) => {
     setDeliveryDates(prev => ({ ...prev, [orderid]: newDate }));
   };
 
-  const markAsDelivered = (orderid) => {
-    handleStatusChange(orderid, 'delivered');
+  const markAsDelivered = async (orderid) => {
+    await updateOrderStatus(orderid, 'delivered');
+    setOrders(prev => prev.filter(order => order.orderid !== orderid));
   };
 
   return (
