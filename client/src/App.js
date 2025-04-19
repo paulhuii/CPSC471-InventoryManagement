@@ -1,5 +1,5 @@
-// src/App.js
-import React from "react"; // Import React if not already present
+// src/App.js 
+import React from "react";
 import {
   BrowserRouter,
   Routes,
@@ -9,152 +9,134 @@ import {
   Outlet,
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import Inventory from "./Inventory";
+import Inventory from "./Main/Inventory";
+import Order from './Main/Order';
+import OrderRestock from './Main/Order/Restock';
+import OrderList from './Main/Order/List';
+import OrderPending from './Main/Order/Pending';
+import OrderHistory from './Main/Order/History';
+
 import Home from "./Home";
-import Login from "./components/Login";
-import Register from "./components/Register";
-import AdminUserListPage from "./components/AdminUserList"; // Import the actual Admin component
-import "./styles.css";
+import Login from "./Login/Login";
+import Register from "./Login/Register";
+import AdminUserListPage from "./Login/AdminUserList";
 
-// --- Helper Components Defined within App.js ---
+const StyledLink = ({ to, end = false, children }) => (
+  <NavLink
+    to={to}
+    end={end}
+    className={({ isActive }) =>
+      `px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+        isActive
+          ? "bg-gray-900 text-white"
+          : "text-gray-300 hover:bg-gray-700 hover:text-white"
+      }`
+    }
+  >
+    {children}
+  </NavLink>
+);
 
-// Enhanced ProtectedRoute component (can check roles)
+
 const ProtectedRoute = ({ allowedRoles }) => {
   const { user, loading } = useAuth();
-
-  if (loading) {
-    return <div>Authenticating...</div>; // Or a better loading indicator
-  }
-
-  if (!user) {
-    console.log("ProtectedRoute: No user found, redirecting to login.");
-    return <Navigate to="/login" replace />;
-  }
-
-  // Check roles if allowedRoles is provided
-  if (allowedRoles && !allowedRoles.includes(user.role?.toLowerCase())) {
-    // Use lowercase comparison for safety
-    console.warn(
-      `ProtectedRoute: User with role '${user.role}' denied access. Redirecting.`
-    );
-    return <Navigate to="/" replace />; // Redirect non-authorized users
-  }
-
-  // Render the nested content if authenticated and authorized
+  if (loading) return <div className="p-6 text-center">Authenticating…</div>;
+  if (!user) return <Navigate to="/login" replace />;
+  if (allowedRoles && !allowedRoles.includes(user.role?.toLowerCase()))
+    return <Navigate to="/" replace />;
   return <Outlet />;
 };
 
-// Navigation component
 const Navigation = () => {
   const { user, logout } = useAuth();
-
   return (
-    <nav>
-      <NavLink
-        to="/"
-        className={({ isActive }) =>
-          isActive ? "nav-link active" : "nav-link"
-        }
-        end
-      >
-        Home
-      </NavLink>
-      {user ? (
-        <>
-          <NavLink
-            to="/inventory"
-            className={({ isActive }) =>
-              isActive ? "nav-link active" : "nav-link"
-            }
-          >
-            Inventory
-          </NavLink>
-          {/* Use consistent lowercase check for admin role */}
-          {user.role?.toLowerCase() === "admin" && (
-            <NavLink
-              to="/admin/users"
-              className={({ isActive }) =>
-                isActive ? "nav-link active" : "nav-link"
-              }
-            >
-              Manage Users
-            </NavLink>
-          )}
-          <button onClick={logout} className="nav-link logout-btn">
-            Logout ({user.username || user.email})
-          </button>
-        </>
-      ) : (
-        <>
-          <NavLink
-            to="/login"
-            className={({ isActive }) =>
-              isActive ? "nav-link active" : "nav-link"
-            }
-          >
-            Login
-          </NavLink>
-          <NavLink
-            to="/register"
-            className={({ isActive }) =>
-              isActive ? "nav-link active" : "nav-link"
-            }
-          >
-            Register
-          </NavLink>
-        </>
-      )}
+    <nav className="bg-gray-800">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
+          {/* Left links */}
+          <div className="flex space-x-4">
+            <StyledLink to="/" end>
+              Home
+            </StyledLink>
+
+            {user && (
+              <StyledLink to="/inventory">Inventory</StyledLink>
+            )}
+
+            {user && (
+              <StyledLink to="/orders">Orders</StyledLink>
+            )}
+
+
+            {user?.role?.toLowerCase() === "admin" && (
+              <StyledLink to="/admin/users">Manage Users</StyledLink>
+            )}
+          </div>
+
+          {/* Right links */}
+          <div className="flex items-center space-x-4">
+            {!user && (
+              <>
+                <StyledLink to="/login">Login</StyledLink>
+                <StyledLink to="/register">Register</StyledLink>
+              </>
+            )}
+
+            {user && (
+              <button
+                onClick={logout}
+                className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+              >
+                Logout ({user.username || user.email})
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
     </nav>
   );
 };
 
-// --- Main App Structure ---
 
 function App() {
-  // AppRoutes component handles rendering based on auth state
   const AppRoutes = () => {
     const { user, loading } = useAuth();
-
-    // Display loading state while auth context initializes
-    if (loading) {
-      return <div className="app-loading">Loading Application...</div>;
-    }
+    if (loading) return <div className="p-6 text-center">Loading Application…</div>;
 
     return (
-      <div className="App">
+      <div className="min-h-screen flex flex-col bg-gray-50">
         <Navigation />
-        <main className="main-content">
+        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
           <Routes>
-            {/* Public Routes */}
+            {/* Public */}
             <Route path="/" element={<Home />} />
             <Route
               path="/login"
-              element={!user ? <Login /> : <Navigate to="/inventory" replace />}
-            />
+              element={!user ? <Login /> : <Navigate to="/inventory" replace />} />
             <Route
               path="/register"
-              element={
-                !user ? <Register /> : <Navigate to="/inventory" replace />
-              }
-            />
+              element={!user ? <Register /> : <Navigate to="/inventory" replace />} />
 
-            {/* Protected Routes (Require Login) */}
+            {/* Protected (any logged‑in user) */}
             <Route element={<ProtectedRoute />}>
-              {" "}
-              {/* Base protection: must be logged in */}
-              <Route path="/inventory" element={<Inventory />} />
-              {/* Add other general protected routes here */}
-            </Route>
+                <Route path="/inventory" element={<Inventory />} />
+                <Route path="/orders" element={<Order />}>
+                  <Route path="restock" element={<OrderRestock />} />
+                  <Route path="list" element={<OrderList />} />
+                  <Route path="pending" element={<OrderPending />} />
+                  <Route path="history" element={<OrderHistory />} />
+                </Route>
+              </Route>
+            
 
-            {/* Admin Only Routes */}
+            
+
+            {/* Admin‑only */}
             <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
-              {" "}
-              {/* Role protection: must be admin */}
               <Route path="/admin/users" element={<AdminUserListPage />} />
-              {/* Add other admin-only routes here */}
             </Route>
 
-            {/* Catch-all Route for unmatched paths */}
+            {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
@@ -162,7 +144,6 @@ function App() {
     );
   };
 
-  // AuthProvider wraps the entire application
   return (
     <AuthProvider>
       <BrowserRouter>
