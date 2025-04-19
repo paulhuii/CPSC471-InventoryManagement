@@ -1,27 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 function InventoryItemModal({ item, onClose, onSubmit, initialError }) {
   const isEditing = item !== null;
 
   const [formData, setFormData] = useState({
-    product_name: item?.product_name || '',
-    case_quantity: item?.case_quantity ?? '',
-    order_unit: item?.order_unit || '',
-    case_price: item?.case_price ?? '',
-    current_stock: item?.current_stock ?? '',
-    max_quantity: item?.max_quantity ?? '',
-    min_quantity: item?.min_quantity ?? '',
-    expiration: item?.expiration ? new Date(item.expiration).toISOString().split('T')[0] : '',
-    categoryid: item?.categoryid ?? '',
-    supplierid: item?.supplierid ?? ''
+    product_name: item?.product_name || "",
+    case_quantity: item?.case_quantity ?? "",
+    order_unit: item?.order_unit || "",
+    case_price: item?.case_price ?? "",
+    current_stock: item?.current_stock ?? "",
+    max_quantity: item?.max_quantity ?? "",
+    min_quantity: item?.min_quantity ?? "",
+    expiration: item?.expiration
+      ? new Date(item.expiration).toISOString().split("T")[0]
+      : "",
+    categoryid: item?.categoryid ?? "",
+    supplierid: item?.supplierid ?? "",
   });
 
   const [error, setError] = useState(initialError);
 
   const handleChange = (e) => {
     const { name, value, type } = e.target;
-    const val = type === 'number' ? (value === '' ? '' : parseFloat(value)) : value;
-    const finalValue = ['categoryid', 'supplierid', 'case_quantity', 'case_price', 'current_stock', 'max_quantity', 'min_quantity'].includes(name) && val === '' ? '' : val;
+    const val =
+      type === "number" ? (value === "" ? "" : parseFloat(value)) : value;
+    const finalValue =
+      [
+        "categoryid",
+        "supplierid",
+        "case_quantity",
+        "case_price",
+        "current_stock",
+        "max_quantity",
+        "min_quantity",
+      ].includes(name) && val === ""
+        ? ""
+        : val;
     setFormData((prev) => ({ ...prev, [name]: finalValue }));
     setError(null);
   };
@@ -30,49 +44,86 @@ function InventoryItemModal({ item, onClose, onSubmit, initialError }) {
     e.preventDefault();
     setError(null);
 
-    if (!formData.product_name || formData.case_price === '' || formData.current_stock === '') {
-      setError('Product Name, Case Price, and Current Stock are required.');
+    if (
+      !formData.product_name ||
+      formData.case_price === "" ||
+      formData.current_stock === ""
+    ) {
+      setError("Product Name, Case Price, and Current Stock are required.");
       return;
     }
 
     const dataToSubmit = { ...formData };
-    for (const key of ['case_quantity', 'case_price', 'current_stock', 'max_quantity', 'min_quantity', 'categoryid', 'supplierid']) {
-      if (dataToSubmit[key] === '') {
+    for (const key of [
+      "case_quantity",
+      "case_price",
+      "current_stock",
+      "max_quantity",
+      "min_quantity",
+      "categoryid",
+      "supplierid",
+    ]) {
+      if (dataToSubmit[key] === "") {
         dataToSubmit[key] = null;
       }
     }
-    if (dataToSubmit.expiration === '') dataToSubmit.expiration = null;
+    if (dataToSubmit.expiration === "") dataToSubmit.expiration = null;
 
     try {
       await onSubmit(dataToSubmit);
     } catch (err) {
-      setError(err.response?.data?.error || err.message || 'An unexpected error occurred.');
-      console.error('Modal Submit Error:', err);
+      setError(
+        err.response?.data?.error ||
+          err.message ||
+          "An unexpected error occurred."
+      );
+      console.error("Modal Submit Error:", err);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-xl font-semibold text-gray-800">{isEditing ? 'Edit Item' : 'Add New Item'}</h3>
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-lg shadow-xl w-full max-w-2xl p-6 space-y-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 className="text-xl font-semibold text-gray-800">
+          {isEditing ? "Edit Item" : "Add New Item"}
+        </h3>
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
             {error}
-            <button onClick={() => setError(null)} className="absolute top-0 right-0 px-2 py-1 text-red-500">×</button>
+            <button
+              onClick={() => setError(null)}
+              className="absolute top-0 right-0 px-2 py-1 text-red-500"
+            >
+              ×
+            </button>
           </div>
         )}
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form
+          onSubmit={handleSubmit}
+          className="grid grid-cols-1 md:grid-cols-2 gap-4"
+        >
           {[
-            { label: 'Product Name *', name: 'product_name', type: 'text' },
-            { label: 'Case Quantity', name: 'case_quantity', type: 'number' },
-            { label: 'Order Unit', name: 'order_unit', type: 'text' },
-            { label: 'Case Price *', name: 'case_price', type: 'number', step: '0.01' },
-            { label: 'Current Stock *', name: 'current_stock', type: 'number' },
-            { label: 'Max Quantity', name: 'max_quantity', type: 'number' },
-            { label: 'Min Quantity', name: 'min_quantity', type: 'number' },
-            { label: 'Expiration Date', name: 'expiration', type: 'date' },
-            { label: 'Category ID', name: 'categoryid', type: 'number' },
-            { label: 'Supplier ID', name: 'supplierid', type: 'number' }
+            { label: "Product Name *", name: "product_name", type: "text" },
+            { label: "Case Quantity", name: "case_quantity", type: "number" },
+            { label: "Order Unit", name: "order_unit", type: "text" },
+            {
+              label: "Case Price *",
+              name: "case_price",
+              type: "number",
+              step: "0.01",
+            },
+            { label: "Current Stock *", name: "current_stock", type: "number" },
+            { label: "Max Quantity", name: "max_quantity", type: "number" },
+            { label: "Min Quantity", name: "min_quantity", type: "number" },
+            { label: "Expiration Date", name: "expiration", type: "date" },
+            { label: "Category ID", name: "categoryid", type: "number" },
+            { label: "Supplier ID", name: "supplierid", type: "number" },
           ].map(({ label, name, type, step }) => (
             <input
               key={name}
@@ -83,15 +134,22 @@ function InventoryItemModal({ item, onClose, onSubmit, initialError }) {
               step={step}
               value={formData[name]}
               onChange={handleChange}
-              required={label.includes('*')}
+              required={label.includes("*")}
             />
           ))}
 
           <div className="col-span-2 flex justify-end gap-3">
-            <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded">
-              {isEditing ? 'Update Item' : 'Add Item'}
+            <button
+              type="submit"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded"
+            >
+              {isEditing ? "Update Item" : "Add Item"}
             </button>
-            <button type="button" onClick={onClose} className="bg-gray-300 hover:bg-gray-400 text-black font-semibold px-4 py-2 rounded">
+            <button
+              type="button"
+              onClick={onClose}
+              className="bg-gray-300 hover:bg-gray-400 text-black font-semibold px-4 py-2 rounded"
+            >
               Cancel
             </button>
           </div>

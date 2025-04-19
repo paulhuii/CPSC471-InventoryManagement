@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { getDeliveredOrders } from '../../api';
+import React, { useEffect, useState } from "react";
+import { getDeliveredOrders } from "../../api";
 
 const OrderHistory = () => {
   const [orders, setOrders] = useState([]);
@@ -8,11 +8,11 @@ const OrderHistory = () => {
   useEffect(() => {
     getDeliveredOrders()
       .then(setOrders)
-      .catch(err => console.error('Error loading delivered orders:', err));
+      .catch((err) => console.error("Error loading delivered orders:", err));
   }, []);
 
   const toggleExpand = (orderid) => {
-    setExpanded(prev => (prev === orderid ? null : orderid));
+    setExpanded((prev) => (prev === orderid ? null : orderid));
   };
 
   const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString();
@@ -23,7 +23,7 @@ const OrderHistory = () => {
       {orders.length === 0 ? (
         <p>No delivered orders yet.</p>
       ) : (
-        orders.map(order => (
+        orders.map((order) => (
           <div key={order.orderid} className="mb-4 border rounded-lg">
             <div
               className="flex justify-between items-center bg-gray-100 px-4 py-3 rounded-t-lg cursor-pointer"
@@ -34,8 +34,15 @@ const OrderHistory = () => {
                   Order #{order.orderid} — {formatDate(order.order_date)}
                 </h3>
                 <p>Total Cost: ${order.total_amount?.toFixed(2)}</p>
+                {order.delivered_date && (
+                  <p className="text-sm text-gray-600">
+                    Delivered on: {formatDate(order.delivered_date)}
+                  </p>
+                )}
               </div>
-              <span className="text-xl">{expanded === order.orderid ? '▲' : '▼'}</span>
+              <span className="text-xl">
+                {expanded === order.orderid ? "▲" : "▼"}
+              </span>
             </div>
 
             {expanded === order.orderid && (
@@ -53,9 +60,18 @@ const OrderHistory = () => {
                     {order.order_detail.map((item, index) => (
                       <tr key={index} className="border-t">
                         <td className="py-2">{item.products.product_name}</td>
-                        <td className="text-center">{item.requested_quantity}</td>
-                        <td className="text-center">${item.unit_price.toFixed(2)}</td>
-                        <td className="text-center">${(item.unit_price * item.requested_quantity).toFixed(2)}</td>
+                        <td className="text-center">
+                          {item.requested_quantity}
+                        </td>
+                        <td className="text-center">
+                          ${item.unit_price.toFixed(2)}
+                        </td>
+                        <td className="text-center">
+                          $
+                          {(item.unit_price * item.requested_quantity).toFixed(
+                            2
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
