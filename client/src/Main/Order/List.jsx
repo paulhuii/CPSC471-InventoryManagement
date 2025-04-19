@@ -6,7 +6,7 @@ const OrderList = () => {
   const [products, setProducts] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [items, setItems] = useState([]);
-  const [formData, setFormData] = useState({ productid: '', quantity: 1, price: '', supplierid: '' });
+  const [formData, setFormData] = useState({ productid: '', quantity: 1, price: '', supplierid: '', supplier_name: ''  });
   const { user } = useAuth();
 
   useEffect(() => {

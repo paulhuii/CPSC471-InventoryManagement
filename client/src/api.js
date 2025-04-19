@@ -103,6 +103,18 @@ export const getSuppliers = async () => {
       throw error;
     }
 };
+
+export const getPendingOrders = async () => {
+    try {
+      const url = `${API_URL}/orders/pending`;
+      const response = await axios.get(url, getAuthHeader());
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching pending orders:', error.response || error);
+      throw error;
+    }
+  };
+  
   
   
 // Auth endpoints
