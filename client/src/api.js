@@ -71,29 +71,28 @@ export const deleteItem = async (id) => {
     }
 };
 
-export const getOrders = async () => {
+export const getOrderDetails = async () => {
     try {
-      const url = `${API_URL}/orders`;
+      const url = `${API_URL}/order-detail`;
       const response = await axios.get(url, getAuthHeader());
       return response.data || [];
     } catch (error) {
-      console.error('Error fetching orders:', error.response || error);
+      console.error('Error fetching order details:', error.response || error);
       throw error;
     }
   };
   
-  export const placeOrder = async (order) => {
+  export const addOrderDetail = async (orderDetail) => {
     try {
-      const url = `${API_URL}/orders`;
-      const response = await axios.post(url, order, getAuthHeader());
+      const url = `${API_URL}/order-detail`;
+      const response = await axios.post(url, orderDetail, getAuthHeader());
       return response.data;
     } catch (error) {
-      console.error('Error placing order:', error.response || error);
+      console.error('Error adding order detail:', error.response || error);
       throw error;
     }
   };
   
-
 // Auth endpoints
 export const login = async (credentials) => {
     try {

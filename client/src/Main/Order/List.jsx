@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getInventory, placeOrder, getOrders } from '../../api';
-
-
+import { getInventory, getOrderDetails, addOrderDetail } from '../../api';
 
 const supplierSuggestions = [
   "GreenLeaf Suppliers",
@@ -17,9 +15,9 @@ const OrderList = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({
     productid: '',
-    quantity: 1,
-    price: '',
-    supplier: ''
+    requested_quantity: 1,
+    unit_price: '',
+    supplierid: ''
   });
 
   const today = new Date().toLocaleDateString();
@@ -29,8 +27,8 @@ const OrderList = () => {
       try {
         const inventory = await getInventory();
         setProducts(inventory);
-        const existingOrders = await getOrders();
-        setOrders(existingOrders);
+        const orderDetails = await getOrderDetails();
+        setOrders(orderDetails);
       } catch (error) {
         console.error('Error loading data:', error);
       }
@@ -45,29 +43,19 @@ const OrderList = () => {
 
   const handleAddOrder = async () => {
     try {
-      const orderData = {
-        productid: parseInt(formData.productid),
-        quantity: parseInt(formData.quantity),
-        price: parseFloat(formData.price),
-        supplier: formData.supplier
-      };
-  
-      const added = await placeOrder(orderData);
-  
-      const product = products.find(p => p.productid === orderData.productid);
+      const added = await addOrderDetail(formData);
+      const product = products.find(p => p.productid === parseInt(formData.productid));
       const product_name = product?.product_name || 'Unknown';
-  
+
       setOrders([{ ...added, product_name }, ...orders]);
       setShowAddForm(false);
-      setFormData({ productid: '', quantity: 1, price: '', supplier: '' });
+      setFormData({ productid: '', requested_quantity: 1, unit_price: '', supplierid: '' });
     } catch (err) {
-      console.error('Error placing order:', err);
-      alert('Failed to place order. Please check your input.');
+      console.error('Error adding order detail:', err);
     }
   };
-  
 
-  const subtotal = orders.reduce((acc, item) => acc + item.quantity * item.price, 0);
+  const subtotal = orders.reduce((acc, item) => acc + item.requested_quantity * item.unit_price, 0);
   const tax = subtotal * 0.05;
   const total = subtotal + tax;
 
@@ -89,21 +77,15 @@ const OrderList = () => {
                 <option key={p.productid} value={p.productid}>{p.product_name}</option>
               ))}
             </select>
-            <input name="quantity" type="number" min="1" value={formData.quantity} onChange={handleChange} className="border rounded px-3 py-2" />
-            <input name="price" type="number" min="0" step="0.01" value={formData.price} onChange={handleChange} placeholder="$ per unit" className="border rounded px-3 py-2" />
+            <input name="requested_quantity" type="number" min="1" value={formData.requested_quantity} onChange={handleChange} className="border rounded px-3 py-2" />
+            <input name="unit_price" type="number" min="0" step="0.01" value={formData.unit_price} onChange={handleChange} placeholder="$ per unit" className="border rounded px-3 py-2" />
             <input
-              name="supplier"
-              value={formData.supplier}
+              name="supplierid"
+              value={formData.supplierid}
               onChange={handleChange}
-              list="supplier-options"
-              placeholder="Enter Supplier"
+              placeholder="Supplier ID"
               className="border rounded px-3 py-2"
             />
-            <datalist id="supplier-options">
-              {supplierSuggestions.map((s, i) => (
-                <option key={i} value={s} />
-              ))}
-            </datalist>
           </div>
           <div className="text-right mt-4">
             <button onClick={handleAddOrder} className="bg-[#7E82A4] text-white px-4 py-2 rounded">Add</button>
@@ -124,11 +106,11 @@ const OrderList = () => {
         <tbody>
           {orders.map((item, index) => (
             <tr key={index} className="border-t">
-              <td className="px-4 py-2">{item.product_name}</td>
-              <td className="px-4 py-2">{item.quantity}</td>
-              <td className="px-4 py-2">${parseFloat(item.price).toFixed(2)}</td>
-              <td className="px-4 py-2">${(item.quantity * item.price).toFixed(2)}</td>
-              <td className="px-4 py-2">{item.supplier}</td>
+              <td className="px-4 py-2">{item.products?.product_name || item.product_name || 'Unknown'}</td>
+              <td className="px-4 py-2">{item.requested_quantity}</td>
+              <td className="px-4 py-2">${parseFloat(item.unit_price).toFixed(2)}</td>
+              <td className="px-4 py-2">${(item.requested_quantity * item.unit_price).toFixed(2)}</td>
+              <td className="px-4 py-2">{item.suppliers?.supplier_name || item.supplier_name || item.supplierid}</td>
             </tr>
           ))}
         </tbody>
