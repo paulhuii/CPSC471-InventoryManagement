@@ -115,6 +115,29 @@ export const getPendingOrders = async () => {
     }
   };
   
+  export const updateOrderStatus = async (orderid, newStatus) => {
+    try {
+      const url = `${API_URL}/orders/${orderid}/status`;
+      const response = await axios.put(url, { order_status: newStatus }, getAuthHeader());
+      return response.data;
+    } catch (error) {
+      console.error('Error updating order status:', error.response || error);
+      throw error;
+    }
+  };
+  
+  export const getDeliveredOrders = async () => {
+    try {
+      const url = `${API_URL}/orders/delivered`;
+      const response = await axios.get(url, getAuthHeader());
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching delivered orders:', error.response || error);
+      throw error;
+    }
+  };
+  
+  
   
   
 // Auth endpoints
