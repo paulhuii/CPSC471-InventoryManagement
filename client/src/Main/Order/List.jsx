@@ -32,6 +32,7 @@ const OrderList = () => {
     productid: "",
     quantity: "",
     price: "",
+    order_unit: "",
     supplier_name: "",
   });
   const [groupedItems, setGroupedItems] = useStateWithLocalStorage("groupedOrderItems", {});
@@ -56,6 +57,7 @@ const OrderList = () => {
           product_name: ci.product_name,
           quantity: ci.requested_quantity,
           price: ci.unit_price,
+          order_unit: ci.order_unit || "",
           supplier_name: supplier,
         });
       });
@@ -65,13 +67,14 @@ const OrderList = () => {
   }, [cartItems]);
 
   const handleAddItem = () => {
-    const { productid, quantity, price, supplier_name } = formData;
-    if (productid && quantity && price && supplier_name) {
+    const { productid, quantity, price, order_unit, supplier_name } = formData;
+    if (productid && quantity && price && order_unit && supplier_name) {
       const product = products.find(p => p.productid.toString() === productid);
       const newItem = {
         productid,
         quantity: parseInt(quantity),
         price: parseFloat(price),
+        order_unit: formData.order_unit,
         product_name: product?.product_name || "",
         supplier_name,
       };
@@ -79,7 +82,7 @@ const OrderList = () => {
         const current = prev[supplier_name] || [];
         return { ...prev, [supplier_name]: [...current, newItem] };
       });
-      setFormData({ productid: "", quantity: "", price: "", supplier_name: "" });
+      setFormData({ productid: "", quantity: "", price: "", order_unit: "", supplier_name: "" });
     }
   };
 
@@ -133,6 +136,7 @@ const OrderList = () => {
       supplierid,
       unit_price: item.price,
       requested_quantity: item.quantity,
+      order_unit: item.order_unit,
     }));
   
     await addOrderDetails(detailItems);
@@ -182,6 +186,13 @@ const OrderList = () => {
         <input type="number" name="price" value={formData.price}
           onChange={e => setFormData({ ...formData, price: e.target.value })}
           placeholder="Price" className="border rounded px-3 py-2" />
+        <input
+            name="order_unit"
+            value={formData.order_unit}
+            onChange={e => setFormData({ ...formData, order_unit: e.target.value })}
+            placeholder="Order Unit (e.g. case, box)"
+            className="border rounded px-3 py-2"
+        />
         <input name="supplier_name" list="supplier-options" value={formData.supplier_name}
           onChange={e => setFormData({ ...formData, supplier_name: e.target.value })}
           placeholder="Supplier Name" className="border rounded px-3 py-2" />
