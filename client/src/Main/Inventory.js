@@ -121,7 +121,7 @@ function Inventory() {
 
   const handleModalClose = () => {
     setIsModalOpen(false);
-    setIsFilterModalOpen(false); // Ensure filter modal also closes if needed
+    setIsFilterModalOpen(false);
     setCurrentItem(null);
     setError(null);
   };
@@ -273,7 +273,7 @@ function Inventory() {
 
       <div className="overflow-x-auto bg-gray-100 p-4 rounded-lg shadow">
         <table className="min-w-full text-left">
-         <thead>
+          <thead>
             <tr className="text-gray-700">
               <th className="px-4 py-2" style={{ backgroundColor: "#D9BE92" }}>Product</th>
               <th className="px-4 py-2" style={{ backgroundColor: "#D9BE92" }}>Quantity</th>
