@@ -17,7 +17,7 @@ router.get("/pending", authenticateToken, async (req, res) => {
         order_detail (
           requested_quantity,
           unit_price,
-          products (product_name)
+          products (productid, product_name)
         )
       `
     )
@@ -46,7 +46,7 @@ router.get("/processing", authenticateToken, async (req, res) => {
       order_detail (
         requested_quantity,
         unit_price,
-        products (product_name)
+        products (productid, product_name)
       )
     `
     )

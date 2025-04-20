@@ -81,17 +81,29 @@ const OrderPending = () => {
       const order = orders.find((o) => o.orderid === orderid);
       if (!order) return;
 
-      // Update inventory quantities
-      for (const item of order.order_detail) {
-        await addInventoryStock(item.productid, item.requested_quantity);
+      if (!order.order_detail || order.order_detail.length === 0) {
+        alert("This order has no details.");
+        return;
       }
 
-      // Then mark the order as delivered
-      await updateOrderStatus(orderid, "delivered");
+      for (const item of order.order_detail) {
+        const productid = item.products?.productid || item.productid;
 
+        if (!productid) {
+          //console.error(" Missing productid in item:", item);
+          alert("Cannot update inventory: product ID is missing.");
+          return;
+        }
+
+        //console.log(" Adding stock for productid:", productid);
+        await addInventoryStock(productid, item.requested_quantity);
+      }
+
+      await updateOrderStatus(orderid, "delivered");
       setOrders((prev) => prev.filter((order) => order.orderid !== orderid));
     } catch (error) {
       console.error("Failed to mark as delivered and update stock:", error);
+      alert("Something went wrong while marking as delivered.");
     }
   };
 

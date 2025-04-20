@@ -68,4 +68,45 @@ router.get("/restock", authenticateToken, async (req, res) => {
   res.json(filtered);
 });
 
+// POST /api/inventory/:productid/add-stock
+router.post(
+  "/:productid/add-stock",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const productid = parseInt(req.params.productid, 10);
+    const { quantity } = req.body;
+
+    if (isNaN(productid)) {
+      return res.status(400).json({ error: "Invalid product ID" });
+    }
+
+    if (!Number.isFinite(quantity)) {
+      return res.status(400).json({ error: "Invalid or missing quantity" });
+    }
+
+    const { data: currentData, error: fetchError } = await supabase
+      .from("products")
+      .select("current_stock")
+      .eq("productid", productid)
+      .single();
+
+    if (fetchError) return res.status(500).json({ error: fetchError.message });
+    if (!currentData)
+      return res.status(404).json({ error: "Product not found" });
+
+    const newStock = currentData.current_stock + quantity;
+
+    const { data, error } = await supabase
+      .from("products")
+      .update({ current_stock: newStock })
+      .eq("productid", productid)
+      .select();
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    res.json(data[0]);
+  }
+);
+
 module.exports = router;
