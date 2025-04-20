@@ -3,6 +3,7 @@ import {
   getPendingOrders,
   getProcessingOrders,
   updateOrderStatus,
+  addInventoryStock,
 } from "../../api";
 
 const OrderPending = () => {
@@ -76,8 +77,22 @@ const OrderPending = () => {
   };
 
   const markAsDelivered = async (orderid) => {
-    await updateOrderStatus(orderid, "delivered");
-    setOrders((prev) => prev.filter((order) => order.orderid !== orderid));
+    try {
+      const order = orders.find((o) => o.orderid === orderid);
+      if (!order) return;
+
+      // Update inventory quantities
+      for (const item of order.order_detail) {
+        await addInventoryStock(item.productid, item.requested_quantity);
+      }
+
+      // Then mark the order as delivered
+      await updateOrderStatus(orderid, "delivered");
+
+      setOrders((prev) => prev.filter((order) => order.orderid !== orderid));
+    } catch (error) {
+      console.error("Failed to mark as delivered and update stock:", error);
+    }
   };
 
   const cancelOrder = async (orderid) => {
