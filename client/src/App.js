@@ -1,4 +1,4 @@
-// src/App.js 
+// src/App.js
 import React from "react";
 import {
   BrowserRouter,
@@ -10,11 +10,12 @@ import {
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Inventory from "./Main/Inventory";
-import Order from './Main/Order';
-import OrderRestock from './Main/Order/Restock';
-import OrderList from './Main/Order/List';
-import OrderPending from './Main/Order/Pending';
-import OrderHistory from './Main/Order/History';
+import { OrderCartProvider } from "./Main/OrderCartContext";
+import Order from "./Main/Order";
+import OrderRestock from "./Main/Order/Restock";
+import OrderList from "./Main/Order/List";
+import OrderPending from "./Main/Order/Pending";
+import OrderHistory from "./Main/Order/History";
 
 import Home from "./Home";
 import Login from "./Login/Login";
@@ -37,7 +38,6 @@ const StyledLink = ({ to, end = false, children }) => (
   </NavLink>
 );
 
-
 const ProtectedRoute = ({ allowedRoles }) => {
   const { user, loading } = useAuth();
   if (loading) return <div className="p-6 text-center">Authenticating…</div>;
@@ -59,14 +59,9 @@ const Navigation = () => {
               Home
             </StyledLink>
 
-            {user && (
-              <StyledLink to="/inventory">Inventory</StyledLink>
-            )}
+            {user && <StyledLink to="/inventory">Inventory</StyledLink>}
 
-            {user && (
-              <StyledLink to="/orders">Orders</StyledLink>
-            )}
-
+            {user && <StyledLink to="/orders">Orders</StyledLink>}
 
             {user?.role?.toLowerCase() === "admin" && (
               <StyledLink to="/admin/users">Manage Users</StyledLink>
@@ -97,28 +92,35 @@ const Navigation = () => {
   );
 };
 
-
 function App() {
   const AppRoutes = () => {
     const { user, loading } = useAuth();
-    if (loading) return <div className="p-6 text-center">Loading Application…</div>;
+    if (loading)
+      return <div className="p-6 text-center">Loading Application…</div>;
 
     return (
-      <div className="min-h-screen flex flex-col bg-gray-50">
-        <Navigation />
-        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
-          <Routes>
-            {/* Public */}
-            <Route path="/" element={<Home />} />
-            <Route
-              path="/login"
-              element={!user ? <Login /> : <Navigate to="/inventory" replace />} />
-            <Route
-              path="/register"
-              element={!user ? <Register /> : <Navigate to="/inventory" replace />} />
+      <OrderCartProvider>
+        <div className="min-h-screen flex flex-col bg-gray-50">
+          <Navigation />
+          <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
+            <Routes>
+              {/* Public */}
+              <Route path="/" element={<Home />} />
+              <Route
+                path="/login"
+                element={
+                  !user ? <Login /> : <Navigate to="/inventory" replace />
+                }
+              />
+              <Route
+                path="/register"
+                element={
+                  !user ? <Register /> : <Navigate to="/inventory" replace />
+                }
+              />
 
-            {/* Protected (any logged‑in user) */}
-            <Route element={<ProtectedRoute />}>
+              {/* Protected (any logged‑in user) */}
+              <Route element={<ProtectedRoute />}>
                 <Route path="/inventory" element={<Inventory />} />
                 <Route path="/orders" element={<Order />}>
                   <Route path="restock" element={<OrderRestock />} />
@@ -127,20 +129,18 @@ function App() {
                   <Route path="history" element={<OrderHistory />} />
                 </Route>
               </Route>
-            
 
-            
+              {/* Admin‑only */}
+              <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+                <Route path="/admin/users" element={<AdminUserListPage />} />
+              </Route>
 
-            {/* Admin‑only */}
-            <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
-              <Route path="/admin/users" element={<AdminUserListPage />} />
-            </Route>
-
-            {/* Fallback */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </main>
-      </div>
+              {/* Fallback */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </main>
+        </div>
+      </OrderCartProvider>
     );
   };
 

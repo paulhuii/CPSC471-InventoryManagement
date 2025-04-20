@@ -130,6 +130,12 @@ export const getSupplierByName = async (name) => {
   return response.data; // returns an array
 };
 
+export const getRestockRecommendations = async () => {
+  const url = `${API_URL}/inventory/restock`;
+  const response = await axios.get(url, getAuthHeader());
+  return response.data || [];
+};
+
 export const getPendingOrders = async () => {
   try {
     const url = `${API_URL}/orders/pending`;
@@ -176,6 +182,12 @@ export const getDeliveredOrders = async () => {
     console.error("Error fetching delivered orders:", error.response || error);
     throw error;
   }
+};
+
+export const addInventoryStock = async (productid, quantity) => {
+  const url = `${API_URL}/inventory/${productid}/add-stock`;
+  const response = await axios.post(url, { quantity }, getAuthHeader());
+  return response.data;
 };
 
 // Auth endpoints

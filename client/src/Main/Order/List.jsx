@@ -1,133 +1,153 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { useAuth } from "../../context/AuthContext";
+import { useOrderCart } from "../OrderCartContext";
 import {
   getInventory,
+  getSuppliers,
   createOrder,
   addOrderDetails,
-  getSuppliers,
+  getSupplierByName,
 } from "../../api";
-import { useAuth } from "../../context/AuthContext";
+
+function useStateWithLocalStorage(key, initialValue) {
+  const [value, setValue] = useState(() => {
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : initialValue;
+  });
+
+  useEffect(() => {
+    localStorage.setItem(key, JSON.stringify(value));
+  }, [key, value]);
+
+  return [value, setValue];
+}
 
 const OrderList = () => {
+  const { user } = useAuth();
+  const { cartItems, removeItem, clearCart } = useOrderCart();
   const [products, setProducts] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
-  const [items, setItems] = useState([]);
-  const [editingIndex, setEditingIndex] = useState(null);
-  const [editedItem, setEditedItem] = useState(null);
   const [formData, setFormData] = useState({
     productid: "",
-    quantity: 1,
+    quantity: "",
     price: "",
-    supplierid: "",
     supplier_name: "",
   });
-  const { user } = useAuth();
+
+  const [items, setItems] = useStateWithLocalStorage("orderItems", []);
+
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [editedItem, setEditedItem] = useState(null);
 
   useEffect(() => {
-    getInventory().then(setProducts).catch(console.error);
+    getInventory().then(setProducts);
+    getSuppliers().then(setSuppliers);
   }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const inventory = await getInventory();
-        setProducts(inventory);
-        const supplierList = await getSuppliers();
-        setSuppliers(supplierList);
-      } catch (error) {
-        console.error("Error loading data:", error);
-      }
-    };
-    fetchData();
-  }, []);
+    if (cartItems.length > 0) {
+      setItems((prev) => {
+        const productIdsInList = new Set(prev.map((item) => item.productid));
+
+        const merged = cartItems
+          .filter((ci) => !productIdsInList.has(ci.productid))
+          .map((ci) => ({
+            productid: ci.productid,
+            product_name: ci.product_name,
+            quantity: ci.requested_quantity,
+            price: ci.unit_price,
+            supplierid: ci.supplierid,
+            supplier_name:
+              suppliers.find((s) => s.supplierid === ci.supplierid)
+                ?.supplier_name || "",
+          }));
+
+        return [...prev, ...merged];
+      });
+      clearCart();
+    }
+  }, [cartItems]);
 
   const handleAddItem = () => {
-    const product = products.find(
-      (p) => p.productid === parseInt(formData.productid)
-    );
-    const supplier = suppliers.find(
-      (s) => s.supplier_name === formData.supplier_name
-    );
-
-    if (!product || !supplier) return;
-
-    setItems((prev) => [
-      ...prev,
-      {
+    if (
+      formData.productid &&
+      formData.quantity &&
+      formData.price &&
+      formData.supplier_name
+    ) {
+      const product = products.find(
+        (p) => p.productid.toString() === formData.productid
+      );
+      const newItem = {
         ...formData,
-        product_name: product.product_name,
-        supplierid: supplier.supplierid,
-      },
-    ]);
-
-    setFormData({ productid: "", quantity: 1, price: "", supplier_name: "" });
+        product_name: product?.product_name || "",
+        quantity: parseInt(formData.quantity),
+        price: parseFloat(formData.price),
+      };
+      setItems([...items, newItem]);
+      setFormData({
+        productid: "",
+        quantity: "",
+        price: "",
+        supplier_name: "",
+      });
+    }
   };
 
   const handleEditItem = (index) => {
     setEditingIndex(index);
-    setEditedItem({ ...items[index] });
+    const item = items[index];
+    setEditedItem({
+      quantity: item.quantity,
+      price: item.price,
+      supplier_name: item.supplier_name,
+    });
   };
 
   const handleSaveEdit = (index) => {
-    const updatedSupplier = suppliers.find(
-      (s) => s.supplier_name === editedItem.supplier_name
-    );
-    if (!updatedSupplier) {
-      alert("Supplier not found.");
-      return;
-    }
-    const updatedItem = {
+    const updatedItems = [...items];
+    updatedItems[index] = {
+      ...updatedItems[index],
       ...editedItem,
-      supplierid: updatedSupplier.supplierid,
     };
-    setItems((prev) =>
-      prev.map((item, i) => (i === index ? updatedItem : item))
-    );
+    setItems(updatedItems);
     setEditingIndex(null);
     setEditedItem(null);
   };
 
-  const handlePlaceOrder = async () => {
-    const total_amount = items.reduce(
-      (sum, i) => sum + i.quantity * i.price,
-      0
-    );
-    const supplierid = parseInt(items[0]?.supplierid); // assumes all items use same supplier
-
-    if (!user?.userid) {
-      console.error("No userid found in AuthContext");
-      return;
-    }
-
-    try {
-      const newOrder = await createOrder({
-        order_date: new Date().toISOString().split("T")[0],
-        total_amount,
-        supplierid,
-        userid: user.userid,
-        order_status: "pending", // optionally set default status
-      });
-
-      const orderid = newOrder.orderid;
-
-      await addOrderDetails(
-        items.map((i) => ({
-          orderid,
-          productid: parseInt(i.productid),
-          unit_price: parseFloat(i.price),
-          requested_quantity: parseInt(i.quantity),
-          supplierid: parseInt(i.supplierid),
-        }))
-      );
-
-      setItems([]);
-    } catch (err) {
-      console.error("Error placing order:", err);
-    }
-  };
-
-  const subtotal = items.reduce((sum, i) => sum + i.quantity * i.price, 0);
+  const subtotal = items.reduce(
+    (sum, item) => sum + item.quantity * item.price,
+    0
+  );
   const tax = subtotal * 0.05;
   const total = subtotal + tax;
+
+  const handlePlaceOrder = async () => {
+    const supplierid = suppliers.find(
+      (s) => s.supplier_name === items[0]?.supplier_name
+    )?.supplierid;
+
+    if (!supplierid) return alert("Supplier not found or invalid");
+
+    const order = await createOrder({
+      order_date: new Date().toISOString().split("T")[0],
+      total_amount: total,
+      supplierid,
+      userid: user.userid,
+    });
+
+    const detailItems = items.map((item) => ({
+      orderid: order.orderid,
+      productid: item.productid,
+      supplierid: supplierid,
+      unit_price: item.price,
+      requested_quantity: item.quantity,
+    }));
+
+    await addOrderDetails(detailItems);
+    alert("Order placed successfully");
+    setItems([]);
+  };
 
   return (
     <div className="p-6">
