@@ -6,7 +6,8 @@ import {
   getInventory,
   getSuppliers,
   createOrder,
-  addOrderDetails
+  addOrderDetails,
+  updateItem 
 } from "../../api";
 
 function useStateWithLocalStorage(key, initialValue) {
@@ -114,18 +115,18 @@ const OrderList = () => {
   const handlePlaceOrderForSupplier = async (supplierName, items) => {
     const supplierid = suppliers.find(s => s.supplier_name === supplierName)?.supplierid;
     if (!supplierid) return alert("Supplier not found");
-
+  
     const subtotal = items.reduce((sum, item) => sum + item.quantity * item.price, 0);
     const tax = subtotal * 0.05;
     const total = subtotal + tax;
-
+  
     const order = await createOrder({
       order_date: new Date().toISOString().split("T")[0],
       total_amount: total,
       supplierid,
       userid: user.userid,
     });
-
+  
     const detailItems = items.map(item => ({
       orderid: order.orderid,
       productid: item.productid,
@@ -133,16 +134,29 @@ const OrderList = () => {
       unit_price: item.price,
       requested_quantity: item.quantity,
     }));
-
+  
     await addOrderDetails(detailItems);
+  
+    // 🛠️ Patch supplierid in products if missing
+    for (const item of detailItems) {
+      const product = products.find(p => p.productid === item.productid);
+      if (!product?.supplierid || product?.supplier?.supplier_name === "N/A") {
+        try {
+          await updateItem(item.productid, { supplierid: item.supplierid });
+        } catch (err) {
+          console.warn(`Could not update product ${item.productid}:`, err.message);
+        }
+      }
+    }
+  
     alert(`Order placed for ${supplierName}`);
-
+  
     setGroupedItems(prev => {
       const copy = { ...prev };
       delete copy[supplierName];
       return copy;
     });
-  };
+  };  
 
   return (
     <div className="p-6">
