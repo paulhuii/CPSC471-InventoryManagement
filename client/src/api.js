@@ -251,3 +251,9 @@ export const updateUserRole = async (userId, newRole) => {
     throw error; // Re-throw to be caught by the component
   }
 };
+
+export const deleteUser = async (userId) => {
+  const url = `${API_URL}/users/${userId}`;
+  const response = await axios.delete(url, getAuthHeader());
+  return response.data;
+};
