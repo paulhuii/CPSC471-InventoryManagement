@@ -35,55 +35,52 @@ router.get("/pending", authenticateToken, async (req, res) => {
 // GET /api/orders/processing
 router.get("/processing", authenticateToken, async (req, res) => {
   const { data, error } = await supabase
-    .from("orders")
-    .select(
-      `
-      orderid,
-      order_date,
-      order_status,
-      total_amount,
-      suppliers (supplier_name),
-      order_detail (
-        requested_quantity,
-        unit_price,
-        products (productid, product_name)
+      .from("orders")
+      .select(
+          `
+            orderid, order_date, order_status, total_amount,
+            order_detail (
+              requested_quantity, unit_price,
+              products (
+                product_name,
+                supplier:suppliers!supplierid ( supplier_name )
+              )
+            )
+          `
       )
-    `
-    )
-    .eq("order_status", "processing")
-    .order("orderid", { ascending: false });
+      .eq("order_status", "processing")
+      .order("order_date", { ascending: false });
 
   if (error) {
-    console.error("Error fetching processing orders:", error);
-    return res.status(500).json({ error: error.message });
+      console.error("Error fetching processing orders:", error.message);
+      return res.status(500).json({ error: error.message || "Failed to fetch processing orders" });
   }
-
   res.json(data);
 });
 
 // GET /api/orders/delivered
 router.get("/delivered", authenticateToken, async (req, res) => {
   const { data, error } = await supabase
-    .from("orders")
-    .select(
-      `
-        orderid,
-        order_date,
-        delivered_date,
-        total_amount,
-        order_detail (
-          requested_quantity,
-          unit_price,
-          products (product_name)
-        )
-      `
-    )
-    .eq("order_status", "delivered")
-    .order("orderid", { ascending: false });
+      .from("orders")
+      .select(
+          `
+            orderid, order_date, delivered_date, total_amount,
+            order_detail (
+              requested_quantity, unit_price,
+              products (               
+                product_name,
+                supplier:suppliers!supplierid ( supplier_name ) 
+              )
+            )
+          `
+      )
+      .eq("order_status", "delivered")
+      .order("delivered_date", { ascending: false, nullsFirst: false })
+      .order("orderid", { ascending: false });
 
   if (error) {
-    console.error("Error fetching delivered orders:", error);
-    return res.status(500).json({ error: error.message });
+      console.error("Error fetching delivered orders:", error.message);
+      return res.status(500).json({ error: error.message || "Failed to fetch delivered orders" });
   }
 
   res.json(data);
