@@ -3,7 +3,7 @@ import { getInventory } from "../../api";
 import { useOrderCart } from "../OrderCartContext";
 
 const getStatusColor = (stock, min) => {
-  if (stock < min * 0.5) return "red";
+  if (stock == 0) return "red";
   if (stock < min) return "yellow";
   return "green";
 };

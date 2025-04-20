@@ -156,7 +156,7 @@ function Inventory() {
   const getStockStatus = (stock, minQty) => {
     if (stock === 0)
       return { text: "Out of Stock", color: "bg-[#D99292] text-red-800" };
-    if (stock <= minQty)
+    if (stock < minQty)
       return { text: "Low Stock", color: "bg-[#F4D98E] text-yellow-800" };
     return { text: "In Stock", color: "bg-[#A3C18F] text-green-800" };
   };
