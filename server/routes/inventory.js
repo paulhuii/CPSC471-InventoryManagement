@@ -16,7 +16,8 @@ router.get("/", authenticateToken, async (req, res) => {
         order_unit,
         orders (order_status, delivered_date)
       )
-    `);
+    `)
+  .eq("is_active", true);
 
   if (error) return res.status(500).json({ error: error.message });
 
@@ -60,23 +61,57 @@ router.put("/:id", authenticateToken, isAdmin, async (req, res) => {
 });
 
 router.delete("/:id", authenticateToken, isAdmin, async (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const { error, count } = await supabase
+  const productid = parseInt(req.params.id, 10);
+
+  // add a check to prevent deleting if pending orders exist
+  const { data: orderDetails, error: fetchError } = await supabase
+    .from("order_detail")
+    .select("orderid, orders (order_status)")
+    .eq("productid", productid);
+
+  if (fetchError) return res.status(500).json({ error: fetchError.message });
+
+  const hasPending = orderDetails.some(
+    (od) => od.orders?.order_status && od.orders.order_status !== "delivered"
+  );
+
+  if (hasPending) {
+    return res.status(400).json({
+      error: "Cannot delete product with active or pending orders.",
+    });
+  }
+
+  //setting is_active to false
+  const { data, error } = await supabase
     .from("products")
-    .delete({ count: "exact" })
-    .eq("productid", id);
+    .update({ is_active: false })
+    .eq("productid", productid)
+    .select();
+
   if (error) return res.status(500).json({ error: error.message });
-  if (count === 0) return res.status(404).json({ error: "Product not found" });
-  res.json({ message: "Product deleted successfully" });
+
+  res.json({ message: "Product archived successfully" });
 });
+
 
 router.get("/restock", authenticateToken, async (req, res) => {
   const { data, error } = await supabase
-    .from("products")
-    .select(`*, supplier: supplierid (supplier_name)`);
+  .from("products")
+  .select(`
+    *,
+    supplier: supplierid (supplier_name),
+    order_detail (
+      unit_price,
+      requested_quantity,
+      order_unit,
+      orders (order_status, delivered_date)
+    )
+  `)
+  .eq("is_active", true); 
+
 
   if (error) {
-    console.error("Error fetching restock recommendations:", error);
+    console.error("Error fetching restock recommendations:", error); 
     return res.status(500).json({ error: error.message });
   }
 
