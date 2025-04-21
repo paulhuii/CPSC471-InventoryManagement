@@ -1,35 +1,32 @@
 // client/src/Main/Reports.jsx
 import React, { useState, useEffect } from 'react';
-// Import the new API function
+
 import { getReportSummary, getMonthlyTopProducts } from '../api';
 import { useAuth } from '../context/AuthContext';
 
-// --- Reusable Summary Card Widget --- (Keep as before)
 const SummaryCard = ({ title, value, format = 'number', icon, color = 'blue' }) => {
-    // ... same code ...
     const formattedValue = () => {
         if (value === undefined || value === null) return 'N/A';
         if (format === 'currency') {
             return `$${Number(value).toFixed(2)}`;
         }
         if (format === 'integer') {
-             return Number(value).toLocaleString(); // Basic number formatting
+             return Number(value).toLocaleString(); 
         }
         return value; // Default plain number
     };
 
     const colorClasses = {
-        blue: 'bg-blue-100 border-blue-300 text-blue-800',
-        green: 'bg-green-100 border-green-300 text-green-800',
-        yellow: 'bg-yellow-100 border-yellow-300 text-yellow-800',
-        red: 'bg-red-100 border-red-300 text-red-800',
+        blue: 'bg-[#B2CBF9] border-blue-300 text-blue-800',
+        green: 'bg-[#C0E0AC] border-green-300 text-green-800',
+        yellow: 'bg-[#F9E3BF] border-yellow-300 text-yellow-800',
+        red: 'bg-[#E9B1B1] border-red-300 text-red-800',
     };
 
     return (
         <div className={`border rounded-lg p-4 shadow-sm ${colorClasses[color]}`}>
             <div className="flex justify-between items-center">
                 <h3 className="text-sm font-medium uppercase text-gray-600">{title}</h3>
-                {/* Optional Icon can go here */}
             </div>
             <p className="text-2xl font-bold mt-2">{formattedValue()}</p>
         </div>
@@ -37,9 +34,8 @@ const SummaryCard = ({ title, value, format = 'number', icon, color = 'blue' }) 
 };
 
 
-// --- Reusable Top List Widget --- (Keep as before)
+// --- Reusable Top List Widget --- (
 const TopListWidget = ({ title, items = [], valueKey, valueLabel = 'Count' }) => {
-    // ... same code ...
         return (
         <div className="bg-white p-4 rounded-lg shadow border">
             <h3 className="text-lg font-semibold mb-3 text-gray-700">{title}</h3>
@@ -68,7 +64,7 @@ function Reports() {
     const [summaryLoading, setSummaryLoading] = useState(true);
     const [summaryError, setSummaryError] = useState(null);
 
-    // --- NEW: State for Monthly Report ---
+    // --- State for Monthly Report ---
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1; // JS months are 0-11
     const [selectedYear, setSelectedYear] = useState(currentYear);
@@ -76,7 +72,6 @@ function Reports() {
     const [monthlyTopProducts, setMonthlyTopProducts] = useState([]);
     const [monthlyLoading, setMonthlyLoading] = useState(false);
     const [monthlyError, setMonthlyError] = useState(null);
-    // const { user } = useAuth();
 
     // --- Fetch Summary Data ---
     useEffect(() => {
@@ -151,7 +146,7 @@ function Reports() {
             </div>
         );
     }
-    if (!summaryData) { // Should not happen if loading/error handled, but good fallback
+    if (!summaryData) { 
         return <div className="p-6 text-center text-gray-500">No summary report data found.</div>;
     }
 
@@ -160,7 +155,7 @@ function Reports() {
         <div className="p-4 md:p-6 space-y-8"> {/* Increased spacing */}
             <h1 className="text-2xl font-bold text-gray-800 mb-6">Reports Dashboard</h1>
 
-            {/* Section 1: Summary Cards */}
+            {/* Summary Cards */}
             <section>
                  <h2 className="text-xl font-semibold text-gray-700 mb-4">Overall Summary</h2>
                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -171,7 +166,7 @@ function Reports() {
                  </div>
             </section>
 
-            {/* Section 2: General Top Product Lists */}
+            {/*  General Top Product Lists */}
              <section>
                   <h2 className="text-xl font-semibold text-gray-700 mb-4">All-Time Top Products (Delivered Orders)</h2>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -181,7 +176,7 @@ function Reports() {
                  </div>
              </section>
 
-             {/* Section 3: Monthly Top Products */}
+             {/*  Monthly Top Products */}
              <section className="mt-8">
                 <h2 className="text-xl font-semibold text-gray-700 mb-4">Monthly Top Ordered Products</h2>
                 {/* Date Selection Controls */}
@@ -223,8 +218,6 @@ function Reports() {
                     />
                  )}
              </section>
-
-             {/* Add more sections/widgets here */}
 
         </div>
     );
