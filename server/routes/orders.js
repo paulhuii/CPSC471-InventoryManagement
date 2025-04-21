@@ -4,6 +4,7 @@ const router = express.Router();
 const { supabase } = require("../utils/supabase");
 const { authenticateToken } = require("../middleware/auth");
 
+// GET /api/orders/pending
 router.get("/pending", authenticateToken, async (req, res) => {
   const { data, error } = await supabase
     .from("orders")
@@ -15,6 +16,7 @@ router.get("/pending", authenticateToken, async (req, res) => {
         total_amount,
         suppliers (supplier_name),
         order_detail (
+          productid,
           requested_quantity,
           unit_price,
           products (productid, product_name)
@@ -35,25 +37,28 @@ router.get("/pending", authenticateToken, async (req, res) => {
 // GET /api/orders/processing
 router.get("/processing", authenticateToken, async (req, res) => {
   const { data, error } = await supabase
-      .from("orders")
-      .select(
-          `
+    .from("orders")
+    .select(
+      `
             orderid, order_date, order_status, total_amount,
             order_detail (
               requested_quantity, unit_price,
               products (
+                productid,
                 product_name,
                 supplier:suppliers!supplierid ( supplier_name )
               )
             )
           `
-      )
-      .eq("order_status", "processing")
-      .order("order_date", { ascending: false });
+    )
+    .eq("order_status", "processing")
+    .order("order_date", { ascending: false });
 
   if (error) {
-      console.error("Error fetching processing orders:", error.message);
-      return res.status(500).json({ error: error.message || "Failed to fetch processing orders" });
+    console.error("Error fetching processing orders:", error.message);
+    return res
+      .status(500)
+      .json({ error: error.message || "Failed to fetch processing orders" });
   }
   res.json(data);
 });
@@ -61,9 +66,9 @@ router.get("/processing", authenticateToken, async (req, res) => {
 // GET /api/orders/delivered
 router.get("/delivered", authenticateToken, async (req, res) => {
   const { data, error } = await supabase
-      .from("orders")
-      .select(
-          `
+    .from("orders")
+    .select(
+      `
             orderid, order_date, delivered_date, total_amount,
             order_detail (
               requested_quantity, unit_price,
@@ -73,14 +78,16 @@ router.get("/delivered", authenticateToken, async (req, res) => {
               )
             )
           `
-      )
-      .eq("order_status", "delivered")
-      .order("delivered_date", { ascending: false, nullsFirst: false })
-      .order("orderid", { ascending: false });
+    )
+    .eq("order_status", "delivered")
+    .order("delivered_date", { ascending: false, nullsFirst: false })
+    .order("orderid", { ascending: false });
 
   if (error) {
-      console.error("Error fetching delivered orders:", error.message);
-      return res.status(500).json({ error: error.message || "Failed to fetch delivered orders" });
+    console.error("Error fetching delivered orders:", error.message);
+    return res
+      .status(500)
+      .json({ error: error.message || "Failed to fetch delivered orders" });
   }
 
   res.json(data);
