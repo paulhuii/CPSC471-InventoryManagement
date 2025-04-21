@@ -268,8 +268,37 @@ export const updateUserRole = async (userId, newRole) => {
   }
 };
 
+export const getReportSummary = async () => {
+  try {
+    const url = `${API_URL}/reports/summary`;
+    console.log("Fetching report summary from:", url);
+    const response = await axios.get(url, getAuthHeader()); // Assumes reports require authentication
+    console.log("Report Summary response:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching report summary:", error.response || error);
+    throw error; // Re-throw for the component to handle
+  }
+};
+
 export const deleteUser = async (userId) => {
   const url = `${API_URL}/users/${userId}`;
   const response = await axios.delete(url, getAuthHeader());
   return response.data;
+};
+
+export const getMonthlyTopProducts = async (year, month, limit = 5) => {
+  try {
+    // Construct query parameters
+    const params = new URLSearchParams({ year, month, limit });
+    const url = `${API_URL}/reports/monthly-top-products?${params.toString()}`;
+
+    console.log("Fetching monthly top products from:", url);
+    const response = await axios.get(url, getAuthHeader()); // Assumes reports require authentication
+    console.log("Monthly Top Products response:", response.data);
+    return response.data; // Expects an array like [{ id, name, count }]
+  } catch (error) {
+    console.error(`Error fetching monthly top products for ${year}-${month}:`, error.response || error);
+    throw error; // Re-throw for the component to handle
+  }
 };

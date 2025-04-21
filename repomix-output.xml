@@ -85,6 +85,7 @@ client/
       InventoryItemModal.jsx
       Order.jsx
       OrderCartContext.js
+      Reports.jsx
     api.js
     App.js
     App.test.js
@@ -106,6 +107,7 @@ server/
     inventory.js
     orderDetail.js
     orders.js
+    reports.js
     suppliers.js
     users.js
   utils/
@@ -3671,6 +3673,242 @@ export const OrderCartProvider = ({ children }) => {
 };
 </file>
 
+<file path="client/src/Main/Reports.jsx">
+// client/src/Main/Reports.jsx
+import React, { useState, useEffect } from 'react';
+// Import the new API function
+import { getReportSummary, getMonthlyTopProducts } from '../api';
+import { useAuth } from '../context/AuthContext';
+
+// --- Reusable Summary Card Widget --- (Keep as before)
+const SummaryCard = ({ title, value, format = 'number', icon, color = 'blue' }) => {
+    // ... same code ...
+    const formattedValue = () => {
+        if (value === undefined || value === null) return 'N/A';
+        if (format === 'currency') {
+            return `$${Number(value).toFixed(2)}`;
+        }
+        if (format === 'integer') {
+             return Number(value).toLocaleString(); // Basic number formatting
+        }
+        return value; // Default plain number
+    };
+
+    const colorClasses = {
+        blue: 'bg-blue-100 border-blue-300 text-blue-800',
+        green: 'bg-green-100 border-green-300 text-green-800',
+        yellow: 'bg-yellow-100 border-yellow-300 text-yellow-800',
+        red: 'bg-red-100 border-red-300 text-red-800',
+    };
+
+    return (
+        <div className={`border rounded-lg p-4 shadow-sm ${colorClasses[color]}`}>
+            <div className="flex justify-between items-center">
+                <h3 className="text-sm font-medium uppercase text-gray-600">{title}</h3>
+                {/* Optional Icon can go here */}
+            </div>
+            <p className="text-2xl font-bold mt-2">{formattedValue()}</p>
+        </div>
+    );
+};
+
+
+// --- Reusable Top List Widget --- (Keep as before)
+const TopListWidget = ({ title, items = [], valueKey, valueLabel = 'Count' }) => {
+    // ... same code ...
+        return (
+        <div className="bg-white p-4 rounded-lg shadow border">
+            <h3 className="text-lg font-semibold mb-3 text-gray-700">{title}</h3>
+            {items && items.length > 0 ? (
+                <ul className="space-y-2 text-sm">
+                    {items.map((item, index) => (
+                        <li key={item.id || index} className="flex justify-between items-center border-b pb-1 last:border-b-0">
+                            <span className="text-gray-800 truncate pr-2">{item.name || 'Unknown Product'}</span>
+                            <span className="font-medium text-gray-600 whitespace-nowrap">
+                                {item[valueKey]?.toLocaleString() ?? 'N/A'} {valueLabel && ` ${valueLabel}`}
+                            </span>
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <p className="text-sm text-gray-500 italic">No data available.</p>
+            )}
+        </div>
+    );
+};
+
+// --- Main Reports Page Component ---
+function Reports() {
+    // State for summary data
+    const [summaryData, setSummaryData] = useState(null);
+    const [summaryLoading, setSummaryLoading] = useState(true);
+    const [summaryError, setSummaryError] = useState(null);
+
+    // --- NEW: State for Monthly Report ---
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1; // JS months are 0-11
+    const [selectedYear, setSelectedYear] = useState(currentYear);
+    const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+    const [monthlyTopProducts, setMonthlyTopProducts] = useState([]);
+    const [monthlyLoading, setMonthlyLoading] = useState(false);
+    const [monthlyError, setMonthlyError] = useState(null);
+    // const { user } = useAuth();
+
+    // --- Fetch Summary Data ---
+    useEffect(() => {
+        const fetchSummary = async () => {
+            setSummaryLoading(true);
+            setSummaryError(null);
+            try {
+                const data = await getReportSummary();
+                setSummaryData(data);
+            } catch (err) {
+                console.error("Failed to load summary reports:", err);
+                setSummaryError(err.response?.data?.error || err.message || "Could not load summary data.");
+            } finally {
+                setSummaryLoading(false);
+            }
+        };
+        fetchSummary();
+    }, []); // Fetch summary only once on mount
+
+    // --- Fetch Monthly Data when year/month changes ---
+    useEffect(() => {
+        const fetchMonthlyData = async () => {
+            setMonthlyLoading(true);
+            setMonthlyError(null);
+            setMonthlyTopProducts([]); // Clear previous results
+            try {
+                const data = await getMonthlyTopProducts(selectedYear, selectedMonth);
+                setMonthlyTopProducts(data);
+            } catch (err) {
+                 console.error(`Failed to load monthly top products for ${selectedYear}-${selectedMonth}:`, err);
+                 setMonthlyError(err.response?.data?.error || err.message || `Could not load monthly data for ${selectedYear}-${selectedMonth}.`);
+            } finally {
+                 setMonthlyLoading(false);
+            }
+        };
+
+        // Only fetch if year and month are validly selected
+        if (selectedYear && selectedMonth) {
+            fetchMonthlyData();
+        }
+    }, [selectedYear, selectedMonth]); // Re-fetch when year or month changes
+
+
+    // --- Render Helper for Year/Month Selects ---
+    const renderYearOptions = () => {
+        const years = [];
+        for (let y = currentYear; y >= currentYear - 5; y--) { // Show last 5 years + current
+            years.push(y);
+        }
+        return years.map(y => <option key={y} value={y}>{y}</option>);
+    };
+    const renderMonthOptions = () => {
+        const months = [
+            { value: 1, name: 'January' }, { value: 2, name: 'February' }, { value: 3, name: 'March' },
+            { value: 4, name: 'April' }, { value: 5, name: 'May' }, { value: 6, name: 'June' },
+            { value: 7, name: 'July' }, { value: 8, name: 'August' }, { value: 9, name: 'September' },
+            { value: 10, name: 'October' }, { value: 11, name: 'November' }, { value: 12, name: 'December' }
+        ];
+        return months.map(m => <option key={m.value} value={m.value}>{m.name}</option>);
+    };
+
+
+    // --- Combined Loading/Error States ---
+    if (summaryLoading) { // Prioritize showing loading for the initial summary
+        return <div className="p-6 text-center text-gray-500">Loading reports...</div>;
+    }
+    if (summaryError) { // Show summary error prominently if it occurs
+        return (
+            <div className="p-6 bg-red-100 border border-red-400 text-red-700 rounded">
+                <p>Error loading summary reports:</p>
+                <p className="text-sm mt-1">{summaryError}</p>
+            </div>
+        );
+    }
+    if (!summaryData) { // Should not happen if loading/error handled, but good fallback
+        return <div className="p-6 text-center text-gray-500">No summary report data found.</div>;
+    }
+
+    // --- Render the Report Page Layout ---
+    return (
+        <div className="p-4 md:p-6 space-y-8"> {/* Increased spacing */}
+            <h1 className="text-2xl font-bold text-gray-800 mb-6">Reports Dashboard</h1>
+
+            {/* Section 1: Summary Cards */}
+            <section>
+                 <h2 className="text-xl font-semibold text-gray-700 mb-4">Overall Summary</h2>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <SummaryCard title="Total Delivered Orders" value={summaryData.totalDeliveredOrders} format="integer" color="blue" />
+                    <SummaryCard title="Total Delivered Value" value={summaryData.totalDeliveredValue} format="currency" color="green" />
+                    <SummaryCard title="Active Product Count" value={summaryData.totalActiveProducts} format="integer" color="yellow" />
+                    <SummaryCard title="Est. Inventory Value" value={summaryData.estimatedInventoryValue} format="currency" color="red" />
+                 </div>
+            </section>
+
+            {/* Section 2: General Top Product Lists */}
+             <section>
+                  <h2 className="text-xl font-semibold text-gray-700 mb-4">All-Time Top Products (Delivered Orders)</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <TopListWidget title="Top 5 by Orders" items={summaryData.topProductsByFrequency} valueKey="count" valueLabel="Orders" />
+                    <TopListWidget title="Top 5 by Quantity" items={summaryData.topProductsByQuantity} valueKey="totalQuantity" valueLabel="Units" />
+                    <TopListWidget title="Top 5 by Value" items={summaryData.topProductsByValue} valueKey="totalValue" valueLabel="$ Value" />
+                 </div>
+             </section>
+
+             {/* Section 3: Monthly Top Products */}
+             <section className="mt-8">
+                <h2 className="text-xl font-semibold text-gray-700 mb-4">Monthly Top Ordered Products</h2>
+                {/* Date Selection Controls */}
+                <div className="flex flex-wrap items-center gap-4 mb-4 bg-gray-50 p-3 rounded-md border">
+                    <label htmlFor="report-month" className="text-sm font-medium text-gray-700">Month:</label>
+                    <select
+                        id="report-month"
+                        value={selectedMonth}
+                        onChange={(e) => setSelectedMonth(parseInt(e.target.value, 10))}
+                        className="p-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                    >
+                        {renderMonthOptions()}
+                    </select>
+                    <label htmlFor="report-year" className="text-sm font-medium text-gray-700">Year:</label>
+                     <select
+                        id="report-year"
+                        value={selectedYear}
+                        onChange={(e) => setSelectedYear(parseInt(e.target.value, 10))}
+                        className="p-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                    >
+                        {renderYearOptions()}
+                    </select>
+                </div>
+
+                 {/* Monthly Report Display Area */}
+                 {monthlyLoading ? (
+                     <div className="text-center py-4 text-gray-500">Loading monthly data...</div>
+                 ) : monthlyError ? (
+                     <div className="p-3 bg-red-50 border border-red-300 text-red-600 rounded text-sm">
+                         Error: {monthlyError}
+                     </div>
+                 ) : (
+                     <TopListWidget
+                        // Dynamic title based on selection
+                        title={`Top 5 by Orders (${new Date(selectedYear, selectedMonth - 1).toLocaleString('default', { month: 'long' })} ${selectedYear})`}
+                        items={monthlyTopProducts}
+                        valueKey="count" // The backend returns 'count'
+                        valueLabel="Orders"
+                    />
+                 )}
+             </section>
+
+             {/* Add more sections/widgets here */}
+
+        </div>
+    );
+}
+
+export default Reports;
+</file>
+
 <file path="client/src/api.js">
 // src/api.js
 import axios from "axios";
@@ -3789,14 +4027,14 @@ export const getSuppliers = async () => {
 
 export const createSupplier = async (supplierData) => {
   try {
-      const url = `${API_URL}/suppliers`;
-      console.log("Creating new supplier:", supplierData);
-      const response = await axios.post(url, supplierData, getAuthHeader());
-      console.log("Create supplier response:", response.data);
-      return response.data; // Should return the newly created supplier object
+    const url = `${API_URL}/suppliers`;
+    console.log("Creating new supplier:", supplierData);
+    const response = await axios.post(url, supplierData, getAuthHeader());
+    console.log("Create supplier response:", response.data);
+    return response.data; // Should return the newly created supplier object
   } catch (error) {
-      console.error("Error creating supplier:", error.response || error);
-      throw error; // Re-throw to be handled by the calling component
+    console.error("Error creating supplier:", error.response || error);
+    throw error; // Re-throw to be handled by the calling component
   }
 };
 
@@ -3942,10 +4180,39 @@ export const updateUserRole = async (userId, newRole) => {
   }
 };
 
+export const getReportSummary = async () => {
+  try {
+    const url = `${API_URL}/reports/summary`;
+    console.log("Fetching report summary from:", url);
+    const response = await axios.get(url, getAuthHeader()); // Assumes reports require authentication
+    console.log("Report Summary response:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching report summary:", error.response || error);
+    throw error; // Re-throw for the component to handle
+  }
+};
+
 export const deleteUser = async (userId) => {
   const url = `${API_URL}/users/${userId}`;
   const response = await axios.delete(url, getAuthHeader());
   return response.data;
+};
+
+export const getMonthlyTopProducts = async (year, month, limit = 5) => {
+  try {
+    // Construct query parameters
+    const params = new URLSearchParams({ year, month, limit });
+    const url = `${API_URL}/reports/monthly-top-products?${params.toString()}`;
+
+    console.log("Fetching monthly top products from:", url);
+    const response = await axios.get(url, getAuthHeader()); // Assumes reports require authentication
+    console.log("Monthly Top Products response:", response.data);
+    return response.data; // Expects an array like [{ id, name, count }]
+  } catch (error) {
+    console.error(`Error fetching monthly top products for ${year}-${month}:`, error.response || error);
+    throw error; // Re-throw for the component to handle
+  }
 };
 </file>
 
@@ -3972,6 +4239,7 @@ import Register from "./Login/Register";
 import AdminUserListPage from "./Login/AdminUserList";
 import Inventory from "./Main/Inventory";
 import Order from "./Main/Order"; // Parent layout for /orders/*
+import Reports from "./Main/Reports";
 
 // Order Child Components
 import OrderRestock from "./Main/Order/Restock";
@@ -4060,13 +4328,13 @@ const Navigation = () => {
             </div>
             <div className="hidden md:block"> {/* Desktop links */}
               <div className="ml-10 flex items-baseline space-x-4">
-                {/* === Conditionally Render Home Link === */}
                 {!user && (
                     <StyledLink to="/" end onClick={closeMobileMenu}>Home</StyledLink>
                 )}
                 {/* ====================================== */}
                 {user && <StyledLink to="/inventory" onClick={closeMobileMenu}>Inventory</StyledLink>}
                 {user && <StyledLink to="/orders" onClick={closeMobileMenu}>Orders</StyledLink>}
+                {user && <StyledLink to="/reports" onClick={closeMobileMenu}>Reports</StyledLink>} 
                 {user?.role?.toLowerCase() === "admin" && (
                   <StyledLink to="/admin/users" onClick={closeMobileMenu}>Manage Users</StyledLink>
                 )}
@@ -4134,6 +4402,7 @@ const Navigation = () => {
           {/* ====================================== */}
           {user && <StyledMobileLink to="/inventory" onClick={closeMobileMenu}>Inventory</StyledMobileLink>}
           {user && <StyledMobileLink to="/orders" onClick={closeMobileMenu}>Orders</StyledMobileLink>}
+          {user && <StyledMobileLink to="/reports" onClick={closeMobileMenu}>Reports</StyledMobileLink>}
           {user?.role?.toLowerCase() === "admin" && (
             <StyledMobileLink to="/admin/users" onClick={closeMobileMenu}>Manage Users</StyledMobileLink>
           )}
@@ -4209,6 +4478,7 @@ function App() {
                   <Route path="pending" element={<OrderPending />} />
                   <Route path="history" element={<OrderHistory />} />
                 </Route>
+                <Route path="/reports" element={<Reports />} />
               </Route>
 
               {/* Admin-Only Routes */}
@@ -4504,51 +4774,62 @@ module.exports = { authenticateToken, isAdmin };
 </file>
 
 <file path="server/routes/auth.js">
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const { supabase } = require('../utils/supabase');
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const { supabase } = require("../utils/supabase");
 
-router.post('/register', async (req, res) => {
+router.post("/register", async (req, res) => {
   const { email, password, username } = req.body;
   if (!email || !password || !username)
-    return res.status(400).json({ error: 'All fields required' });
+    return res.status(400).json({ error: "All fields required" });
 
   const { data: existingUser } = await supabase
-    .from('users')
-    .select('userid')
+    .from("users")
+    .select("userid")
     .or(`email.eq.${email},username.eq.${username}`)
     .maybeSingle();
 
-  if (existingUser) return res.status(400).json({ error: 'User already exists' });
+  if (existingUser)
+    return res.status(400).json({ error: "User already exists" });
 
   const hashedPassword = await bcrypt.hash(password, 10);
   const { data: newUser, error } = await supabase
-    .from('users')
-    .insert({ email, username, password: hashedPassword, role: 'user' })
-    .select('userid, email, username, role')
+    .from("users")
+    .insert({
+      email,
+      username,
+      password: hashedPassword,
+      role: "user",
+      is_active: true,
+    })
+    .select("userid, email, username, role")
     .single();
 
-  if (error) return res.status(500).json({ error: 'Failed to create user' });
+  if (error) return res.status(500).json({ error: "Failed to create user" });
 
-  const token = jwt.sign({ userId: newUser.userid }, process.env.JWT_SECRET, { expiresIn: '24h' });
+  const token = jwt.sign({ userId: newUser.userid }, process.env.JWT_SECRET, {
+    expiresIn: "24h",
+  });
   res.status(201).json({ token, user: newUser });
 });
 
-router.post('/login', async (req, res) => {
+router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   const { data: user } = await supabase
-    .from('users')
-    .select('*')
-    .eq('email', email)
+    .from("users")
+    .select("*")
+    .eq("email", email)
     .single();
 
   if (!user || !(await bcrypt.compare(password, user.password))) {
-    return res.status(400).json({ error: 'Invalid credentials' });
+    return res.status(400).json({ error: "Invalid credentials" });
   }
 
-  const token = jwt.sign({ userId: user.userid }, process.env.JWT_SECRET, { expiresIn: '24h' });
+  const token = jwt.sign({ userId: user.userid }, process.env.JWT_SECRET, {
+    expiresIn: "24h",
+  });
   const { password: _, ...userWithoutPass } = user;
   res.json({ token, user: userWithoutPass });
 });
@@ -4608,14 +4889,77 @@ router.post("/", authenticateToken, isAdmin, async (req, res) => {
 });
 
 router.put("/:id", authenticateToken, isAdmin, async (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const { data, error } = await supabase
-    .from("products")
-    .update(req.body)
-    .eq("productid", id)
-    .select();
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data[0]);
+  const productid = parseInt(req.params.id, 10);
+  const updatedFields = req.body; 
+  const userid = req.user.userid; // Get userid from authenticated user
+
+  if (isNaN(productid)) {
+    return res.status(400).json({ error: "Invalid product ID" });
+  }
+
+  try {
+    // --- Fetch the Old Quantity ---
+    const { data: currentProduct, error: fetchError } = await supabase
+      .from("products")
+      .select("current_stock")
+      .eq("productid", productid)
+      .single();
+
+    if (fetchError) {
+      console.error("Error fetching current stock:", fetchError);
+      return res.status(500).json({ error: "Failed to fetch product before update." });
+    }
+    if (!currentProduct) {
+      return res.status(404).json({ error: "Product not found." });
+    }
+    const old_quantity = currentProduct.current_stock;
+
+    // ---  Perform the Stock Update ---
+    const { data: updatedData, error: updateError } = await supabase
+      .from("products")
+      .update(updatedFields) 
+      .eq("productid", productid)
+      .select() 
+      .single();
+
+    if (updateError) {
+      console.error("Error updating product:", updateError);
+      return res.status(500).json({ error: updateError.message });
+    }
+    if (!updatedData) {
+        return res.status(404).json({ error: "Product not found after update attempt." });
+    }
+
+    // 
+    const new_quantity = updatedData.current_stock; 
+
+    //
+    if (updatedFields.hasOwnProperty('current_stock') && new_quantity !== old_quantity) {
+      const quantity_changed = new_quantity - old_quantity;
+
+      const { error: transactionError } = await supabase
+        .from("inventory_transaction")
+        .insert({
+          userid: userid,
+          productid: productid,
+          transaction_date: new Date(), // Use current server time
+          quantity_changed: quantity_changed,
+          old_quantity: old_quantity,
+          new_quantity: new_quantity,
+          transaction_type: 'manual_update' 
+        });
+
+      if (transactionError) {
+        console.error("Failed to log inventory transaction:", transactionError);
+      }
+    }
+
+    res.json(updatedData); // Return the updated product data
+
+  } catch (err) {
+      console.error("Unexpected error in PUT /inventory/:id:", err);
+      res.status(500).json({ error: "An unexpected server error occurred." });
+  }
 });
 
 router.delete("/:id", authenticateToken, isAdmin, async (req, res) => {
@@ -4682,37 +5026,74 @@ router.get("/restock", authenticateToken, async (req, res) => {
 
 router.post("/:productid/add-stock", authenticateToken, isAdmin, async (req, res) => {
   const productid = parseInt(req.params.productid, 10);
-  const { quantity } = req.body;
+  const { quantity: quantityToAdd } = req.body; // Rename for clarity
+  const userid = req.user.userid; // Get userid
 
   if (isNaN(productid)) {
     return res.status(400).json({ error: "Invalid product ID" });
   }
-
-  if (!Number.isFinite(quantity)) {
-    return res.status(400).json({ error: "Invalid or missing quantity" });
+  if (typeof quantityToAdd !== 'number' || quantityToAdd <= 0) { // Ensure quantity is positive
+    return res.status(400).json({ error: "Invalid or missing quantity (must be a positive number)" });
   }
 
-  const { data: currentData, error: fetchError } = await supabase
-    .from("products")
-    .select("current_stock")
-    .eq("productid", productid)
-    .single();
+  try {
+    // Fetch the Old Quantity ---
+    const { data: currentProduct, error: fetchError } = await supabase
+      .from("products")
+      .select("current_stock")
+      .eq("productid", productid)
+      .single();
 
-  if (fetchError) return res.status(500).json({ error: fetchError.message });
-  if (!currentData)
-    return res.status(404).json({ error: "Product not found" });
+    if (fetchError) {
+        console.error("Error fetching current stock:", fetchError);
+        return res.status(500).json({ error: "Failed to fetch product before adding stock." });
+    }
+    if (!currentProduct) {
+        return res.status(404).json({ error: "Product not found." });
+    }
+    const old_quantity = currentProduct.current_stock;
 
-  const newStock = currentData.current_stock + quantity;
+    // Perform the Stock Update ---
+    const new_quantity = old_quantity + quantityToAdd; // Calculate new stock
 
-  const { data, error } = await supabase
-    .from("products")
-    .update({ current_stock: newStock })
-    .eq("productid", productid)
-    .select();
+    const { data: updatedData, error: updateError } = await supabase
+      .from("products")
+      .update({ current_stock: new_quantity }) // Update with calculated value
+      .eq("productid", productid)
+      .select()
+      .single();
 
-  if (error) return res.status(500).json({ error: error.message });
+    if (updateError) {
+        console.error("Error adding stock:", updateError);
+        return res.status(500).json({ error: updateError.message });
+    }
+     if (!updatedData) {
+        return res.status(404).json({ error: "Product not found after stock update attempt." });
+    }
 
-  res.json(data[0]);
+    // Log Transaction ---
+    const { error: transactionError } = await supabase
+      .from("inventory_transaction")
+      .insert({
+        userid: userid,
+        productid: productid,
+        transaction_date: new Date(),
+        quantity_changed: quantityToAdd,
+        old_quantity: old_quantity,
+        new_quantity: new_quantity,
+        transaction_type: 'order_received' 
+      });
+
+    if (transactionError) {
+      console.error("Failed to log inventory transaction for stock add:", transactionError);
+    }
+
+    res.json(updatedData); 
+
+  } catch (err) {
+      console.error("Unexpected error in POST /inventory/:productid/add-stock:", err);
+      res.status(500).json({ error: "An unexpected server error occurred." });
+  }
 });
 
 module.exports = router;
@@ -4986,6 +5367,272 @@ router.put("/:orderid/status", authenticateToken, async (req, res) => {
 module.exports = router;
 </file>
 
+<file path="server/routes/reports.js">
+// server/routes/reports.js
+const express = require("express");
+const router = express.Router();
+const { supabase } = require("../utils/supabase");
+const { authenticateToken, isAdmin } = require("../middleware/auth"); // Assuming reports might be admin-only
+
+// --- GET /api/reports/summary ---
+// Fetches various summary statistics
+router.get("/summary", authenticateToken, /* Optional: isAdmin, */ async (req, res) => {
+  try {
+    // --- Total Delivered Orders Count ---
+    const { count: totalDeliveredOrdersCount, error: countError } = await supabase
+      .from("orders")
+      .select('*', { count: "exact", head: true }) // Use head: true to only fetch the count
+      .eq("order_status", "delivered");
+
+    if (countError) throw countError;
+    // If count is null (no rows found), default to 0
+    const totalDeliveredOrders = totalDeliveredOrdersCount ?? 0;
+
+    // --- Total Delivered Value (Sum) ---
+    const { data: valueData, error: valueError } = await supabase
+      .from("orders")
+      .select("total_amount") // Select only the column to be summed
+      .eq("order_status", "delivered");
+
+    if (valueError) throw valueError;
+    // Sum the amounts, defaulting to 0 if data is null/empty or amount is null
+    const totalDeliveredValue = valueData?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
+
+
+    // --- Most Frequently Ordered Products (Top 5 from Delivered Orders) ---
+    // Fetch delivered order IDs first
+    const { data: deliveredOrderIdsData, error: deliveredIdsError } = await supabase
+      .from('orders')
+      .select('orderid')
+      .eq('order_status', 'delivered');
+
+    if (deliveredIdsError) throw deliveredIdsError;
+    const deliveredOrderIds = deliveredOrderIdsData.map(o => o.orderid);
+
+    // Fetch details only for those delivered orders
+    let topProducts = []; // Default to empty array
+    if (deliveredOrderIds.length > 0) {
+        const { data: productDetailsData, error: productError } = await supabase
+            .from("order_detail")
+            .select(`
+                requested_quantity,
+                unit_price,
+                products!inner (productid, product_name)
+            `)
+            .in('orderid', deliveredOrderIds); // Filter by the fetched IDs
+
+        if (productError) throw productError;
+        topProducts = productDetailsData || []; // Assign fetched data or keep empty
+    }
+
+
+    const productCounts = {};
+    const productQuantities = {};
+    const productValues = {};
+
+    topProducts.forEach(item => {
+        // Check if products relationship exists and has data
+        if (!item.products || item.products.productid === undefined || item.products.product_name === undefined) {
+            console.warn("Skipping order detail item due to missing product data:", item);
+            return; // Skip this item if product info is missing
+        }
+
+        const productId = item.products.productid;
+        const productName = item.products.product_name;
+        const quantity = item.requested_quantity || 0;
+        const value = quantity * (item.unit_price || 0);
+
+        // Count occurrences
+        if (!productCounts[productId]) {
+            productCounts[productId] = { id: productId, name: productName, count: 0 };
+        }
+        productCounts[productId].count += 1;
+
+        // Sum total quantity ordered
+        if (!productQuantities[productId]) {
+             productQuantities[productId] = { id: productId, name: productName, totalQuantity: 0 };
+        }
+        productQuantities[productId].totalQuantity += quantity;
+
+         // Sum total value ordered
+        if (!productValues[productId]) {
+             productValues[productId] = { id: productId, name: productName, totalValue: 0 };
+        }
+        productValues[productId].totalValue += value;
+    });
+
+    // Sort and take top 5
+    const topByFrequency = Object.values(productCounts)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+
+    const topByQuantity = Object.values(productQuantities)
+        .sort((a, b) => b.totalQuantity - a.totalQuantity)
+        .slice(0, 5);
+
+     const topByValue = Object.values(productValues)
+        .sort((a, b) => b.totalValue - a.totalValue)
+        .slice(0, 5);
+
+
+    // --- Inventory Summary Count ---
+     const { count: totalActiveProductsCount, error: invCountError } = await supabase
+      .from("products")
+      .select('*', { count: "exact", head: true }) // Get count only
+      .eq("is_active", true);
+
+    if (invCountError) throw invCountError;
+    const totalActiveProducts = totalActiveProductsCount ?? 0;
+
+
+    // --- Estimated Inventory Value (Corrected Logic) ---
+    let estimatedInventoryValue = 0; // Initialize
+
+    // 1. Get active products currently in stock
+    const { data: activeProducts, error: invProdError } = await supabase
+        .from('products')
+        .select('productid, current_stock') // Select ID and stock
+        .eq('is_active', true)
+        .gt('current_stock', 0); // Only products with stock > 0
+
+    if (invProdError) throw invProdError;
+
+    if (activeProducts && activeProducts.length > 0) {
+        const productIdsInStock = activeProducts.map(p => p.productid);
+
+        // 2. Get the latest delivered purchase price for these products
+        const { data: priceDetails, error: priceError } = await supabase
+            .from('order_detail')
+            .select(`
+                productid,
+                unit_price,
+                orders!inner (delivered_date)
+            `)
+            .in('productid', productIdsInStock)       // Only for products we have in stock
+            .eq('orders.order_status', 'delivered')   // Only from delivered orders
+            .not('orders.delivered_date', 'is', null) // Ensure delivered_date exists
+            .order('orders.delivered_date', { ascending: false }); // Order by date DESC
+
+        if (priceError) throw priceError;
+
+        // 3. Create a map of product ID to its latest cost
+        const latestCosts = {};
+        (priceDetails || []).forEach(detail => {
+            // Since we ordered by date descending, the first price we see for a product is the latest
+            if (!latestCosts[detail.productid]) {
+                latestCosts[detail.productid] = detail.unit_price || 0; // Use the unit price, default 0
+            }
+        });
+
+        // 4. Calculate total value using the latest cost found
+        estimatedInventoryValue = activeProducts.reduce((sum, product) => {
+            const cost = latestCosts[product.productid] || 0; // Get latest cost for this product, default 0 if no purchase history
+            const stock = product.current_stock || 0;
+            return sum + (stock * cost);
+        }, 0);
+    }
+    // If activeProducts is empty or null, estimatedInventoryValue remains 0
+
+
+    // --- Combine all stats ---
+    const summaryData = {
+      totalDeliveredOrders,
+      totalDeliveredValue,
+      totalActiveProducts,
+      estimatedInventoryValue, // Use the calculated value
+      topProductsByFrequency: topByFrequency,
+      topProductsByQuantity: topByQuantity,
+      topProductsByValue: topByValue,
+    };
+
+    res.json(summaryData);
+
+  } catch (error) {
+    console.error("Error fetching report summary:", error);
+    // Send back the specific message from the caught error
+    res.status(500).json({ error: "Failed to generate report summary.", details: error.message });
+  }
+});
+
+
+// --- NEW: GET /api/reports/monthly-top-products ---
+// Fetches top N products ordered within a specific month and year
+router.get("/monthly-top-products", authenticateToken, /* Optional: isAdmin, */ async (req, res) => {
+    const { year, month, limit = 5 } = req.query; // Default limit to 5
+
+    // --- Validation ---
+    const currentYear = new Date().getFullYear();
+    const reportYear = parseInt(year, 10);
+    const reportMonth = parseInt(month, 10); // Month is 1-12
+    const reportLimit = parseInt(limit, 10);
+
+    if (isNaN(reportYear) || reportYear < 2000 || reportYear > currentYear + 1) {
+        return res.status(400).json({ error: "Invalid or missing 'year' parameter." });
+    }
+    if (isNaN(reportMonth) || reportMonth < 1 || reportMonth > 12) {
+        return res.status(400).json({ error: "Invalid or missing 'month' parameter (1-12)." });
+    }
+     if (isNaN(reportLimit) || reportLimit <= 0) {
+        return res.status(400).json({ error: "Invalid 'limit' parameter." });
+    }
+
+    try {
+        // --- Calculate Date Range for the Query ---
+        // Start of the month (YYYY-MM-01)
+        const startDate = `${reportYear}-${String(reportMonth).padStart(2, '0')}-01`;
+        // Start of the *next* month
+        const nextMonth = reportMonth === 12 ? 1 : reportMonth + 1;
+        const nextYear = reportMonth === 12 ? reportYear + 1 : reportYear;
+        const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
+
+        console.log(`Querying top products for range: >= ${startDate} and < ${endDate}`);
+
+        // --- Fetch Order Details within the Date Range ---
+        const { data: monthlyOrderDetails, error: detailsError } = await supabase
+            .from('order_detail')
+            .select(`
+                productid,
+                products!inner (product_name),
+                orders!inner (order_date)
+            `)
+            .gte('orders.order_date', startDate) // Greater than or equal to start date
+            .lt('orders.order_date', endDate)    // Less than end date (exclusive)
+            // Optionally filter by order status if needed, e.g., only count 'delivered'
+            // .eq('orders.order_status', 'delivered')
+
+        if (detailsError) throw detailsError;
+
+        // --- Process Results in Node.js to Count Frequencies ---
+        const productFrequency = {};
+        (monthlyOrderDetails || []).forEach(detail => {
+            if (!detail.products || !detail.productid) return; // Skip if product info is missing
+
+            const productId = detail.productid;
+            const productName = detail.products.product_name || `Product ID ${productId}`;
+
+            if (!productFrequency[productId]) {
+                productFrequency[productId] = { id: productId, name: productName, count: 0 };
+            }
+            productFrequency[productId].count += 1; // Count each line item occurrence
+        });
+
+        // --- Sort and Limit ---
+        const sortedProducts = Object.values(productFrequency)
+            .sort((a, b) => b.count - a.count) // Sort by count descending
+            .slice(0, reportLimit); // Take the top N
+
+        res.json(sortedProducts);
+
+    } catch (error) {
+        console.error(`Error fetching monthly top products for ${year}-${month}:`, error);
+        res.status(500).json({ error: "Failed to generate monthly top products report.", details: error.message });
+    }
+});
+
+
+module.exports = router; // Make sure this is at the end
+</file>
+
 <file path="server/routes/suppliers.js">
 // server/routes/suppliers.js
 const express = require("express");
@@ -5075,7 +5722,8 @@ router.get("/profile", authenticateToken, (req, res) => {
 router.get("/", authenticateToken, isAdmin, async (req, res) => {
   const { data, error } = await supabase
     .from("users")
-    .select("userid, email, username, role");
+    .select("userid, email, username, role")
+    .eq("is_active", true);
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
@@ -5091,6 +5739,7 @@ router.put("/:id/role", authenticateToken, isAdmin, async (req, res) => {
     .update({ role })
     .eq("userid", userId)
     .select("userid, email, username, role")
+    .eq("is_active", true)
     .single();
 
   if (error) return res.status(500).json({ error: error.message });
@@ -5166,15 +5815,14 @@ router.delete("/:id", authenticateToken, isAdmin, async (req, res) => {
       );
     }
 
-    // 5. Delete user
-    const { error: userDelErr } = await supabase
+    // 5. Soft delete user
+    const { error: deactivateError } = await supabase
       .from("users")
-      .delete()
+      .update({ is_active: false })
       .eq("userid", userId);
 
-    if (userDelErr) {
-      console.error("Delete from users failed:", userDelErr.message);
-      return res.status(500).json({ error: userDelErr.message });
+    if (deactivateError) {
+      return res.status(500).json({ error: deactivateError.message });
     }
 
     console.log("Successfully deleted user:", userId);
@@ -5232,6 +5880,7 @@ PORT=5000
 </file>
 
 <file path="server/server.js">
+// server/server.js
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -5244,16 +5893,18 @@ app.use(express.json());
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const inventoryRoutes = require('./routes/inventory');
-const orderRoutes = require('./routes/orderDetail');
-const ordersRoutes = require('./routes/orders'); 
+const orderDetailRoutes = require('./routes/orderDetail'); // Renamed variable for clarity
+const ordersRoutes = require('./routes/orders');
 const supplierRoutes = require('./routes/suppliers');
+const reportRoutes = require('./routes/reports'); 
 // Mount routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/inventory', inventoryRoutes);
-app.use('/api/order-detail', orderRoutes);
-app.use('/api/orders', ordersRoutes); 
+app.use('/api/order-detail', orderDetailRoutes);
+app.use('/api/orders', ordersRoutes);
 app.use('/api/suppliers', supplierRoutes);
+app.use('/api/reports', reportRoutes); 
 
 // Test route
 app.get('/api/test', (req, res) => res.json({ message: 'Server is running!' }));

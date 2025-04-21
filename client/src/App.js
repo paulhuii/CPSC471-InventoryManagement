@@ -20,6 +20,7 @@ import Register from "./Login/Register";
 import AdminUserListPage from "./Login/AdminUserList";
 import Inventory from "./Main/Inventory";
 import Order from "./Main/Order"; // Parent layout for /orders/*
+import Reports from "./Main/Reports";
 
 // Order Child Components
 import OrderRestock from "./Main/Order/Restock";
@@ -108,13 +109,13 @@ const Navigation = () => {
             </div>
             <div className="hidden md:block"> {/* Desktop links */}
               <div className="ml-10 flex items-baseline space-x-4">
-                {/* === Conditionally Render Home Link === */}
                 {!user && (
                     <StyledLink to="/" end onClick={closeMobileMenu}>Home</StyledLink>
                 )}
                 {/* ====================================== */}
                 {user && <StyledLink to="/inventory" onClick={closeMobileMenu}>Inventory</StyledLink>}
                 {user && <StyledLink to="/orders" onClick={closeMobileMenu}>Orders</StyledLink>}
+                {user && <StyledLink to="/reports" onClick={closeMobileMenu}>Reports</StyledLink>} 
                 {user?.role?.toLowerCase() === "admin" && (
                   <StyledLink to="/admin/users" onClick={closeMobileMenu}>Manage Users</StyledLink>
                 )}
@@ -182,6 +183,7 @@ const Navigation = () => {
           {/* ====================================== */}
           {user && <StyledMobileLink to="/inventory" onClick={closeMobileMenu}>Inventory</StyledMobileLink>}
           {user && <StyledMobileLink to="/orders" onClick={closeMobileMenu}>Orders</StyledMobileLink>}
+          {user && <StyledMobileLink to="/reports" onClick={closeMobileMenu}>Reports</StyledMobileLink>}
           {user?.role?.toLowerCase() === "admin" && (
             <StyledMobileLink to="/admin/users" onClick={closeMobileMenu}>Manage Users</StyledMobileLink>
           )}
@@ -257,6 +259,7 @@ function App() {
                   <Route path="pending" element={<OrderPending />} />
                   <Route path="history" element={<OrderHistory />} />
                 </Route>
+                <Route path="/reports" element={<Reports />} />
               </Route>
 
               {/* Admin-Only Routes */}
