@@ -1,5 +1,5 @@
-// Updated List.jsx that groups items by supplier with edit support
-import React, { useEffect, useState } from "react";
+// src/Main/Order/List.jsx
+import React, { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useOrderCart } from "../OrderCartContext";
 import {
@@ -7,280 +7,293 @@ import {
   getSuppliers,
   createOrder,
   addOrderDetails,
-  updateItem 
+  updateItem,
+  addItem as addProductApi // Renamed API import
 } from "../../api";
+import InventoryItemModal from '../InventoryItemModal';
+import AddItemForm from './AddItemForm'; // Import new component
+import SupplierOrderSection from './SupplierOrderSection'; // Import new component
+import { useStateWithLocalStorage } from '../hooks/useStateWithLocalStorage'; // Import hook
 
-function useStateWithLocalStorage(key, initialValue) {
-  const [value, setValue] = useState(() => {
-    const saved = localStorage.getItem(key);
-    return saved ? JSON.parse(saved) : initialValue;
-  });
-
-  useEffect(() => {
-    localStorage.setItem(key, JSON.stringify(value));
-  }, [key, value]);
-
-  return [value, setValue];
-}
-
+// Main component for the Order List creation/management page
 const OrderList = () => {
-  const { user } = useAuth();
-  const { cartItems, clearCart } = useOrderCart();
-  const [products, setProducts] = useState([]);
-  const [suppliers, setSuppliers] = useState([]);
-  const [formData, setFormData] = useState({
-    productid: "",
-    quantity: "",
-    price: "",
-    order_unit: "",
-    supplier_name: "",
-  });
-  const [groupedItems, setGroupedItems] = useStateWithLocalStorage("groupedOrderItems", {});
-  const [editingIndex, setEditingIndex] = useState(null);
-  const [editingSupplier, setEditingSupplier] = useState(null);
-  const [editedItem, setEditedItem] = useState(null);
+    const { user } = useAuth();
+    const { cartItems, clearCart } = useOrderCart();
+    const [products, setProducts] = useState([]);
+    const [suppliers, setSuppliers] = useState([]);
+    const [groupedItems, setGroupedItems] = useStateWithLocalStorage("groupedOrderItems", {});
+    const [editingIndex, setEditingIndex] = useState(null);
+    const [editingSupplier, setEditingSupplier] = useState(null);
+    const [editedItem, setEditedItem] = useState(null); // Holds data for the item being edited
 
-  useEffect(() => {
-    getInventory().then(setProducts);
-    getSuppliers().then(setSuppliers);
-  }, []);
+    const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
+    const [addProductError, setAddProductError] = useState(null);
 
-  useEffect(() => {
-    if (cartItems.length > 0) {
-      const newGrouped = { ...groupedItems };
-      cartItems.forEach(ci => {
-        const supplier = suppliers.find(s => s.supplierid === ci.supplierid)?.supplier_name;
-        if (!supplier) return;
-        if (!newGrouped[supplier]) newGrouped[supplier] = [];
-        newGrouped[supplier].push({
-          productid: ci.productid,
-          product_name: ci.product_name,
-          quantity: ci.requested_quantity,
-          price: ci.unit_price,
-          order_unit: ci.order_unit || "",
-          supplier_name: supplier,
-        });
-      });
-      setGroupedItems(newGrouped);
-      clearCart();
-    }
-  }, [cartItems]);
-
-  const handleAddItem = () => {
-    const { productid, quantity, price, order_unit, supplier_name } = formData;
-    if (productid && quantity && price && order_unit && supplier_name) {
-      const product = products.find(p => p.productid.toString() === productid);
-      const newItem = {
-        productid,
-        quantity: parseInt(quantity),
-        price: parseFloat(price),
-        order_unit: formData.order_unit,
-        product_name: product?.product_name || "",
-        supplier_name,
-      };
-      setGroupedItems(prev => {
-        const current = prev[supplier_name] || [];
-        return { ...prev, [supplier_name]: [...current, newItem] };
-      });
-      setFormData({ productid: "", quantity: "", price: "", order_unit: "", supplier_name: "" });
-    }
-  };
-
-  const handleEditItem = (supplier, index) => {
-    setEditingSupplier(supplier);
-    setEditingIndex(index);
-    setEditedItem({ ...groupedItems[supplier][index] });
-  };
-
-  const handleSaveEdit = () => {
-    setGroupedItems(prev => {
-      const updated = [...prev[editingSupplier]];
-      updated[editingIndex] = editedItem;
-      return { ...prev, [editingSupplier]: updated };
-    });
-    setEditingIndex(null);
-    setEditedItem(null);
-    setEditingSupplier(null);
-  };
-
-  const handleDeleteItem = (supplier, index) => {
-    setGroupedItems(prev => {
-      const updated = [...prev[supplier]];
-      updated.splice(index, 1);
-      if (updated.length === 0) {
-        const { [supplier]: _, ...rest } = prev;
-        return rest;
-      }
-      return { ...prev, [supplier]: updated };
-    });
-  };
-
-  const handlePlaceOrderForSupplier = async (supplierName, items) => {
-    const supplierid = suppliers.find(s => s.supplier_name === supplierName)?.supplierid;
-    if (!supplierid) return alert("Supplier not found");
-  
-    const subtotal = items.reduce((sum, item) => sum + item.quantity * item.price, 0);
-    const tax = subtotal * 0.05;
-    const total = subtotal + tax;
-  
-    const order = await createOrder({
-      order_date: new Date().toISOString().split("T")[0],
-      total_amount: total,
-      supplierid,
-      userid: user.userid,
-    });
-  
-    const detailItems = items.map(item => ({
-      orderid: order.orderid,
-      productid: item.productid,
-      supplierid,
-      unit_price: item.price,
-      requested_quantity: item.quantity,
-      order_unit: item.order_unit,
-    }));
-  
-    await addOrderDetails(detailItems);
-  
-    // 🛠️ Patch supplierid in products if missing
-    for (const item of detailItems) {
-      const product = products.find(p => p.productid === item.productid);
-      if (!product?.supplierid || product?.supplier?.supplier_name === "N/A") {
+    // --- Data Fetching ---
+    const fetchProducts = useCallback(async () => {
         try {
-          await updateItem(item.productid, { supplierid: item.supplierid });
-        } catch (err) {
-          console.warn(`Could not update product ${item.productid}:`, err.message);
+            const data = await getInventory();
+            setProducts(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error("Failed to fetch products:", error);
         }
-      }
+    }, []);
+
+    useEffect(() => {
+        fetchProducts();
+        getSuppliers().then(setSuppliers);
+    }, [fetchProducts]);
+
+    // --- Process Cart Items ---
+    useEffect(() => {
+        if (cartItems.length > 0 && suppliers.length > 0) {
+            const newGrouped = { ...groupedItems };
+            let changed = false;
+            cartItems.forEach(ci => {
+                const supplierInfo = suppliers.find(s => s.supplierid === ci.supplierid);
+                const supplierName = supplierInfo?.supplier_name;
+                if (!supplierName) {
+                    console.warn(`Supplier not found for ID: ${ci.supplierid} for product ${ci.product_name}`);
+                    return;
+                }
+                if (!newGrouped[supplierName]) newGrouped[supplierName] = [];
+                const existingIndex = newGrouped[supplierName].findIndex(item => item.productid === ci.productid);
+                if (existingIndex === -1) {
+                    newGrouped[supplierName].push({
+                        productid: ci.productid,
+                        product_name: ci.product_name,
+                        quantity: ci.requested_quantity,
+                        price: ci.unit_price,
+                        order_unit: ci.order_unit || "",
+                        supplier_name: supplierName,
+                    });
+                    changed = true;
+                }
+            });
+            if (changed) setGroupedItems(newGrouped);
+            clearCart();
+        }
+    }, [cartItems, clearCart, groupedItems, setGroupedItems, suppliers]);
+
+    // --- Modal Handlers ---
+    const handleOpenAddProductModal = () => {
+        setAddProductError(null);
+        setIsAddProductModalOpen(true);
+    };
+    const handleCloseAddProductModal = () => {
+        setIsAddProductModalOpen(false);
+        setAddProductError(null);
+    };
+    const handleAddProductSubmit = async (newProductData) => {
+        try {
+            setAddProductError(null);
+            const addedProductArray = await addProductApi(newProductData); // Use renamed import
+            if (addedProductArray && addedProductArray.length > 0) {
+                handleCloseAddProductModal();
+                await fetchProducts();
+                alert(`Product "${addedProductArray[0]?.product_name || 'New Product'}" added successfully! You can now select it for your order.`);
+            } else {
+                throw new Error("Failed to add product, no data returned from server.");
+            }
+        } catch (err) {
+            console.error("Failed to add product from order list:", err);
+            setAddProductError(err.response?.data?.error || err.message || "An unexpected error occurred while adding the product.");
+        }
+    };
+
+    // --- Order Item Handlers ---
+    const handleAddItem = (formDataFromForm, resetFormCallback) => {
+        const { productid, quantity, price, order_unit, supplier_name } = formDataFromForm;
+        if (productid && quantity && price && order_unit && supplier_name) {
+            const product = products.find(p => p.productid.toString() === productid);
+            if (!product) {
+                alert("Selected product details not found. Please refresh or select a valid product.");
+                return;
+            }
+            const newItem = {
+                productid: parseInt(productid, 10),
+                quantity: parseInt(quantity, 10),
+                price: parseFloat(price),
+                order_unit: order_unit,
+                product_name: product.product_name,
+                supplier_name,
+            };
+
+            setGroupedItems(prev => {
+                const currentSupplierItems = prev[supplier_name] || [];
+                const exists = currentSupplierItems.some(item => item.productid === newItem.productid);
+                if (exists) {
+                    alert(`${newItem.product_name} is already in the order list for ${supplier_name}. You can edit the existing entry.`);
+                    return prev;
+                }
+                return { ...prev, [supplier_name]: [...currentSupplierItems, newItem] };
+            });
+            resetFormCallback(); // Reset the form in the child component
+        } else {
+            alert("Please fill in all fields (Product, Quantity, Price, Order Unit, Supplier) to add an item.");
+        }
+    };
+
+    const handleEditItem = (supplier, index) => {
+        setEditingSupplier(supplier);
+        setEditingIndex(index);
+        const itemToEdit = groupedItems[supplier][index];
+        // Set the temporary state for the item being edited
+        setEditedItem({
+            ...itemToEdit,
+            quantity: parseInt(itemToEdit.quantity, 10) || 0,
+            price: parseFloat(itemToEdit.price) || 0,
+        });
+    };
+
+    const handleSaveEdit = () => {
+        setGroupedItems(prev => {
+            const updatedSupplierItems = [...prev[editingSupplier]];
+            // Ensure quantity and price are numbers in the final save
+            updatedSupplierItems[editingIndex] = {
+                ...editedItem, // Use data from the temporary editedItem state
+                quantity: parseInt(editedItem.quantity, 10) || 0,
+                price: parseFloat(editedItem.price) || 0,
+            };
+            return { ...prev, [editingSupplier]: updatedSupplierItems };
+        });
+        // Reset editing state
+        setEditingIndex(null);
+        setEditedItem(null);
+        setEditingSupplier(null);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingIndex(null);
+        setEditedItem(null);
+        setEditingSupplier(null);
     }
-  
-    alert(`Order placed for ${supplierName}`);
-  
-    setGroupedItems(prev => {
-      const copy = { ...prev };
-      delete copy[supplierName];
-      return copy;
-    });
-  };  
 
-  return (
-    <div className="p-6">
-      <h2 className="text-xl font-bold text-center mb-4">
-        {new Date().toLocaleDateString()}
-      </h2>
+    const handleDeleteItem = (supplier, index) => {
+        if (window.confirm(`Remove ${groupedItems[supplier][index].product_name} from this order list?`)) {
+            setGroupedItems(prev => {
+                const updatedSupplierItems = [...prev[supplier]];
+                updatedSupplierItems.splice(index, 1);
+                if (updatedSupplierItems.length === 0) {
+                    const { [supplier]: _, ...rest } = prev;
+                    return rest;
+                }
+                return { ...prev, [supplier]: updatedSupplierItems };
+            });
+             // If deleting the item currently being edited, cancel editing state
+             if (editingSupplier === supplier && editingIndex === index) {
+                handleCancelEdit();
+             }
+        }
+    };
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-        <select
-          name="productid"
-          value={formData.productid}
-          onChange={e => setFormData({ ...formData, productid: e.target.value })}
-          className="border rounded px-3 py-2"
-        >
-          <option value="">Select Product</option>
-          {products.map(p => (
-            <option key={p.productid} value={p.productid}>{p.product_name}</option>
-          ))}
-        </select>
-        <input type="number" name="quantity" value={formData.quantity}
-          onChange={e => setFormData({ ...formData, quantity: e.target.value })}
-          placeholder="Quantity" className="border rounded px-3 py-2" />
-        <input type="number" name="price" value={formData.price}
-          onChange={e => setFormData({ ...formData, price: e.target.value })}
-          placeholder="Price" className="border rounded px-3 py-2" />
-        <input
-            name="order_unit"
-            value={formData.order_unit}
-            onChange={e => setFormData({ ...formData, order_unit: e.target.value })}
-            placeholder="Order Unit (e.g. case, box)"
-            className="border rounded px-3 py-2"
-        />
-        <input name="supplier_name" list="supplier-options" value={formData.supplier_name}
-          onChange={e => setFormData({ ...formData, supplier_name: e.target.value })}
-          placeholder="Supplier Name" className="border rounded px-3 py-2" />
-        <datalist id="supplier-options">
-          {suppliers.map(s => <option key={s.supplierid} value={s.supplier_name} />)}
-        </datalist>
-        <button className="bg-[#7E82A4] text-white rounded px-4 py-2 shadow" onClick={handleAddItem}>
-          Add
-        </button>
-      </div>
-
-      {Object.entries(groupedItems).map(([supplier, items]) => {
-        const subtotal = items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+    // --- Place Order Handler ---
+    const handlePlaceOrderForSupplier = async (supplierName, items) => {
+        const supplier = suppliers.find(s => s.supplier_name === supplierName);
+        if (!supplier) {
+            alert(`Could not find supplier details for ${supplierName}. Order cannot be placed.`);
+            return;
+        }
+        const supplierid = supplier.supplierid;
+        const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
         const tax = subtotal * 0.05;
-        const total = subtotal + tax;
+        const total_amount = subtotal + tax;
 
-        return (
-          <div key={supplier} className="mb-8 border p-4 rounded shadow bg-white">
-            <h3 className="text-lg font-semibold mb-2">Supplier: {supplier}</h3>
-            <table className="min-w-full mb-4">
-              <thead>
-                <tr className="bg-gray-100 text-left">
-                  <th className="px-3 py-2">Product</th>
-                  <th className="px-3 py-2">Quantity</th>
-                  <th className="px-3 py-2">Price</th>
-                  <th className="px-3 py-2">Total</th>
-                  <th className="px-3 py-2">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item, idx) => (
-                  <tr key={idx} className="border-t">
-                    <td className="px-3 py-2">{item.product_name}</td>
-                    <td className="px-3 py-2">
-                      {editingIndex === idx && editingSupplier === supplier ? (
-                        <input
-                          type="number"
-                          value={editedItem.quantity}
-                          onChange={e => setEditedItem({ ...editedItem, quantity: e.target.value })}
-                          className="border rounded px-2 py-1 w-20"
-                        />
-                      ) : item.quantity}
-                    </td>
-                    <td className="px-3 py-2">
-                      {editingIndex === idx && editingSupplier === supplier ? (
-                        <input
-                          type="number"
-                          value={editedItem.price}
-                          onChange={e => setEditedItem({ ...editedItem, price: e.target.value })}
-                          className="border rounded px-2 py-1 w-20"
-                        />
-                      ) : `$${parseFloat(item.price).toFixed(2)}`}
-                    </td>
-                    <td className="px-3 py-2">
-                      ${(item.quantity * item.price).toFixed(2)}
-                    </td>
-                    <td className="px-3 py-2 space-x-2">
-                      {editingIndex === idx && editingSupplier === supplier ? (
-                        <>
-                          <button onClick={handleSaveEdit} className="bg-[#7E82A4] text-white px-3 py-1 rounded text-sm">Save</button>
-                          <button onClick={() => { setEditingIndex(null); setEditedItem(null); setEditingSupplier(null); }} className="bg-gray-300 text-black px-3 py-1 rounded text-sm">Cancel</button>
-                        </>
-                      ) : (
-                        <button onClick={() => handleEditItem(supplier, idx)} className="bg-[#7E82A4] text-white px-3 py-1 rounded text-sm">Edit</button>
-                      )}
-                      <button onClick={() => handleDeleteItem(supplier, idx)} className="bg-[#D99292] text-white px-3 py-1 rounded text-sm">Delete</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div className="text-right mb-2">
-              <p>Subtotal: ${subtotal.toFixed(2)}</p>
-              <p>Tax (5%): ${tax.toFixed(2)}</p>
-              <p className="font-bold">Total: ${total.toFixed(2)}</p>
-            </div>
-            {user?.role === "admin" ? (
-              <button className="bg-[#7E82A4] text-white px-4 py-2 rounded" onClick={() => handlePlaceOrderForSupplier(supplier, items)}>
-                Place Order for {supplier}
-              </button>
+        if (!user || !user.userid) {
+            alert("User not identified. Cannot place order."); return;
+        }
+
+        try {
+            const order = await createOrder({
+                order_date: new Date().toISOString().split("T")[0],
+                total_amount: total_amount,
+                supplierid: supplierid,
+                userid: user.userid,
+            });
+            if (!order || !order.orderid) throw new Error("Failed to create order header.");
+
+            const detailItems = items.map(item => ({
+                orderid: order.orderid,
+                productid: item.productid,
+                supplierid: supplierid,
+                unit_price: item.price,
+                requested_quantity: item.quantity,
+                order_unit: item.order_unit,
+            }));
+            await addOrderDetails(detailItems);
+
+            // Optional product supplier update (unchanged)
+            for (const item of detailItems) {
+                const product = products.find(p => p.productid === item.productid);
+                if (!product?.supplierid || product?.supplier?.supplier_name === "N/A") {
+                  try {
+                    await updateItem(item.productid, { supplierid: item.supplierid });
+                  } catch (err) { console.warn(`Could not update product ${item.productid} supplier ID:`, err.message); }
+                }
+            }
+
+            alert(`Order placed successfully for ${supplierName}!`);
+            setGroupedItems(prev => {
+                const { [supplierName]: _, ...rest } = prev;
+                return rest;
+            });
+
+        } catch (error) {
+            console.error(`Failed to place order for ${supplierName}:`, error);
+            alert(`Error placing order for ${supplierName}: ${error.message || 'Unknown error'}`);
+        }
+    };
+
+    // --- Render ---
+    return (
+        <div className="p-6 bg-gray-50 min-h-screen">
+            <h2 className="text-2xl font-semibold text-center mb-6 text-gray-700">
+                Create New Order - {new Date().toLocaleDateString()}
+            </h2>
+
+            {/* Use the AddItemForm component */}
+            <AddItemForm
+                products={products}
+                suppliers={suppliers}
+                onAddItem={handleAddItem}
+                onOpenAddProductModal={handleOpenAddProductModal}
+            />
+
+            {/* Display Grouped Order Items */}
+            {Object.keys(groupedItems).length === 0 ? (
+                <p className="text-center text-gray-500 italic mt-8">Your order list is empty. Add items using the form above.</p>
             ) : (
-              <p className="italic text-sm text-gray-500">Only admins can place orders.</p>
+                Object.entries(groupedItems).map(([supplier, items]) => (
+                    <SupplierOrderSection
+                        key={supplier}
+                        supplierName={supplier}
+                        items={items}
+                        userRole={user?.role?.toLowerCase()}
+                        editingIndex={editingIndex}
+                        editingSupplier={editingSupplier}
+                        editedItem={editedItem} // Pass the temporary edit state
+                        onEditItem={handleEditItem}
+                        onDeleteItem={handleDeleteItem}
+                        onSaveEdit={handleSaveEdit}
+                        onCancelEdit={handleCancelEdit}
+                        onPlaceOrder={handlePlaceOrderForSupplier}
+                        onEditedItemChange={setEditedItem} // Pass the setter for child to update
+                    />
+                ))
             )}
-          </div>
-        );
-      })}
-    </div>
-  );
+
+            {/* Add Product Modal */}
+            {isAddProductModalOpen && (
+                <InventoryItemModal
+                    item={null}
+                    onClose={handleCloseAddProductModal}
+                    onSubmit={handleAddProductSubmit}
+                    initialError={addProductError}
+                    isQuickAdd={false} // Or adjust as needed if this prop is still used internally by the modal
+                />
+            )}
+        </div>
+    );
 };
 
 export default OrderList;

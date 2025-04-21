@@ -66,6 +66,9 @@ client/
       ProtectedRoute.js
       Register.js
     Main/
+      hooks/
+        useInventoryFilter.jsx
+        useInventorySearch.jsx
       Order/
         History.jsx
         List.jsx
@@ -73,6 +76,7 @@ client/
         Restock.jsx
       FilterModal.js
       Inventory.jsx
+      InventoryHeader.jsx
       InventoryItemModal.jsx
       Order.jsx
       OrderCartContext.js
@@ -1006,6 +1010,107 @@ function Register() {
 export default Register;
 </file>
 
+<file path="client/src/Main/hooks/useInventoryFilter.jsx">
+// src/hooks/useInventoryFilter.js
+import { useState, useCallback, useMemo } from 'react';
+
+// Helper function
+const getStockStatusInfo = (stock, minQty) => {
+    if (stock <= 0) return { text: "Out of Stock", color: "bg-[#D99292] text-red-800" };
+    if (stock < minQty) return { text: "Low Stock", color: "bg-[#F4D98E] text-yellow-800" };
+    return { text: "In Stock", color: "bg-[#A3C18F] text-green-800" };
+};
+
+const definedStatuses = ["Out of Stock", "Low Stock", "In Stock"];
+
+export function useInventoryFilter(allItems = []) {
+  const initialFilterState = useMemo(() => ({ suppliers: [], statuses: [] }), []);
+  const [appliedFilters, setAppliedFilters] = useState(initialFilterState);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+
+  const openFilterModal = useCallback(() => setIsFilterModalOpen(true), []);
+  const closeFilterModal = useCallback(() => setIsFilterModalOpen(false), []);
+
+  const applyFilters = useCallback((filtersFromModal) => {
+    setAppliedFilters(filtersFromModal);
+    closeFilterModal();
+  }, [closeFilterModal]);
+
+  const clearFilters = useCallback(() => {
+    setAppliedFilters(initialFilterState);
+    // Optionally close modal if open: closeFilterModal();
+  }, [initialFilterState]);
+
+  // Calculate available suppliers based on the full dataset
+  const availableSuppliers = useMemo(() => {
+    const supplierNames = allItems
+      .map(item => item.supplier?.supplier_name)
+      .filter(Boolean); // Filter out null/undefined names
+    return [...new Set(supplierNames)].sort(); // Unique, sorted list
+  }, [allItems]);
+
+  // Calculate the number of active filter categories
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (appliedFilters.suppliers?.length > 0) count++;
+    if (appliedFilters.statuses?.length > 0) count++;
+    return count;
+  }, [appliedFilters]);
+
+  // Memoize the filter function itself
+  const filterItems = useCallback((itemsToFilter) => {
+    if (activeFilterCount === 0) {
+      return itemsToFilter; // No filters applied, return original list
+    }
+
+    return itemsToFilter.filter(item => {
+      const supplierMatch = appliedFilters.suppliers.length === 0 ||
+        appliedFilters.suppliers.includes(item.supplier?.supplier_name);
+
+      const statusInfo = getStockStatusInfo(item.current_stock, item.min_quantity);
+      const statusMatch = appliedFilters.statuses.length === 0 ||
+        appliedFilters.statuses.includes(statusInfo.text);
+
+      return supplierMatch && statusMatch;
+    });
+  }, [appliedFilters, activeFilterCount]); // Recalculate only when filters change
+
+
+  return {
+    appliedFilters,
+    isFilterModalOpen,
+    openFilterModal,
+    closeFilterModal,
+    applyFilters,
+    clearFilters,
+    availableSuppliers,
+    availableStatuses: definedStatuses, // Provide static statuses
+    activeFilterCount,
+    filterItems, // Provide the filtering function
+    getStockStatusInfo // Expose helper if needed elsewhere (or import from utils)
+  };
+}
+</file>
+
+<file path="client/src/Main/hooks/useInventorySearch.jsx">
+import { useState, useCallback } from 'react';
+
+export function useInventorySearch(initialTerm = '') {
+  const [searchTerm, setSearchTerm] = useState(initialTerm);
+
+  const handleSearchChange = useCallback((event) => {
+    setSearchTerm(event.target.value);
+  }, []);
+
+  // Optional: Function to clear search externally if needed
+  const clearSearch = useCallback(() => {
+    setSearchTerm('');
+  }, []);
+
+  return { searchTerm, handleSearchChange, clearSearch };
+}
+</file>
+
 <file path="client/src/Main/Order/History.jsx">
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { getDeliveredOrders } from "../../api";
@@ -1399,8 +1504,8 @@ export default OrderHistory;
 </file>
 
 <file path="client/src/Main/Order/List.jsx">
-// Updated List.jsx that groups items by supplier with edit support
-import React, { useEffect, useState } from "react";
+// client/src/Main/Order/List.jsx
+import React, { useEffect, useState, useCallback } from "react"; // Make sure useState, useEffect, useCallback are imported
 import { useAuth } from "../../context/AuthContext";
 import { useOrderCart } from "../OrderCartContext";
 import {
@@ -1408,278 +1513,549 @@ import {
   getSuppliers,
   createOrder,
   addOrderDetails,
-  updateItem 
+  updateItem,
+  addItem as addProduct // Import the addItem function for products
 } from "../../api";
+import InventoryItemModal from '../InventoryItemModal'; // Import the modal
 
+// --- Define the hook OUTSIDE the component ---
+// This custom hook manages state persisted in localStorage.
 function useStateWithLocalStorage(key, initialValue) {
+  // Initialize state using a function to read from localStorage only once
   const [value, setValue] = useState(() => {
-    const saved = localStorage.getItem(key);
-    return saved ? JSON.parse(saved) : initialValue;
+    try {
+      const saved = localStorage.getItem(key);
+      // Parse stored json or return initialValue if nothing is saved or error occurs
+      return saved ? JSON.parse(saved) : initialValue;
+    } catch (error) {
+      console.error("Error reading localStorage key “" + key + "”:", error);
+      return initialValue; // Fallback to initial value on error
+    }
   });
 
+  // Use useEffect to update localStorage whenever the key or value changes
   useEffect(() => {
-    localStorage.setItem(key, JSON.stringify(value));
-  }, [key, value]);
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.error("Error setting localStorage key “" + key + "”:", error);
+    }
+  }, [key, value]); // Dependencies array ensures effect runs only when key or value changes
 
-  return [value, setValue];
+  return [value, setValue]; // Return the state value and setter function
 }
+// --- End hook definition ---
 
+
+// Main component for the Order List creation/management page
 const OrderList = () => {
-  const { user } = useAuth();
-  const { cartItems, clearCart } = useOrderCart();
-  const [products, setProducts] = useState([]);
-  const [suppliers, setSuppliers] = useState([]);
-  const [formData, setFormData] = useState({
+  const { user } = useAuth(); // Get current user authentication context
+  const { cartItems, clearCart } = useOrderCart(); // Get items added from restock recommendations
+  const [products, setProducts] = useState([]); // State for the inventory product list (for dropdown)
+  const [suppliers, setSuppliers] = useState([]); // State for the supplier list
+  const [formData, setFormData] = useState({ // State for the form to add items to the current order
     productid: "",
     quantity: "",
     price: "",
     order_unit: "",
     supplier_name: "",
   });
+  // State for items grouped by supplier, persisted in localStorage
   const [groupedItems, setGroupedItems] = useStateWithLocalStorage("groupedOrderItems", {});
-  const [editingIndex, setEditingIndex] = useState(null);
-  const [editingSupplier, setEditingSupplier] = useState(null);
-  const [editedItem, setEditedItem] = useState(null);
+  // State variables for managing inline editing of order items
+  const [editingIndex, setEditingIndex] = useState(null); // Index of the item being edited
+  const [editingSupplier, setEditingSupplier] = useState(null); // Supplier group of the item being edited
+  const [editedItem, setEditedItem] = useState(null); // Temporary state for the item being edited
 
-  useEffect(() => {
-    getInventory().then(setProducts);
-    getSuppliers().then(setSuppliers);
-  }, []);
+  // State for controlling the "Add New Product" modal
+  const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
+  const [addProductError, setAddProductError] = useState(null); // Error message specific to adding a product
 
+  // Fetches the product inventory list using useCallback for stability
+  const fetchProducts = useCallback(async () => {
+      try {
+          const data = await getInventory();
+          setProducts(Array.isArray(data) ? data : []); // Update state, ensure it's an array
+      } catch (error) {
+          console.error("Failed to fetch products:", error);
+          // Consider setting an error state here for user feedback
+      }
+  }, []); // Empty dependency array means this function reference is stable
+
+  // Effect hook to fetch initial data (products and suppliers) on component mount
   useEffect(() => {
-    if (cartItems.length > 0) {
-      const newGrouped = { ...groupedItems };
-      cartItems.forEach(ci => {
-        const supplier = suppliers.find(s => s.supplierid === ci.supplierid)?.supplier_name;
-        if (!supplier) return;
-        if (!newGrouped[supplier]) newGrouped[supplier] = [];
-        newGrouped[supplier].push({
-          productid: ci.productid,
-          product_name: ci.product_name,
-          quantity: ci.requested_quantity,
-          price: ci.unit_price,
-          order_unit: ci.order_unit || "",
-          supplier_name: supplier,
+    fetchProducts(); // Fetch the product list
+    getSuppliers().then(setSuppliers); // Fetch the supplier list
+  }, [fetchProducts]); // Run only once on mount due to stable fetchProducts reference
+
+  // Effect hook to process items added from the OrderCartContext (e.g., from Restock page)
+  useEffect(() => {
+     // Only process if there are items in the cart and suppliers have loaded
+     if (cartItems.length > 0 && suppliers.length > 0) {
+        const newGrouped = { ...groupedItems }; // Create a copy to modify
+        let changed = false; // Flag to track if any items were actually added
+
+        cartItems.forEach(ci => {
+            // Find the supplier name based on the supplierid from the cart item
+            const supplierInfo = suppliers.find(s => s.supplierid === ci.supplierid);
+            const supplierName = supplierInfo?.supplier_name;
+
+            if (!supplierName) {
+                console.warn(`Supplier not found for ID: ${ci.supplierid} for product ${ci.product_name}`);
+                return; // Skip this cart item if supplier name is unknown
+            }
+
+            // Ensure the supplier group exists in our newGrouped object
+            if (!newGrouped[supplierName]) {
+                newGrouped[supplierName] = [];
+            }
+
+            // Check if this specific product is already in this supplier's list for this session
+            const existingIndex = newGrouped[supplierName].findIndex(item => item.productid === ci.productid);
+
+            if (existingIndex === -1) { // Only add if it's not already present
+                newGrouped[supplierName].push({
+                    productid: ci.productid,
+                    product_name: ci.product_name,
+                    quantity: ci.requested_quantity,
+                    price: ci.unit_price,
+                    order_unit: ci.order_unit || "", // Include order_unit
+                    supplier_name: supplierName, // Store supplier name with the item
+                });
+                changed = true; // Mark that we added something
+            }
         });
-      });
-      setGroupedItems(newGrouped);
-      clearCart();
-    }
-  }, [cartItems]);
 
+        if (changed) {
+             setGroupedItems(newGrouped); // Update the state with the newly added items
+        }
+        // Always clear the cart context after processing to avoid reprocessing
+        clearCart();
+     }
+  }, [cartItems, clearCart, groupedItems, setGroupedItems, suppliers]); // Dependencies: run when these change
+
+  // --- Handlers for Add Product Modal ---
+  const handleOpenAddProductModal = () => {
+    setAddProductError(null); // Clear any previous error messages
+    setIsAddProductModalOpen(true); // Open the modal
+  };
+
+  const handleCloseAddProductModal = () => {
+    setIsAddProductModalOpen(false); // Close the modal
+    setAddProductError(null); // Clear errors when closing manually
+  };
+
+  // Handles the submission of the "Add New Product" form (via InventoryItemModal)
+  const handleAddProductSubmit = async (newProductData) => {
+     try {
+        setAddProductError(null); // Clear previous error attempt
+        // Call the API function to add the new product to the main inventory
+        const addedProductArray = await addProduct(newProductData);
+
+        // Check if the API returned the added product data successfully
+        if (addedProductArray && addedProductArray.length > 0) {
+            handleCloseAddProductModal(); // Close the modal on success
+            await fetchProducts(); // <<< Refresh the product list to update the dropdown
+            // Notify the user
+            alert(`Product "${addedProductArray[0]?.product_name || 'New Product'}" added successfully! You can now select it for your order.`);
+        } else {
+             // If API call succeeds but returns no data, treat as error
+             throw new Error("Failed to add product, no data returned from server.");
+        }
+     } catch (err) {
+        // Handle errors during product addition
+        console.error("Failed to add product from order list:", err);
+        // Set the error state to display the message in the modal
+        setAddProductError(err.response?.data?.error || err.message || "An unexpected error occurred while adding the product.");
+        // Keep the modal open on error
+     }
+  };
+  // --- End Handlers for Add Product Modal ---
+
+  // Handles adding an item from the form to the current order list (groupedItems state)
   const handleAddItem = () => {
-    const { productid, quantity, price, order_unit, supplier_name } = formData;
-    if (productid && quantity && price && order_unit && supplier_name) {
-      const product = products.find(p => p.productid.toString() === productid);
-      const newItem = {
-        productid,
-        quantity: parseInt(quantity),
-        price: parseFloat(price),
-        order_unit: formData.order_unit,
-        product_name: product?.product_name || "",
-        supplier_name,
-      };
-      setGroupedItems(prev => {
-        const current = prev[supplier_name] || [];
-        return { ...prev, [supplier_name]: [...current, newItem] };
-      });
-      setFormData({ productid: "", quantity: "", price: "", order_unit: "", supplier_name: "" });
-    }
+     const { productid, quantity, price, order_unit, supplier_name } = formData;
+      // Basic validation: ensure all fields are filled
+      if (productid && quantity && price && order_unit && supplier_name) {
+        // Find the full product object from the state to get its name
+        const product = products.find(p => p.productid.toString() === productid);
+        if (!product) {
+            alert("Selected product details not found. Please refresh or select a valid product.");
+            return; // Stop if product details aren't available
+        }
+
+        // Create the new item object for the order list
+        const newItem = {
+          productid: parseInt(productid, 10), // Ensure productid is integer if needed
+          quantity: parseInt(quantity, 10),   // Ensure quantity is integer
+          price: parseFloat(price),           // Ensure price is float
+          order_unit: order_unit,             // Get unit from form
+          product_name: product.product_name, // Get name from the fetched product data
+          supplier_name,                      // Get supplier name from form
+        };
+
+        // Update the groupedItems state
+        setGroupedItems(prev => {
+          const currentSupplierItems = prev[supplier_name] || []; // Get items for this supplier or empty array
+          // Check if this product is already in the list for this supplier in this session
+          const exists = currentSupplierItems.some(item => item.productid === newItem.productid);
+          if (exists) {
+              // Prevent adding duplicates
+              alert(`${newItem.product_name} is already in the order list for ${supplier_name}. You can edit the existing entry.`);
+              return prev; // Return the state unchanged
+          }
+          // If not a duplicate, add the new item to the supplier's array
+          return {
+              ...prev, // Spread the previous state
+              [supplier_name]: [...currentSupplierItems, newItem] // Add new item to the specific supplier's list
+          };
+        });
+
+        // Reset the form fields after successfully adding the item
+        setFormData({ productid: "", quantity: "", price: "", order_unit: "", supplier_name: "" });
+      } else {
+          // Alert user if any fields are missing
+          alert("Please fill in all fields (Product, Quantity, Price, Order Unit, Supplier) to add an item.");
+      }
   };
 
+  // Sets state to begin editing an item in the list
   const handleEditItem = (supplier, index) => {
-    setEditingSupplier(supplier);
-    setEditingIndex(index);
-    setEditedItem({ ...groupedItems[supplier][index] });
+    setEditingSupplier(supplier); // Store which supplier group is being edited
+    setEditingIndex(index);       // Store the index within that group
+    // Create a copy of the item to edit, ensuring numbers are parsed correctly
+    const itemToEdit = groupedItems[supplier][index];
+    setEditedItem({
+        ...itemToEdit,
+        quantity: parseInt(itemToEdit.quantity, 10) || 0,
+        price: parseFloat(itemToEdit.price) || 0,
+    });
   };
 
+  // Saves the changes made during inline editing
   const handleSaveEdit = () => {
+    // Update the groupedItems state with the edited item
     setGroupedItems(prev => {
-      const updated = [...prev[editingSupplier]];
-      updated[editingIndex] = editedItem;
-      return { ...prev, [editingSupplier]: updated };
+      const updatedSupplierItems = [...prev[editingSupplier]]; // Copy the array for the specific supplier
+      updatedSupplierItems[editingIndex] = { // Replace the item at the editing index
+          ...editedItem, // Use the data from the temporary editedItem state
+          // Ensure quantity and price are stored correctly after edits
+          quantity: parseInt(editedItem.quantity, 10) || 0,
+          price: parseFloat(editedItem.price) || 0,
+      };
+      return { ...prev, [editingSupplier]: updatedSupplierItems }; // Return the updated state object
     });
+    // Reset editing state variables
     setEditingIndex(null);
     setEditedItem(null);
     setEditingSupplier(null);
   };
 
+  // Removes an item from the order list
   const handleDeleteItem = (supplier, index) => {
-    setGroupedItems(prev => {
-      const updated = [...prev[supplier]];
-      updated.splice(index, 1);
-      if (updated.length === 0) {
-        const { [supplier]: _, ...rest } = prev;
-        return rest;
-      }
-      return { ...prev, [supplier]: updated };
-    });
+    if (window.confirm(`Remove ${groupedItems[supplier][index].product_name} from this order list?`)) {
+        setGroupedItems(prev => {
+            const updatedSupplierItems = [...prev[supplier]]; // Copy the supplier's item array
+            updatedSupplierItems.splice(index, 1); // Remove the item at the specified index
+
+            // If removing the last item for this supplier, remove the supplier key entirely
+            if (updatedSupplierItems.length === 0) {
+                const { [supplier]: _, ...rest } = prev; // Destructure to remove the key
+                return rest; // Return the state without this supplier
+            }
+            // Otherwise, return the state with the updated (shorter) item list for the supplier
+            return { ...prev, [supplier]: updatedSupplierItems };
+        });
+    }
   };
 
+  // Handles placing the actual order via API calls
   const handlePlaceOrderForSupplier = async (supplierName, items) => {
-    const supplierid = suppliers.find(s => s.supplier_name === supplierName)?.supplierid;
-    if (!supplierid) return alert("Supplier not found");
-  
-    const subtotal = items.reduce((sum, item) => sum + item.quantity * item.price, 0);
-    const tax = subtotal * 0.05;
-    const total = subtotal + tax;
-  
-    const order = await createOrder({
-      order_date: new Date().toISOString().split("T")[0],
-      total_amount: total,
-      supplierid,
-      userid: user.userid,
-    });
-  
-    const detailItems = items.map(item => ({
-      orderid: order.orderid,
-      productid: item.productid,
-      supplierid,
-      unit_price: item.price,
-      requested_quantity: item.quantity,
-      order_unit: item.order_unit,
-    }));
-  
-    await addOrderDetails(detailItems);
-  
-    // 🛠️ Patch supplierid in products if missing
-    for (const item of detailItems) {
-      const product = products.find(p => p.productid === item.productid);
-      if (!product?.supplierid || product?.supplier?.supplier_name === "N/A") {
-        try {
-          await updateItem(item.productid, { supplierid: item.supplierid });
-        } catch (err) {
-          console.warn(`Could not update product ${item.productid}:`, err.message);
-        }
-      }
+    // Find the supplier ID based on the name
+    const supplier = suppliers.find(s => s.supplier_name === supplierName);
+    if (!supplier) {
+        alert(`Could not find supplier details for ${supplierName}. Order cannot be placed.`);
+        return;
     }
-  
-    alert(`Order placed for ${supplierName}`);
-  
-    setGroupedItems(prev => {
-      const copy = { ...prev };
-      delete copy[supplierName];
-      return copy;
-    });
-  };  
+    const supplierid = supplier.supplierid;
 
+    // Calculate total amount for the order
+    const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+    const tax = subtotal * 0.05; // Assuming 5% tax
+    const total_amount = subtotal + tax;
+
+    if (!user || !user.userid) {
+        alert("User not identified. Cannot place order.");
+        return;
+    }
+
+    try {
+        // 1. Create the main order entry
+        const order = await createOrder({
+          order_date: new Date().toISOString().split("T")[0], // Today's date
+          total_amount: total_amount,
+          supplierid: supplierid,
+          userid: user.userid, // Include the user ID
+          // order_status is set to 'pending' by default in the API/database
+        });
+
+        if (!order || !order.orderid) {
+            throw new Error("Failed to create order header.");
+        }
+
+        // 2. Prepare the order detail items for bulk insertion
+        const detailItems = items.map(item => ({
+          orderid: order.orderid, // Use the ID from the created order
+          productid: item.productid,
+          supplierid: supplierid, // Use the determined supplier ID
+          unit_price: item.price,
+          requested_quantity: item.quantity,
+          order_unit: item.order_unit, // Include the order unit
+          // received_quantity and received_date are handled upon delivery
+        }));
+
+        // 3. Add the order details in bulk
+        await addOrderDetails(detailItems);
+
+        // 4. Optional: Update product supplier ID if missing (Patch operation)
+        // This assumes products might be added without a supplier initially
+        for (const item of detailItems) {
+          const product = products.find(p => p.productid === item.productid);
+          // Check if supplier info is missing or explicitly 'N/A'
+          if (!product?.supplierid || product?.supplier?.supplier_name === "N/A") {
+            try {
+              // Attempt to update the product's supplierid in the database
+              await updateItem(item.productid, { supplierid: item.supplierid });
+            } catch (err) {
+              console.warn(`Could not update product ${item.productid} supplier ID:`, err.message);
+              // Continue even if this patch fails
+            }
+          }
+        }
+
+        // 5. Success: Notify user and remove the placed order from the local state
+        alert(`Order placed successfully for ${supplierName}!`);
+        setGroupedItems(prev => {
+          const { [supplierName]: _, ...rest } = prev; // Remove the supplier group from state
+          return rest;
+        });
+
+    } catch (error) {
+        console.error(`Failed to place order for ${supplierName}:`, error);
+        alert(`Error placing order for ${supplierName}: ${error.message || 'Unknown error'}`);
+    }
+  };
+
+
+  // --- Component Rendering ---
   return (
-    <div className="p-6">
-      <h2 className="text-xl font-bold text-center mb-4">
-        {new Date().toLocaleDateString()}
+    <div className="p-6 bg-gray-50 min-h-screen"> {/* Added background and min-height */}
+      <h2 className="text-2xl font-semibold text-center mb-6 text-gray-700">
+        Create New Order - {new Date().toLocaleDateString()}
       </h2>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-        <select
-          name="productid"
-          value={formData.productid}
-          onChange={e => setFormData({ ...formData, productid: e.target.value })}
-          className="border rounded px-3 py-2"
-        >
-          <option value="">Select Product</option>
-          {products.map(p => (
-            <option key={p.productid} value={p.productid}>{p.product_name}</option>
-          ))}
-        </select>
-        <input type="number" name="quantity" value={formData.quantity}
-          onChange={e => setFormData({ ...formData, quantity: e.target.value })}
-          placeholder="Quantity" className="border rounded px-3 py-2" />
-        <input type="number" name="price" value={formData.price}
-          onChange={e => setFormData({ ...formData, price: e.target.value })}
-          placeholder="Price" className="border rounded px-3 py-2" />
-        <input
-            name="order_unit"
-            value={formData.order_unit}
-            onChange={e => setFormData({ ...formData, order_unit: e.target.value })}
-            placeholder="Order Unit (e.g. case, box)"
-            className="border rounded px-3 py-2"
-        />
-        <input name="supplier_name" list="supplier-options" value={formData.supplier_name}
-          onChange={e => setFormData({ ...formData, supplier_name: e.target.value })}
-          placeholder="Supplier Name" className="border rounded px-3 py-2" />
-        <datalist id="supplier-options">
-          {suppliers.map(s => <option key={s.supplierid} value={s.supplier_name} />)}
-        </datalist>
-        <button className="bg-[#7E82A4] text-white rounded px-4 py-2 shadow" onClick={handleAddItem}>
-          Add
-        </button>
+      {/* --- Form for adding items to the current order --- */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6 p-4 border rounded bg-white shadow-sm"> {/* Adjusted grid cols */}
+        {/* Product Selection with Add Button */}
+        <div className="flex flex-col col-span-1 lg:col-span-1"> {/* Adjusted col span */}
+            <label htmlFor="product-select" className="text-xs font-medium text-gray-600 mb-1">Product</label>
+            <div className="flex items-center gap-2">
+                 <select
+                    id="product-select"
+                    name="productid"
+                    value={formData.productid}
+                    onChange={e => setFormData({ ...formData, productid: e.target.value })}
+                    className="border border-gray-300 rounded px-3 py-2 w-full text-sm flex-grow focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                 >
+                    <option value="">-- Select Product --</option>
+                    {products.sort((a,b) => a.product_name.localeCompare(b.product_name)).map(p => ( // Sort products alphabetically
+                      <option key={p.productid} value={p.productid}>{p.product_name}</option>
+                    ))}
+                 </select>
+                 {/* Button to trigger the Add Product Modal */}
+                 <button
+                    type="button"
+                    onClick={handleOpenAddProductModal}
+                    className="p-2 border border-gray-300 rounded bg-blue-50 hover:bg-blue-100 text-blue-600 shrink-0 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    title="Add New Product to Inventory"
+                  >
+                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                     </svg>
+                 </button>
+            </div>
+        </div>
+
+        {/* Quantity Input */}
+        <div className="col-span-1">
+            <label htmlFor="quantity-input" className="text-xs font-medium text-gray-600 mb-1">Quantity</label>
+            <input id="quantity-input" type="number" name="quantity" value={formData.quantity}
+                onChange={e => setFormData({ ...formData, quantity: e.target.value })}
+                placeholder="e.g., 10" className="border border-gray-300 rounded px-3 py-2 w-full text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500" min="1" />
+        </div>
+        {/* Price Input */}
+        <div className="col-span-1">
+            <label htmlFor="price-input" className="text-xs font-medium text-gray-600 mb-1">Price per Unit ($)</label>
+            <input id="price-input" type="number" step="0.01" name="price" value={formData.price}
+                onChange={e => setFormData({ ...formData, price: e.target.value })}
+                placeholder="e.g., 15.50" className="border border-gray-300 rounded px-3 py-2 w-full text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500" min="0.01"/>
+        </div>
+        {/* Order Unit Input */}
+        <div className="col-span-1">
+             <label htmlFor="unit-input" className="text-xs font-medium text-gray-600 mb-1">Order Unit</label>
+             <input
+                id="unit-input"
+                name="order_unit"
+                value={formData.order_unit}
+                onChange={e => setFormData({ ...formData, order_unit: e.target.value })}
+                placeholder="e.g. case, box, lbs"
+                className="border border-gray-300 rounded px-3 py-2 w-full text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            />
+        </div>
+        {/* Supplier Input */}
+        <div className="flex flex-col col-span-1">
+            <label htmlFor="supplier-input" className="text-xs font-medium text-gray-600 mb-1">Supplier Name</label>
+            <input id="supplier-input" name="supplier_name" list="supplier-options" value={formData.supplier_name}
+                onChange={e => setFormData({ ...formData, supplier_name: e.target.value })}
+                placeholder="Start typing..." className="border border-gray-300 rounded px-3 py-2 w-full text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500" />
+            <datalist id="supplier-options">
+                {suppliers.sort((a,b) => a.supplier_name.localeCompare(b.supplier_name)).map(s => <option key={s.supplierid} value={s.supplier_name} />)} {/* Sort suppliers */}
+            </datalist>
+        </div>
+
+        {/* Add Item Button - Spans full width on smaller screens */}
+        <div className="col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-5 flex justify-end mt-2">
+            <button className="bg-blue-600 text-white rounded px-6 py-2 shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1" onClick={handleAddItem}>
+              Add Item to Order List
+            </button>
+        </div>
       </div>
 
-      {Object.entries(groupedItems).map(([supplier, items]) => {
-        const subtotal = items.reduce((sum, item) => sum + item.quantity * item.price, 0);
-        const tax = subtotal * 0.05;
-        const total = subtotal + tax;
+      {/* --- Display Grouped Order Items --- */}
+      {Object.keys(groupedItems).length === 0 ? (
+        <p className="text-center text-gray-500 italic mt-8">Your order list is empty. Add items using the form above.</p>
+      ) : (
+          // Map through each supplier in the groupedItems object
+          Object.entries(groupedItems).map(([supplier, items]) => {
+            // Calculate totals for this specific supplier group
+            const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+            const tax = subtotal * 0.05;
+            const total = subtotal + tax;
 
-        return (
-          <div key={supplier} className="mb-8 border p-4 rounded shadow bg-white">
-            <h3 className="text-lg font-semibold mb-2">Supplier: {supplier}</h3>
-            <table className="min-w-full mb-4">
-              <thead>
-                <tr className="bg-gray-100 text-left">
-                  <th className="px-3 py-2">Product</th>
-                  <th className="px-3 py-2">Quantity</th>
-                  <th className="px-3 py-2">Price</th>
-                  <th className="px-3 py-2">Total</th>
-                  <th className="px-3 py-2">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item, idx) => (
-                  <tr key={idx} className="border-t">
-                    <td className="px-3 py-2">{item.product_name}</td>
-                    <td className="px-3 py-2">
-                      {editingIndex === idx && editingSupplier === supplier ? (
-                        <input
-                          type="number"
-                          value={editedItem.quantity}
-                          onChange={e => setEditedItem({ ...editedItem, quantity: e.target.value })}
-                          className="border rounded px-2 py-1 w-20"
-                        />
-                      ) : item.quantity}
-                    </td>
-                    <td className="px-3 py-2">
-                      {editingIndex === idx && editingSupplier === supplier ? (
-                        <input
-                          type="number"
-                          value={editedItem.price}
-                          onChange={e => setEditedItem({ ...editedItem, price: e.target.value })}
-                          className="border rounded px-2 py-1 w-20"
-                        />
-                      ) : `$${parseFloat(item.price).toFixed(2)}`}
-                    </td>
-                    <td className="px-3 py-2">
-                      ${(item.quantity * item.price).toFixed(2)}
-                    </td>
-                    <td className="px-3 py-2 space-x-2">
-                      {editingIndex === idx && editingSupplier === supplier ? (
-                        <>
-                          <button onClick={handleSaveEdit} className="bg-[#7E82A4] text-white px-3 py-1 rounded text-sm">Save</button>
-                          <button onClick={() => { setEditingIndex(null); setEditedItem(null); setEditingSupplier(null); }} className="bg-gray-300 text-black px-3 py-1 rounded text-sm">Cancel</button>
-                        </>
-                      ) : (
-                        <button onClick={() => handleEditItem(supplier, idx)} className="bg-[#7E82A4] text-white px-3 py-1 rounded text-sm">Edit</button>
-                      )}
-                      <button onClick={() => handleDeleteItem(supplier, idx)} className="bg-[#D99292] text-white px-3 py-1 rounded text-sm">Delete</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div className="text-right mb-2">
-              <p>Subtotal: ${subtotal.toFixed(2)}</p>
-              <p>Tax (5%): ${tax.toFixed(2)}</p>
-              <p className="font-bold">Total: ${total.toFixed(2)}</p>
-            </div>
-            {user?.role === "admin" ? (
-              <button className="bg-[#7E82A4] text-white px-4 py-2 rounded" onClick={() => handlePlaceOrderForSupplier(supplier, items)}>
-                Place Order for {supplier}
-              </button>
-            ) : (
-              <p className="italic text-sm text-gray-500">Only admins can place orders.</p>
-            )}
-          </div>
-        );
-      })}
+            return (
+              // Container for each supplier's order section
+              <div key={supplier} className="mb-8 border border-gray-300 rounded-lg shadow-md bg-white overflow-hidden">
+                {/* Supplier Header */}
+                <h3 className="text-lg font-semibold mb-0 px-4 py-3 bg-gray-100 border-b border-gray-200 text-gray-800">Supplier: {supplier}</h3>
+                {/* Table container for responsiveness */}
+                <div className="overflow-x-auto p-4">
+                    <table className="min-w-full mb-4 text-sm ">
+                      <thead className="bg-gray-50">
+                        <tr className="text-left text-gray-600 uppercase text-xs tracking-wider">
+                          <th className="px-3 py-2 font-semibold">Product</th>
+                          <th className="px-3 py-2 font-semibold text-center">Quantity</th>
+                          <th className="px-3 py-2 font-semibold text-center">Price/Unit</th>
+                          <th className="px-3 py-2 font-semibold text-center">Order Unit</th>
+                          <th className="px-3 py-2 font-semibold text-right">Line Total</th>
+                          <th className="px-3 py-2 font-semibold text-center">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                         {/* Map through items for the current supplier */}
+                         {items.map((item, idx) => (
+                           <tr key={idx} className="hover:bg-gray-50">
+                             {/* Product Name */}
+                             <td className="px-3 py-2 whitespace-nowrap font-medium text-gray-900">{item.product_name}</td>
+                             {/* Quantity (Editable) */}
+                             <td className="px-3 py-2 text-center">
+                               {editingIndex === idx && editingSupplier === supplier ? (
+                                 <input
+                                   type="number"
+                                   value={editedItem.quantity}
+                                   onChange={e => setEditedItem({ ...editedItem, quantity: parseInt(e.target.value, 10) || 0 })}
+                                   className="border border-gray-300 rounded px-2 py-1 w-20 text-sm text-center focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                   min="1"
+                                 />
+                               ) : item.quantity}
+                             </td>
+                             {/* Price (Editable) */}
+                             <td className="px-3 py-2 text-center">
+                               {editingIndex === idx && editingSupplier === supplier ? (
+                                 <input
+                                   type="number"
+                                   step="0.01"
+                                   value={editedItem.price}
+                                   onChange={e => setEditedItem({ ...editedItem, price: parseFloat(e.target.value) || 0 })}
+                                   className="border border-gray-300 rounded px-2 py-1 w-24 text-sm text-center focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                   min="0.01"
+                                 />
+                               ) : `$${parseFloat(item.price).toFixed(2)}`}
+                             </td>
+                             {/* Order Unit */}
+                             <td className="px-3 py-2 text-center">{item.order_unit || 'N/A'}</td>
+                             {/* Line Total */}
+                             <td className="px-3 py-2 font-medium text-right">
+                               ${(item.quantity * item.price).toFixed(2)}
+                             </td>
+                             {/* Action Buttons (Edit/Save/Cancel/Delete) */}
+                             <td className="px-3 py-2 space-x-2 whitespace-nowrap text-center">
+                               {editingIndex === idx && editingSupplier === supplier ? (
+                                 // Show Save/Cancel when editing
+                                 <>
+                                   <button onClick={handleSaveEdit} className="bg-green-500 text-white px-3 py-1 rounded text-xs hover:bg-green-600 focus:outline-none focus:ring-1 focus:ring-green-500">Save</button>
+                                   <button onClick={() => { setEditingIndex(null); setEditedItem(null); setEditingSupplier(null); }} className="bg-gray-400 text-white px-3 py-1 rounded text-xs hover:bg-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-400">Cancel</button>
+                                 </>
+                               ) : (
+                                 // Show Edit button when not editing
+                                 <button onClick={() => handleEditItem(supplier, idx)} className="bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-500">Edit</button>
+                               )}
+                               {/* Always show Delete button */}
+                               <button onClick={() => handleDeleteItem(supplier, idx)} className="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600 focus:outline-none focus:ring-1 focus:ring-red-500">Delete</button>
+                             </td>
+                           </tr>
+                         ))}
+                       </tbody>
+                    </table>
+                </div>
+                {/* Totals Section */}
+                 <div className="px-4 pb-4 text-right text-sm space-y-1">
+                   <p className="text-gray-600">Subtotal: <span className="font-medium text-gray-800">${subtotal.toFixed(2)}</span></p>
+                   <p className="text-gray-600">Tax (5%): <span className="font-medium text-gray-800">${tax.toFixed(2)}</span></p>
+                   <p className="font-bold text-base border-t border-gray-200 pt-2 mt-2 text-gray-900">Order Total: ${total.toFixed(2)}</p>
+                 </div>
+                 {/* Place Order Button (Admin only) */}
+                 {user?.role?.toLowerCase() === "admin" ? ( // Check role case-insensitively
+                   <div className="px-4 pb-4 text-right border-t border-gray-200 pt-3">
+                        <button
+                            className="bg-green-600 text-white px-5 py-2 rounded shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 disabled:opacity-50"
+                            onClick={() => handlePlaceOrderForSupplier(supplier, items)}
+                            disabled={items.length === 0} // Disable if no items for this supplier
+                        >
+                          Place Order for {supplier}
+                        </button>
+                   </div>
+                 ) : (
+                   // Show message for non-admins
+                   <p className="italic text-xs text-gray-500 text-right px-4 pb-3 border-t border-gray-200 pt-3">Only administrators can place orders.</p>
+                 )}
+              </div>
+            );
+          })
+      )}
+
+
+      {/* --- Add Product Modal --- */}
+      {/* This modal is rendered conditionally based on isAddProductModalOpen */}
+      {isAddProductModalOpen && (
+        <InventoryItemModal
+          item={null} // Pass null for 'item' prop to indicate adding mode
+          onClose={handleCloseAddProductModal} // Function to close the modal
+          onSubmit={handleAddProductSubmit} // Function to handle form submission
+          initialError={addProductError} // Pass any error from the last add attempt
+        />
+      )}
+      {/* --- End Add Product Modal --- */}
+
     </div>
   );
 };
@@ -2174,47 +2550,48 @@ export default FilterModal;
 </file>
 
 <file path="client/src/Main/Inventory.jsx">
+// client/src/Main/Inventory.jsx
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { getInventory, addItem, updateItem, deleteItem } from "../api";
+// NOTE: Removed 'addItem' from import as it's no longer used here
+import { getInventory, updateItem, deleteItem } from "../api";
 import { useAuth } from "../context/AuthContext";
 import InventoryItemModal from "./InventoryItemModal";
 import FilterModal from "./FilterModal";
-
-const SearchIcon = (props) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-  </svg>
-);
-
-const FilterIcon = (props) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
-  </svg>
-);
-
+import InventoryHeader from "./InventoryHeader";
+import { useInventorySearch } from "./hooks/useInventorySearch";
+import { useInventoryFilter } from "./hooks/useInventoryFilter";
 
 function Inventory() {
-  const [items, setItems] = useState([]);
+  // --- Core State ---
+  const [allItems, setAllItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentItem, setCurrentItem] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [appliedFilters, setAppliedFilters] = useState({});
+  const [isItemModalOpen, setIsItemModalOpen] = useState(false);
+  const [currentItem, setCurrentItem] = useState(null); // Used only for editing now
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const getStockStatusInfo = (stock, minQty) => {
-    if (stock <= 0) return { text: "Out of Stock", color: "bg-[#D99292] text-red-800" };
-    if (stock < minQty) return { text: "Low Stock", color: "bg-[#F4D98E] text-yellow-800" };
-    return { text: "In Stock", color: "bg-[#A3C18F] text-green-800" };
-  };
-  const definedStatuses = ["Out of Stock", "Low Stock", "In Stock"];
+  // --- Custom Hooks ---
+  const { searchTerm, handleSearchChange } = useInventorySearch();
+  const {
+    appliedFilters,
+    isFilterModalOpen,
+    openFilterModal,
+    closeFilterModal,
+    applyFilters,
+    clearFilters,
+    availableSuppliers,
+    availableStatuses,
+    activeFilterCount,
+    filterItems,
+    getStockStatusInfo
+  } = useInventoryFilter(allItems);
 
+  // --- Data Fetching ---
   const fetchInventory = useCallback(async () => {
-    if (!user) {
+    // ... (fetchInventory logic remains the same) ...
+     if (!user) {
       navigate("/login");
       return;
     }
@@ -2222,7 +2599,7 @@ function Inventory() {
       setLoading(true);
       setError(null);
       const data = await getInventory();
-      setItems(Array.isArray(data) ? data : []);
+      setAllItems(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Error fetching inventory:", err);
       if (err.response?.status === 401 || err.message.includes("401")) {
@@ -2230,7 +2607,7 @@ function Inventory() {
       } else {
         setError("Failed to load inventory. Please try again later.");
       }
-      setItems([]);
+      setAllItems([]);
     } finally {
       setLoading(false);
     }
@@ -2240,27 +2617,10 @@ function Inventory() {
     fetchInventory();
   }, [fetchInventory]);
 
-  const availableSuppliers = useMemo(() => {
-    const supplierNames = items
-        .map(item => item.supplier?.supplier_name)
-        .filter(Boolean);
-    return [...new Set(supplierNames)].sort();
-  }, [items]);
-
+  // --- Derived Data: Filtering and Searching ---
   const displayItems = useMemo(() => {
-    let filtered = [...items];
-
-    if (appliedFilters.suppliers && appliedFilters.suppliers.length > 0) {
-        filtered = filtered.filter(item =>
-            appliedFilters.suppliers.includes(item.supplier?.supplier_name)
-        );
-    }
-    if (appliedFilters.statuses && appliedFilters.statuses.length > 0) {
-        filtered = filtered.filter(item => {
-            const statusInfo = getStockStatusInfo(item.current_stock, item.min_quantity);
-            return appliedFilters.statuses.includes(statusInfo.text);
-        });
-    }
+    // ... (displayItems logic remains the same) ...
+    let filtered = filterItems(allItems);
 
     if (searchTerm) {
       const lowerCaseSearchTerm = searchTerm.toLowerCase();
@@ -2276,13 +2636,10 @@ function Inventory() {
     return filtered.sort((a, b) =>
       (a.product_name || "").localeCompare(b.product_name || "")
     );
-  }, [items, searchTerm, appliedFilters]);
+  }, [allItems, searchTerm, filterItems]);
 
-  const handleOpenAddModal = () => {
-    setCurrentItem(null);
-    setError(null);
-    setIsModalOpen(true);
-  };
+  // --- Modal Handlers (Edit Item ONLY) ---
+  // REMOVED handleOpenAddModal function
 
   const handleOpenEditModal = (item) => {
     if (!item || typeof item !== "object") {
@@ -2290,43 +2647,50 @@ function Inventory() {
       setError("Could not load item data for editing.");
       return;
     }
-    setCurrentItem(item);
+    setCurrentItem(item); // Set the item to be edited
     setError(null);
-    setIsModalOpen(true);
+    setIsItemModalOpen(true); // Open the modal
   };
 
-  const handleModalClose = () => {
-    setIsModalOpen(false);
-    setIsFilterModalOpen(false);
-    setCurrentItem(null);
-    setError(null);
+  const handleItemModalClose = () => {
+    setIsItemModalOpen(false);
+    setCurrentItem(null); // Clear the item being edited
+    // setError(null); // Decide if you want to clear error on cancel
   };
 
+  // SIMPLIFIED handleFormSubmit for UPDATE ONLY
   const handleFormSubmit = async (formData) => {
     const primaryKey = "productid";
-    const isEditing = currentItem && currentItem[primaryKey];
+    // Check if we are actually editing (currentItem should be set)
+    if (!currentItem || !currentItem[primaryKey]) {
+        console.error("handleFormSubmit called without a currentItem for editing.");
+        setError("Cannot update item: No item selected for editing.");
+        return; // Exit if not in edit mode
+    }
 
     try {
       setLoading(true);
       setError(null);
-      if (isEditing) {
-        const updatedData = { ...formData, [primaryKey]: currentItem[primaryKey] };
-        await updateItem(currentItem[primaryKey], updatedData);
-      } else {
-        await addItem(formData);
-      }
-      handleModalClose();
-      await fetchInventory();
+      // Prepare data for update
+      const updatedData = { ...formData, [primaryKey]: currentItem[primaryKey] };
+      // Call the update API
+      await updateItem(currentItem[primaryKey], updatedData);
+
+      handleItemModalClose(); // Close modal on success
+      await fetchInventory(); // Refresh data
     } catch (err) {
-      console.error(`Error ${isEditing ? "updating" : "adding"} item:`, err);
-      setError(`Failed to ${isEditing ? "update" : "add"} item. ${ err.response?.data?.error || err.message || "" }`);
+      console.error(`Error updating item:`, err);
+      setError(`Failed to update item. ${ err.response?.data?.error || err.message || "" }`);
+      // Keep modal open on error
     } finally {
-      setLoading(false);
+      // setLoading(false); // fetchInventory handles this
     }
   };
 
+  // --- Delete Handler ---
   const handleDelete = async (id) => {
-    const itemToDelete = items.find((item) => item.productid === id);
+    // ... (handleDelete logic remains the same) ...
+    const itemToDelete = allItems.find((item) => item.productid === id);
     if (!itemToDelete) {
       setError("Item not found.");
       return;
@@ -2336,7 +2700,7 @@ function Inventory() {
         setLoading(true);
         setError(null);
         await deleteItem(id);
-        await fetchInventory();
+        await fetchInventory(); // Refresh data
       } catch (err) {
         console.error("Error deleting item:", err);
         setError(`Failed to delete item. ${err.response?.data?.error || ""}`);
@@ -2344,94 +2708,32 @@ function Inventory() {
           navigate("/login");
         }
       } finally {
-        setLoading(false);
+         // setLoading(false); // fetchInventory already handles this
       }
     }
   };
 
-  const handleOpenFilterModal = () => setIsFilterModalOpen(true);
-  const handleCloseFilterModal = () => setIsFilterModalOpen(false);
-
-  const handleApplyFilters = (filtersFromModal) => {
-    setAppliedFilters(filtersFromModal);
-    handleCloseFilterModal();
-  };
-
-  const handleClearFilters = () => {
-    setAppliedFilters({});
-  };
-
-
-  if (loading && items.length === 0) {
+  // --- Render Logic ---
+  if (loading && allItems.length === 0) {
     return <div className="p-6 text-center">Loading inventory...</div>;
   }
 
-
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="mb-6 flex justify-between items-start gap-4">
-        <div>
-          {user?.role === "admin" && (
-            <div className="text-5xl font-medium text-gray-700 mb-2">
-              Hello Admin
-            </div>
-          )}
-          <h2 className="text-2xl font-bold text-green-900">Product List</h2>
-        </div>
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+      {/* Use the Header Component (without Add button functionality) */}
+      <InventoryHeader
+        user={user}
+        searchTerm={searchTerm}
+        onSearchChange={handleSearchChange}
+        onOpenFilterModal={openFilterModal}
+        onClearFilters={clearFilters}
+        // onOpenAddModal prop removed
+        activeFilterCount={activeFilterCount}
+      />
 
-        <div className="flex flex-col items-end gap-2">
-            <div className="relative w-full sm:w-72 lg:w-80">
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                aria-label="Search inventory items"
-              />
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                <SearchIcon className="h-5 w-5 text-gray-400" />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-                {Object.keys(appliedFilters).some(key => appliedFilters[key]?.length > 0) && (
-                    <button
-                        onClick={handleClearFilters}
-                        className="p-2 text-sm text-red-600 border border-red-300 rounded-md shadow-sm hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                        aria-label="Clear applied filters"
-                        title="Clear Filters"
-                    >
-                        Clear Filters
-                    </button>
-                )}
-
-                {user?.role === 'admin' && (
-                  <button
-                      onClick={handleOpenFilterModal}
-                      className="p-2 text-gray-600 border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                      aria-label="Open filters"
-                      title="Filters"
-                  >
-                      <FilterIcon className="h-5 w-5" />
-                  </button>
-                )}
-
-                {user?.role === 'admin' && (
-                  <button
-                    onClick={handleOpenAddModal}
-                    className="text-black px-4 py-2 rounded shadow whitespace-nowrap"
-                    style={{ backgroundColor: "#8DACE5" }}
-                  >
-                    + Add Product
-                  </button>
-                )}
-            </div>
-        </div>
-      </div>
-
-      {error && !isModalOpen && !isFilterModalOpen && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 relative">
+      {/* ... (Error display logic) ... */}
+       {error && !isItemModalOpen && !isFilterModalOpen && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 relative text-sm">
           {error}
           <button
             onClick={() => setError(null)}
@@ -2443,87 +2745,103 @@ function Inventory() {
         </div>
       )}
 
-      {loading && items.length > 0 && (
-        <div className="text-center py-4 text-gray-500">Updating list...</div>
+      {/* ... (Loading indicator logic) ... */}
+       {loading && allItems.length > 0 && (
+        <div className="text-center py-4 text-gray-500 text-sm italic">Updating list...</div>
       )}
 
-      <div className="overflow-x-auto bg-gray-100 p-4 rounded-lg shadow">
-        <table className="min-w-full text-left">
-          <thead>
-            <tr className="text-gray-700">
-              <th className="px-4 py-2" style={{ backgroundColor: "#D9BE92" }}>Product</th>
-              <th className="px-4 py-2" style={{ backgroundColor: "#D9BE92" }}>Quantity</th>
-              <th className="px-4 py-2" style={{ backgroundColor: "#D9BE92" }}>Price</th>
-              <th className="px-4 py-2" style={{ backgroundColor: "#D9BE92" }}>Stock Status</th>
-              <th className="px-4 py-2" style={{ backgroundColor: "#D9BE92" }}>Supplier</th>
-              {user?.role === "admin" && (
-                <th className="px-4 py-2" style={{ backgroundColor: "#D9BE92" }}>Action</th>
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {displayItems.length > 0 ? (
-              displayItems.map((item) => {
-                const { text: statusText, color: statusColor } =
-                  getStockStatusInfo(item.current_stock, item.min_quantity);
-                return (
-                  <tr key={item.productid} className="border-t border-gray-200">
-                    <td className="px-4 py-2">{item.product_name}</td>
-                    <td className="px-4 py-2">{item.current_stock}</td>
-                    <td className="px-4 py-2">${item.case_price?.toFixed(2)}/{item.order_unit}</td>
-                    <td className="px-4 py-2">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColor}`}>
-                        {statusText}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2">{item.supplier?.supplier_name || "N/A"}</td>
-                    {user?.role === "admin" && (
-                      <td className="px-4 py-2 flex space-x-2">
-                        <button
-                          onClick={() => handleOpenEditModal(item)}
-                          className="text-white text-sm font-semibold px-3 py-1 rounded hover:opacity-80 transition-opacity"
-                          style={{ backgroundColor: "#7E82A4" }}
-                          aria-label={`Edit ${item.product_name}`}
-                        > Edit </button>
-                        <button
-                          onClick={() => handleDelete(item.productid)}
-                          className="text-white text-sm font-semibold px-3 py-1 rounded hover:opacity-80 transition-opacity"
-                          style={{ backgroundColor: "#D99292" }}
-                          aria-label={`Delete ${item.product_name}`}
-                        > Delete </button>
-                      </td>
-                    )}
-                  </tr>
-                );
-              })
-            ) : (
-              <tr>
-                <td colSpan={user?.role === "admin" ? 6 : 5} className="text-center py-4 text-gray-500">
-                  {searchTerm || Object.keys(appliedFilters).some(key => appliedFilters[key]?.length > 0)
-                    ? "No products found matching your search/filters."
-                    : "No products in inventory."}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      {/* ... (Inventory Table rendering logic remains the same) ... */}
+      <div className="overflow-x-auto bg-white p-4 rounded-lg shadow-md">
+          <table className="min-w-full text-left text-sm">
+             {/* ... thead ... */}
+             <thead className="bg-gray-50">
+                 <tr className="text-gray-600 uppercase text-xs">
+                     <th className="px-4 py-2 font-medium" style={{ backgroundColor: "#EAE0D5" }}>Product</th>
+                     <th className="px-4 py-2 font-medium" style={{ backgroundColor: "#EAE0D5" }}>Quantity</th>
+                     <th className="px-4 py-2 font-medium" style={{ backgroundColor: "#EAE0D5" }}>Price/Unit</th>
+                     <th className="px-4 py-2 font-medium" style={{ backgroundColor: "#EAE0D5" }}>Stock Status</th>
+                     <th className="px-4 py-2 font-medium" style={{ backgroundColor: "#EAE0D5" }}>Supplier</th>
+                     {user?.role === "admin" && (
+                       <th className="px-4 py-2 font-medium" style={{ backgroundColor: "#EAE0D5" }}>Action</th>
+                     )}
+                 </tr>
+             </thead>
+             {/* ... tbody ... */}
+             <tbody className="divide-y divide-gray-200">
+                 {displayItems.length > 0 ? (
+                     displayItems.map((item) => {
+                         const { text: statusText, color: statusColor } =
+                           getStockStatusInfo(item.current_stock, item.min_quantity);
+                         return (
+                             <tr key={item.productid} className="hover:bg-gray-50">
+                                 <td className="px-4 py-2 whitespace-nowrap font-medium text-gray-900">{item.product_name}</td>
+                                 <td className="px-4 py-2 text-gray-700">{item.current_stock}</td>
+                                 <td className="px-4 py-2 text-gray-700">
+                                     {item.case_price != null ? `$${item.case_price.toFixed(2)}` : 'N/A'}
+                                     {item.order_unit ? ` / ${item.order_unit}` : ''}
+                                 </td>
+                                 <td className="px-4 py-2">
+                                     <span className={`px-2 py-1 rounded-full text-xs font-semibold ${statusColor}`}>
+                                       {statusText}
+                                     </span>
+                                 </td>
+                                 <td className="px-4 py-2 text-gray-700 whitespace-nowrap">{item.supplier?.supplier_name || "N/A"}</td>
+                                 {user?.role === "admin" && (
+                                     <td className="px-4 py-2 flex space-x-2">
+                                         {/* Edit button triggers handleOpenEditModal */}
+                                         <button
+                                           onClick={() => handleOpenEditModal(item)}
+                                           className="text-white text-xs font-semibold px-3 py-1 rounded hover:opacity-80 transition-opacity"
+                                           style={{ backgroundColor: "#7E82A4" }}
+                                           aria-label={`Edit ${item.product_name}`}
+                                         > Edit </button>
+                                         {/* Delete button triggers handleDelete */}
+                                         <button
+                                           onClick={() => handleDelete(item.productid)}
+                                           className="text-white text-xs font-semibold px-3 py-1 rounded hover:opacity-80 transition-opacity"
+                                           style={{ backgroundColor: "#D99292" }}
+                                           aria-label={`Delete ${item.product_name}`}
+                                         > Delete </button>
+                                     </td>
+                                 )}
+                             </tr>
+                         );
+                     })
+                 ) : (
+                    /* ... No items row ... */
+                     <tr>
+                         <td colSpan={user?.role === "admin" ? 6 : 5} className="text-center py-6 text-gray-500 italic">
+                           {loading ? "Loading..." : (searchTerm || activeFilterCount > 0
+                             ? "No products found matching your search/filters."
+                             : "No products in inventory.")}
+                         </td>
+                     </tr>
+                 )}
+             </tbody>
+          </table>
       </div>
 
-      {isModalOpen && (
+
+      {/* Modals */}
+      {/* InventoryItemModal is now ONLY used for editing here */}
+      {isItemModalOpen && currentItem && ( // Ensure currentItem is set before rendering for edit
         <InventoryItemModal
-          item={currentItem}
-          onClose={handleModalClose}
-          onSubmit={handleFormSubmit}
-          initialError={ error && !error.toLowerCase().includes("load inventory") ? error : null }
+          item={currentItem} // Pass the item to be edited
+          onClose={handleItemModalClose}
+          onSubmit={handleFormSubmit} // Submits only updates now
+          initialError={ error && isItemModalOpen ? error : null } // Pass error relevant to the open modal
+          isQuickAdd={false} // Explicitly false for editing
         />
       )}
+
+      {/* Filter Modal */}
       <FilterModal
         isOpen={isFilterModalOpen}
-        onClose={handleCloseFilterModal}
-        onApplyFilters={handleApplyFilters}
+        onClose={closeFilterModal}
+        onApplyFilters={applyFilters}
         initialFilters={appliedFilters}
         availableSuppliers={availableSuppliers}
-        availableStatuses={definedStatuses}
+        availableStatuses={availableStatuses}
       />
 
     </div>
@@ -2533,134 +2851,265 @@ function Inventory() {
 export default Inventory;
 </file>
 
-<file path="client/src/Main/InventoryItemModal.jsx">
-import React, { useState } from "react";
+<file path="client/src/Main/InventoryHeader.jsx">
+// client/src/Main/InventoryHeader.jsx
+import React from 'react';
 
-function InventoryItemModal({ item, onClose, onSubmit, initialError }) {
+// Define or import icons here (SearchIcon, FilterIcon, XMarkIcon - keep these)
+const SearchIcon = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+  </svg>
+);
+const FilterIcon = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+  </svg>
+);
+const XMarkIcon = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+);
+
+
+function InventoryHeader({
+  user,
+  searchTerm,
+  onSearchChange,
+  onOpenFilterModal,
+  onClearFilters,
+  // onOpenAddModal, // REMOVED PROP
+  activeFilterCount,
+}) {
+  const userRole = user?.role?.toLowerCase();
+
+  return (
+    <div className="mb-6 flex flex-col sm:flex-row justify-between items-start gap-4">
+      {/* Left Side: Title */}
+      <div>
+        {userRole === "admin" && (
+          <div className="text-3xl sm:text-4xl lg:text-5xl font-medium text-gray-700 mb-1 sm:mb-2">
+            Hello Admin
+          </div>
+        )}
+        <h2 className="text-xl sm:text-2xl font-bold text-green-900">Product List</h2>
+      </div>
+
+      {/* Right Side: Controls */}
+      <div className="w-full sm:w-auto flex flex-col items-stretch sm:items-end gap-2">
+        {/* Search Bar */}
+        <div className="relative w-full sm:w-72 lg:w-80">
+          <input
+            type="text"
+            placeholder="Search by Product or Supplier..."
+            value={searchTerm}
+            onChange={onSearchChange}
+            className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
+            aria-label="Search inventory items"
+          />
+          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+            <SearchIcon className="h-5 w-5 text-gray-400" />
+          </div>
+        </div>
+
+        {/* Filter and Add Buttons */}
+        <div className="flex items-center justify-end gap-2">
+          {activeFilterCount > 0 && (
+            <button
+              onClick={onClearFilters}
+              className="flex items-center px-3 py-2 text-xs sm:text-sm text-red-600 border border-red-300 rounded-md shadow-sm hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 whitespace-nowrap"
+              aria-label="Clear applied filters"
+              title="Clear Filters"
+            >
+              <XMarkIcon className="w-3 h-3 mr-1" />
+              Clear Filters ({activeFilterCount})
+            </button>
+          )}
+
+          {/* Filter Button */}
+          <button
+              onClick={onOpenFilterModal}
+              className="relative p-2 text-gray-600 border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500"
+              aria-label="Open filters"
+              title="Filters"
+          >
+              <FilterIcon className="h-5 w-5" />
+               {activeFilterCount > 0 && (
+                    <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
+                        {activeFilterCount}
+                    </span>
+                )}
+          </button>
+
+          {/* --- ADD PRODUCT BUTTON REMOVED --- */}
+          {/* {userRole === 'admin' && (
+            <button
+              onClick={onOpenAddModal} // This prop is removed
+              className="text-black px-3 sm:px-4 py-2 rounded shadow whitespace-nowrap text-xs sm:text-sm"
+              style={{ backgroundColor: "#8DACE5" }}
+            >
+              + Add Product
+            </button>
+          )} */}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default InventoryHeader;
+</file>
+
+<file path="client/src/Main/InventoryItemModal.jsx">
+// client/src/Main/InventoryItemModal.jsx
+import React, { useState, useEffect } from "react";
+
+function InventoryItemModal({
+  item,       // Item object if editing, null if adding
+  onClose,
+  onSubmit,   // Function to call with submitted data
+  initialError,
+  // isQuickAdd prop is no longer used for conditional rendering
+}) {
+  // Determine if we are editing an existing item
   const isEditing = item !== null;
 
+  // --- Initial form state - ONLY include fields managed by this modal ---
   const [formData, setFormData] = useState({
     product_name: item?.product_name || "",
-    current_stock: item?.current_stock ?? "",
-    max_quantity: item?.max_quantity ?? "",
     min_quantity: item?.min_quantity ?? "",
+    max_quantity: item?.max_quantity ?? "",
     expiration: item?.expiration
       ? new Date(item.expiration).toISOString().split("T")[0]
       : "",
     categoryid: item?.categoryid ?? "",
-    supplierid: item?.supplierid ?? "",
   });
 
   const [error, setError] = useState(initialError);
 
+  // Update error state if the initialError prop changes
+  useEffect(() => {
+    setError(initialError);
+  }, [initialError]);
+
+  // Handle input changes for controlled components
   const handleChange = (e) => {
     const { name, value, type } = e.target;
-    const val =
-      type === "number" ? (value === "" ? "" : parseFloat(value)) : value;
-    const finalValue =
-      ["categoryid", "supplierid", "current_stock", "max_quantity", "min_quantity"].includes(name) && val === ""
-        ? ""
-        : val;
-    setFormData((prev) => ({ ...prev, [name]: finalValue }));
-    setError(null);
+    const val = type === "number" ? (value === "" ? "" : parseFloat(value)) : value;
+    setFormData((prev) => ({ ...prev, [name]: val }));
+    setError(null); // Clear error on change
   };
 
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
 
-    if (!formData.product_name || formData.current_stock === "") {
-      setError("Product Name and Current Stock are required.");
-      return;
+    // --- Field Validations ---
+    if (!formData.product_name) {
+      setError("Product Name is required."); return;
     }
+    if (formData.min_quantity === "" || formData.min_quantity === null || isNaN(formData.min_quantity)) {
+        setError("Minimum Quantity is required."); return;
+    }
+     if (formData.max_quantity !== null && formData.max_quantity !== "" && parseFloat(formData.max_quantity) < parseFloat(formData.min_quantity)) {
+        setError("Max Quantity cannot be less than Min Quantity."); return;
+     }
 
-    const dataToSubmit = { ...formData };
-    for (const key of [
-      "current_stock",
-      "max_quantity",
-      "min_quantity",
-      "categoryid",
-      "supplierid",
-    ]) {
-      if (dataToSubmit[key] === "") {
-        dataToSubmit[key] = null;
-      }
+    // --- Prepare Data to Submit ---
+    const dataToSubmit = {
+      product_name: formData.product_name,
+      min_quantity: formData.min_quantity === "" ? null : parseFloat(formData.min_quantity),
+      max_quantity: formData.max_quantity === "" ? null : parseFloat(formData.max_quantity),
+      expiration: formData.expiration === "" ? null : formData.expiration,
+      categoryid: formData.categoryid === "" ? null : parseInt(formData.categoryid, 10),
+    };
+
+    // If ADDING a new product, explicitly set current_stock to 0
+    // Other fields like price, unit, supplier will rely on backend defaults/null handling
+    if (!isEditing) {
+      dataToSubmit.current_stock = 0;
     }
-    if (dataToSubmit.expiration === "") dataToSubmit.expiration = null;
+    // If editing, we only send the fields managed by this modal.
+
+    console.log("Data being submitted:", dataToSubmit); // Debug log
 
     try {
-      await onSubmit(dataToSubmit);
+      await onSubmit(dataToSubmit); // Call the parent component's submit handler
     } catch (err) {
-      setError(
-        err.response?.data?.error ||
-          err.message ||
-          "An unexpected error occurred."
-      );
-      console.error("Modal Submit Error:", err);
+      setError(err.response?.data?.error || err.message || "Submission failed.");
+      console.error("Modal Submit Prop Error:", err);
     }
   };
 
+  // --- Define ONLY the fields to be displayed in the modal ---
+  const fields = [
+    { label: "Product Name *", name: "product_name", type: "text", required: true },
+    { label: "Min Quantity *", name: "min_quantity", type: "number", required: true },
+    { label: "Max Quantity", name: "max_quantity", type: "number", required: false },
+    { label: "Category ID", name: "categoryid", type: "number", required: false },
+    { label: "Expiration Date", name: "expiration", type: "date", required: false },
+  ];
+
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
+      className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex justify-center items-center z-50 p-4"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-xl w-full max-w-2xl p-6 space-y-4"
+        className="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 m-4 space-y-4 overflow-y-auto max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-xl font-semibold text-gray-800">
-          {isEditing ? "Edit Item" : "Add New Item"}
-        </h3>
+        {/* Header */}
+        <div className="flex justify-between items-center border-b pb-2">
+          <h3 className="text-xl font-semibold text-gray-800">
+            {isEditing ? "Edit Product Details" : "Add New Product"}
+          </h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl font-bold" aria-label="Close modal">×</button>
+        </div>
+
+        {/* Error Display */}
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-            {error}
-            <button
-              onClick={() => setError(null)}
-              className="absolute top-0 right-0 px-2 py-1 text-red-500"
-            >
-              ×
-            </button>
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded relative text-sm">
+            <span className="block sm:inline">{error}</span>
+            <button onClick={() => setError(null)} className="absolute top-0 bottom-0 right-0 px-3 py-1 text-red-500 hover:text-red-700 font-bold" aria-label="Dismiss error">×</button>
           </div>
         )}
+
+        {/* Form */}
         <form
           onSubmit={handleSubmit}
-          className="grid grid-cols-1 md:grid-cols-2 gap-4"
+          className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3"
+          noValidate
         >
-          {[
-            { label: "Product Name *", name: "product_name", type: "text" },
-            { label: "Current Stock *", name: "current_stock", type: "number" },
-            { label: "Max Quantity", name: "max_quantity", type: "number" },
-            { label: "Min Quantity", name: "min_quantity", type: "number" },
-            { label: "Expiration Date", name: "expiration", type: "date" },
-            { label: "Category ID", name: "categoryid", type: "number" },
-            { label: "Supplier ID", name: "supplierid", type: "number" },
-          ].map(({ label, name, type }) => (
-            <input
-              key={name}
-              className="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder={label}
-              name={name}
-              type={type}
-              value={formData[name]}
-              onChange={handleChange}
-              required={label.includes("*")}
-            />
+          {/* Render only the defined fields */}
+          {fields.map(({ label, name, type, required, placeholder, step, min }) => (
+            <div key={name} className={name === 'product_name' ? 'md:col-span-2' : ''}>
+              <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">
+                {label}
+              </label>
+              <input
+                id={name}
+                className="border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                placeholder={placeholder || label.replace(" *", "")}
+                name={name}
+                type={type}
+                value={formData[name]}
+                onChange={handleChange}
+                required={required} // Basic HTML5 required
+                step={step}
+                min={min}
+                // No 'disabled' needed here as all displayed fields are editable
+              />
+            </div>
           ))}
 
-          <div className="col-span-2 flex justify-end gap-3">
-            <button
-              type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded"
-            >
-              {isEditing ? "Update Item" : "Add Item"}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="bg-gray-300 hover:bg-gray-400 text-black font-semibold px-4 py-2 rounded"
-            >
-              Cancel
+          {/* Action Buttons */}
+          <div className="col-span-1 md:col-span-2 flex justify-end gap-3 pt-4 mt-2 border-t">
+            <button type="button" onClick={onClose} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-gray-400">Cancel</button>
+            <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              {isEditing ? "Update Details" : "Add Product"}
             </button>
           </div>
         </form>

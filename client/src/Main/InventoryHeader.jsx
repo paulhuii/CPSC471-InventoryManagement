@@ -1,7 +1,7 @@
-// src/Main/InventoryHeader.jsx
+// client/src/Main/InventoryHeader.jsx
 import React from 'react';
 
-// Define or import icons here
+// Define or import icons here (SearchIcon, FilterIcon, XMarkIcon - keep these)
 const SearchIcon = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
@@ -20,12 +20,12 @@ const XMarkIcon = (props) => (
 
 
 function InventoryHeader({
-  user, // Pass the whole user object or just the role
+  user,
   searchTerm,
   onSearchChange,
   onOpenFilterModal,
   onClearFilters,
-  onOpenAddModal,
+  // onOpenAddModal, // REMOVED PROP
   activeFilterCount,
 }) {
   const userRole = user?.role?.toLowerCase();
@@ -73,8 +73,7 @@ function InventoryHeader({
             </button>
           )}
 
-          {/* Filter Button - Always show? Or only admin? Decide based on requirements */}
-          {/* Let's assume all users can filter */}
+          {/* Filter Button */}
           <button
               onClick={onOpenFilterModal}
               className="relative p-2 text-gray-600 border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500"
@@ -89,16 +88,16 @@ function InventoryHeader({
                 )}
           </button>
 
-
-          {userRole === 'admin' && (
+          {/* --- ADD PRODUCT BUTTON REMOVED --- */}
+          {/* {userRole === 'admin' && (
             <button
-              onClick={onOpenAddModal}
+              onClick={onOpenAddModal} // This prop is removed
               className="text-black px-3 sm:px-4 py-2 rounded shadow whitespace-nowrap text-xs sm:text-sm"
               style={{ backgroundColor: "#8DACE5" }}
             >
               + Add Product
             </button>
-          )}
+          )} */}
         </div>
       </div>
     </div>
