@@ -2,16 +2,13 @@
 import React, { useState, useEffect } from "react";
 
 function InventoryItemModal({
-  item,       // Item object if editing, null if adding
-  onClose,
+  item,       
   onSubmit,   // Function to call with submitted data
   initialError,
-  // isQuickAdd prop is no longer used for conditional rendering
 }) {
-  // Determine if we are editing an existing item
+
   const isEditing = item !== null;
 
-  // --- Initial form state - ONLY include fields managed by this modal ---
   const [formData, setFormData] = useState({
     product_name: item?.product_name || "",
     min_quantity: item?.min_quantity ?? "",
@@ -67,9 +64,8 @@ function InventoryItemModal({
     if (!isEditing) {
       dataToSubmit.current_stock = 0;
     }
-    // If editing, we only send the fields managed by this modal.
 
-    console.log("Data being submitted:", dataToSubmit); // Debug log
+    console.log("Data being submitted:", dataToSubmit); 
 
     try {
       await onSubmit(dataToSubmit); // Call the parent component's submit handler
@@ -79,7 +75,6 @@ function InventoryItemModal({
     }
   };
 
-  // --- Define ONLY the fields to be displayed in the modal ---
   const fields = [
     { label: "Product Name *", name: "product_name", type: "text", required: true },
     { label: "Min Quantity *", name: "min_quantity", type: "number", required: true },
