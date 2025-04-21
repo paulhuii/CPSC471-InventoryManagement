@@ -1,0 +1,4303 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+<additional_info>
+
+</additional_info>
+
+</file_summary>
+
+<directory_structure>
+client/
+  .idea/
+    inspectionProfiles/
+      Project_Default.xml
+    .gitignore
+    cpsc471project.iml
+    modules.xml
+    vcs.xml
+  public/
+    index.html
+    manifest.json
+    robots.txt
+  src/
+    components/
+      Modal.js
+    context/
+      AuthContext.js
+    Login/
+      AdminUserList.js
+      Login.js
+      ProtectedRoute.js
+      Register.js
+    Main/
+      Order/
+        History.jsx
+        List.jsx
+        Pending.jsx
+        Restock.jsx
+      FilterModal.js
+      Inventory.jsx
+      InventoryItemModal.jsx
+      Order.jsx
+      OrderCartContext.js
+    api.js
+    App.js
+    App.test.js
+    Home.js
+    index.css
+    index.js
+    logo.svg
+    reportWebVitals.js
+    setupTests.js
+  .gitignore
+  package.json
+  postcss.config.js
+  tailwind.config.js
+server/
+  middleware/
+    auth.js
+  routes/
+    auth.js
+    inventory.js
+    orderDetail.js
+    orders.js
+    suppliers.js
+    users.js
+  utils/
+    supabase.js
+  .env
+  package.json
+  server.js
+package.json
+README.md
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="client/.idea/inspectionProfiles/Project_Default.xml">
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="Eslint" enabled="true" level="WARNING" enabled_by_default="true" />
+  </profile>
+</component>
+</file>
+
+<file path="client/.idea/.gitignore">
+# Default ignored files
+/shelf/
+/workspace.xml
+# Editor-based HTTP Client requests
+/httpRequests/
+</file>
+
+<file path="client/.idea/cpsc471project.iml">
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="WEB_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/temp" />
+      <excludeFolder url="file://$MODULE_DIR$/.tmp" />
+      <excludeFolder url="file://$MODULE_DIR$/tmp" />
+      <excludeFolder url="file://$MODULE_DIR$/build" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>
+</file>
+
+<file path="client/.idea/modules.xml">
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/cpsc471project.iml" filepath="$PROJECT_DIR$/.idea/cpsc471project.iml" />
+    </modules>
+  </component>
+</project>
+</file>
+
+<file path="client/.idea/vcs.xml">
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="$PROJECT_DIR$" vcs="Git" />
+  </component>
+</project>
+</file>
+
+<file path="client/public/index.html">
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="Web site created using create-react-app"
+    />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <!--
+      manifest.json provides metadata used when your web app is installed on a
+      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
+    -->
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <!--
+      Notice the use of %PUBLIC_URL% in the tags above.
+      It will be replaced with the URL of the `public` folder during the build.
+      Only files inside the `public` folder can be referenced from the HTML.
+
+      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
+      work correctly both with client-side routing and a non-root public URL.
+      Learn how to configure a non-root public URL by running `npm run build`.
+    -->
+    <title>React App</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <!--
+      This HTML file is a template.
+      If you open it directly in the browser, you will see an empty page.
+
+      You can add webfonts, meta tags, or analytics to this file.
+      The build step will place the bundled scripts into the <body> tag.
+
+      To begin the development, run `npm start` or `yarn start`.
+      To create a production bundle, use `npm run build` or `yarn build`.
+    -->
+  </body>
+</html>
+</file>
+
+<file path="client/public/manifest.json">
+{
+  "short_name": "React App",
+  "name": "Create React App Sample",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}
+</file>
+
+<file path="client/public/robots.txt">
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Disallow:
+</file>
+
+<file path="client/src/components/Modal.js">
+import React from 'react';
+
+const Modal = ({ children, onClose, isOpen }) => {
+    if (!isOpen) return null;
+
+    const handleBackdropClick = (e) => {
+        if (e.target === e.currentTarget) {
+            onClose();
+        }
+    };
+
+    return (
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4"
+            onClick={handleBackdropClick}
+            aria-modal="true"
+            role="dialog"
+        >
+            <div
+                className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md relative"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <button
+                    onClick={onClose}
+                    className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-2xl font-bold p-1 leading-none"
+                    aria-label="Close modal"
+                >
+                    ×
+                </button>
+                {children}
+            </div>
+        </div>
+    );
+};
+
+export default Modal;
+</file>
+
+<file path="client/src/context/AuthContext.js">
+// src/context/AuthContext.js
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { login as apiLogin, getUserProfile } from '../api';
+
+const AuthContext = createContext();
+
+export const useAuth = () => useContext(AuthContext);
+
+export const AuthProvider = ({ children }) => {
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    // Check for saved token on component mount
+    useEffect(() => {
+        const checkAuth = async () => {
+            const token = localStorage.getItem('token');
+            console.log('Initial auth check - Token exists:', !!token);
+
+            if (token) {
+                try {
+                    // Verify the token by getting user profile
+                    const userData = await getUserProfile();
+                    setUser(userData);
+                } catch (error) {
+                    console.error('Invalid token, removing it:', error);
+                    localStorage.removeItem('token');
+                }
+            }
+            setLoading(false);
+        };
+
+        checkAuth();
+    }, []);
+
+    const login = async (email, password) => {
+        try {
+            // Call the API login function
+            const response = await apiLogin({ email, password });
+            console.log('Login response:', response);
+
+            if (!response.token) {
+                console.error('No token received from server');
+                return { success: false, error: 'Authentication failed' };
+            }
+
+            // Store token in localStorage
+            localStorage.setItem('token', response.token);
+            console.log('Token stored in localStorage');
+
+            // Get user information with the token
+            const userData = await getUserProfile();
+            console.log('User data fetched:', userData);
+            setUser(userData);
+
+            return { success: true };
+        } catch (error) {
+            console.error('Login error:', error);
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Login failed. Please check your credentials.'
+            };
+        }
+    };
+
+    const logout = () => {
+        localStorage.removeItem('token');
+        setUser(null);
+    };
+
+    // Provide these values to all components
+    const value = {
+        user,
+        loading,
+        login,
+        logout,
+    };
+
+    return (
+        <AuthContext.Provider value={value}>
+            {children}
+        </AuthContext.Provider>
+    );
+};
+</file>
+
+<file path="client/src/Login/AdminUserList.js">
+import React, { useState, useEffect, useCallback } from "react";
+import { getAllUsers, updateUserRole, deleteUser, register } from "../api";
+import { useAuth } from "../context/AuthContext";
+import { FaTrashAlt } from "react-icons/fa";
+
+function AdminUserListPage() {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
+  const { user: currentUser } = useAuth();
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newUser, setNewUser] = useState({
+    username: "",
+    email: "",
+    password: "",
+  });
+  const [addUserError, setAddUserError] = useState("");
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      setSuccessMessage("");
+
+      const fetched = await getAllUsers();
+      setUsers(Array.isArray(fetched) ? fetched : []);
+    } catch (err) {
+      console.error("Fetch Users Error:", err);
+      setError(
+        `Failed to load users. ${err.response?.data?.error || err.message}`
+      );
+      setUsers([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  /* -------------------- Role Change ------------------- */
+  const handleRoleChange = async (userId, newRole) => {
+    if (
+      !window.confirm(
+        `Are you sure you want to change this user's role to "${newRole}"?`
+      )
+    ) {
+      return;
+    }
+
+    if (currentUser && currentUser.id === userId) {
+      setError("You cannot change your own role from this page.");
+      setTimeout(() => setError(null), 4000);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      setSuccessMessage("");
+
+      const updatedUser = await updateUserRole(userId, newRole);
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.userid === userId ? { ...u, role: updatedUser.role } : u
+        )
+      );
+      setSuccessMessage(
+        `Successfully updated role for ${
+          updatedUser.username || updatedUser.email
+        } to ${updatedUser.role}.`
+      );
+      setTimeout(() => setSuccessMessage(""), 4000);
+    } catch (err) {
+      console.error("Update Role Error:", err);
+      setError(
+        `Failed to update role. ${err.response?.data?.error || err.message}`
+      );
+      setTimeout(() => setError(null), 4000);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading && users.length === 0) {
+    return (
+      <div className="flex justify-center items-center h-40 text-gray-600">
+        Loading users...
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 max-w-5xl mx-auto bg-gray-50 rounded-lg shadow mb-8">
+      <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">
+        Admin – Manage User Roles
+      </h2>
+
+      {/* Error message */}
+      {error && (
+        <div className="relative bg-red-50 border border-red-400 text-red-700 rounded p-4 mb-4 flex justify-between items-start">
+          <span className="text-sm font-medium">{error}</span>
+          <button
+            onClick={() => setError(null)}
+            className="absolute top-1/2 -translate-y-1/2 right-3 text-lg leading-none"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {/* Success message */}
+      {successMessage && (
+        <div className="relative bg-green-50 border border-green-400 text-green-800 rounded p-4 mb-4 flex justify-between items-start">
+          <span className="text-sm font-medium">{successMessage}</span>
+          <button
+            onClick={() => setSuccessMessage("")}
+            className="absolute top-1/2 -translate-y-1/2 right-3 text-lg leading-none"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {loading && users.length > 0 && (
+        <div className="text-center italic text-sm text-gray-500 mb-2">
+          Updating...
+        </div>
+      )}
+
+      {/* Add Member button */}
+      <div className="flex justify-end mb-4">
+        <button
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          onClick={() => {
+            setNewUser({ username: "", email: "", password: "" });
+            setShowAddForm(true);
+          }}
+        >
+          + Add Member
+        </button>
+      </div>
+
+      {/* Users table */}
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                Username
+              </th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                Email
+              </th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                Current Role
+              </th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                Change Role To
+              </th>
+              <th className="px-4 py-2 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {users.length === 0 && !loading ? (
+              <tr>
+                <td colSpan={5} className="px-4 py-6 text-center text-gray-500">
+                  No users found.
+                </td>
+              </tr>
+            ) : (
+              users.map((user) => (
+                <tr key={user.userid} className="odd:bg-white even:bg-gray-50">
+                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-800">
+                    {user.username || "N/A"}
+                  </td>
+                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-800">
+                    {user.email}
+                  </td>
+                  <td className="px-4 py-2 whitespace-nowrap text-sm">
+                    <span
+                      className={`px-2 py-1 rounded text-xs font-semibold text-white ${
+                        user.role === "admin" ? "bg-red-600" : "bg-blue-600"
+                      }`}
+                    >
+                      {user.role}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2 whitespace-nowrap text-sm">
+                    {currentUser && currentUser.id === user.userid ? (
+                      <span className="italic text-gray-500">(Your Role)</span>
+                    ) : (
+                      <select
+                        value={user.role}
+                        onChange={(e) =>
+                          handleRoleChange(user.userid, e.target.value)
+                        }
+                        className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        disabled={loading}
+                      >
+                        <option value="user">user</option>
+                        <option value="admin">admin</option>
+                      </select>
+                    )}
+                  </td>
+                  <td className="px-4 py-2 whitespace-nowrap text-sm text-right">
+                    {currentUser && currentUser.id === user.userid ? null : (
+                      <button
+                        onClick={() => setUserToDelete(user)}
+                        className="text-red-600 hover:text-red-800"
+                        title="Delete user"
+                      >
+                        <FaTrashAlt className="inline-block h-4 w-4" />
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Confirmation Modal */}
+      {showAddForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+          <div className="bg-white rounded-lg p-6 shadow-lg max-w-md w-full">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Add New Member
+            </h3>
+
+            {addUserError && (
+              <div className="text-sm text-red-600 mb-2">{addUserError}</div>
+            )}
+
+            <div className="space-y-3">
+              <input
+                type="text"
+                name="username"
+                placeholder="Username"
+                autoComplete="new-username"
+                value={newUser.username}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, username: e.target.value })
+                }
+                className="w-full border px-3 py-2 rounded text-sm"
+              />
+              <input
+                type="email"
+                name="email"
+                placeholder="Email"
+                autoComplete="new-email"
+                value={newUser.email}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, email: e.target.value })
+                }
+                className="w-full border px-3 py-2 rounded text-sm"
+              />
+              <input
+                type="password"
+                name="password"
+                placeholder="Password"
+                autoComplete="new-password"
+                value={newUser.password}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, password: e.target.value })
+                }
+                className="w-full border px-3 py-2 rounded text-sm"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 mt-4">
+              <button
+                className="px-4 py-2 text-sm bg-gray-200 rounded hover:bg-gray-300"
+                onClick={() => {
+                  setShowAddForm(false);
+                  setNewUser({ username: "", email: "", password: "" });
+                  setAddUserError("");
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                onClick={async () => {
+                  setAddUserError("");
+                  try {
+                    await register(newUser);
+                    await fetchUsers();
+                    setShowAddForm(false);
+                    setNewUser({ username: "", email: "", password: "" });
+                    setSuccessMessage("New member added successfully.");
+                    setTimeout(() => setSuccessMessage(""), 3000);
+                  } catch (err) {
+                    setAddUserError(
+                      err.response?.data?.error || "Failed to add member."
+                    );
+                  }
+                }}
+              >
+                Add
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {userToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+          <div className="bg-white rounded-lg p-6 shadow-lg max-w-sm w-full">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Confirm Deletion
+            </h3>
+            <p className="text-sm text-gray-600 mb-6">
+              Are you sure you want to remove{" "}
+              <span className="font-semibold">
+                {userToDelete.username || userToDelete.email}
+              </span>
+              ? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                className="px-4 py-2 text-sm bg-gray-200 rounded hover:bg-gray-300"
+                onClick={() => setUserToDelete(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+                onClick={async () => {
+                  try {
+                    setLoading(true);
+                    await deleteUser(userToDelete.userid);
+                    setUsers((prev) =>
+                      prev.filter((u) => u.userid !== userToDelete.userid)
+                    );
+                    setSuccessMessage("User removed successfully.");
+                    setUserToDelete(null);
+                    setTimeout(() => setSuccessMessage(""), 3000);
+                  } catch (err) {
+                    console.error("Delete User Error:", err);
+                    setError("Failed to delete user.");
+                    setTimeout(() => setError(null), 4000);
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+export default AdminUserListPage;
+</file>
+
+<file path="client/src/Login/Login.js">
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
+function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    try {
+      const result = await login(email, password);
+      if (result.success) {
+        navigate("/inventory");
+      } else {
+        setError(result.error || "Login failed. Please try again.");
+      }
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.");
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md space-y-8">
+        <h2 className="text-center text-3xl font-extrabold text-gray-900">Login</h2>
+
+        {error && (
+          <div className="rounded-md bg-red-50 border border-red-400 p-3 text-center text-sm font-medium text-red-700">
+            {error}
+          </div>
+        )}
+
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div className="relative rounded-md shadow-sm">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              Email
+            </label>
+            <input
+              type="email"
+              id="email"
+              className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:text-sm"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="relative rounded-md shadow-sm">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              Password
+            </label>
+            <input
+              type="password"
+              id="password"
+              className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:text-sm"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full flex justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            Login
+          </button>
+        </form>
+
+        <p className="mt-4 text-center text-sm text-gray-600">
+          Don't have an account? {" "}
+          <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
+            Register here
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export default Login;
+</file>
+
+<file path="client/src/Login/ProtectedRoute.js">
+// client/src/components/ProtectedRoute.js
+import React from 'react';
+import { Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+
+// allowedRoles is an array, e.g., ['admin'] or ['admin', 'manager']
+function ProtectedRoute({ allowedRoles }) {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    // Show a loading indicator while auth state is being determined
+    return <div>Loading...</div>;
+  }
+
+  if (!user) {
+    // Not logged in, redirect to login page
+    // Pass the current location so we can redirect back after login (optional)
+    return <Navigate to="/login" replace />;
+  }
+
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    // Logged in, but doesn't have the required role
+    // Redirect to a "Not Authorized" page or the home page
+    console.warn(`User with role '${user.role}' tried to access restricted route.`);
+    return <Navigate to="/" replace />; // Redirect to home page
+  }
+
+  // User is authenticated and has the required role (or no specific role is required)
+  // Render the child component passed to this route
+  return <Outlet />;
+}
+
+export default ProtectedRoute;
+</file>
+
+<file path="client/src/Login/Register.js">
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { register as apiRegister } from "../api";
+
+function Register() {
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    try {
+      await apiRegister({
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+      });
+      navigate("/login");
+    } catch (err) {
+      setError(err.response?.data?.error || "Registration failed. Please try again.");
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md space-y-8">
+        <h2 className="text-center text-3xl font-extrabold text-gray-900">Create Account</h2>
+
+        {error && (
+          <div className="rounded-md bg-red-50 border border-red-400 p-3 text-center text-sm font-medium text-red-700">
+            {error}
+          </div>
+        )}
+
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          {/* Username */}
+          <div>
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+              Username
+            </label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              required
+              value={formData.username}
+              onChange={handleChange}
+              placeholder="Choose a username"
+              className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:text-sm"
+            />
+          </div>
+
+          {/* Email */}
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              Email
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              required
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Enter your email"
+              className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:text-sm"
+            />
+          </div>
+
+          {/* Password */}
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              Password
+            </label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              required
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Enter your password"
+              className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:text-sm"
+            />
+          </div>
+
+          {/* Confirm Password */}
+          <div>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+              Confirm Password
+            </label>
+            <input
+              type="password"
+              id="confirmPassword"
+              name="confirmPassword"
+              required
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              placeholder="Confirm your password"
+              className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:text-sm"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full flex justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            Register
+          </button>
+        </form>
+
+        <p className="mt-4 text-center text-sm text-gray-600">
+          Already have an account? {" "}
+          <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
+            Login here
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export default Register;
+</file>
+
+<file path="client/src/Main/Order/History.jsx">
+import React, { useEffect, useState, useMemo, useCallback } from "react";
+import { getDeliveredOrders } from "../../api";
+import Modal from '../../components/Modal';
+
+const OrderFilterModalContent = ({
+    initialFilters,
+    onApply,
+    onReset,
+    onClose,
+    availableProducts,
+    availableSuppliers
+}) => {
+    const [localFilters, setLocalFilters] = useState(
+        initialFilters || { productNames: [], supplierNames: [], deliveryStatus: 'all' }
+    );
+
+    useEffect(() => {
+        setLocalFilters(initialFilters || { productNames: [], supplierNames: [], deliveryStatus: 'all' });
+    }, [initialFilters]);
+
+    const handleChange = (event) => {
+        const { name, value } = event.target;
+        setLocalFilters(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleProductCheckboxChange = (event) => {
+        const { value, checked } = event.target;
+        setLocalFilters(prev => {
+            const currentProductNames = prev.productNames || [];
+            if (checked) {
+                return { ...prev, productNames: [...currentProductNames, value] };
+            } else {
+                return { ...prev, productNames: currentProductNames.filter(name => name !== value) };
+            }
+        });
+    };
+
+    const handleSupplierCheckboxChange = (event) => {
+        const { value, checked } = event.target;
+        setLocalFilters(prev => {
+            const currentSupplierNames = prev.supplierNames || [];
+            if (checked) {
+                return { ...prev, supplierNames: [...currentSupplierNames, value] };
+            } else {
+                return { ...prev, supplierNames: currentSupplierNames.filter(name => name !== value) };
+            }
+        });
+    };
+
+    const handleApply = () => { onApply(localFilters); };
+
+    const handleReset = () => {
+        const defaultFilters = { productNames: [], supplierNames: [], deliveryStatus: 'all' };
+        setLocalFilters(defaultFilters);
+        onReset();
+    };
+
+    const labelStyle = "block text-sm font-medium text-gray-700 mb-1";
+    const selectStyle = "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm mt-1 appearance-none bg-white";
+    const checkboxLabelStyle = "flex items-center space-x-2 cursor-pointer px-2 py-1 hover:bg-gray-50 rounded";
+    const checkboxInputStyle = "rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-offset-0 focus:ring-indigo-200 focus:ring-opacity-50";
+    const checkboxContainerStyle = "max-h-40 overflow-y-auto border border-gray-300 rounded-md p-2 space-y-1";
+    const buttonBaseStyle = "px-4 py-2 text-sm font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2";
+    const cancelButtonStyle = `${buttonBaseStyle} text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:ring-indigo-500`;
+    const resetButtonStyle = `${buttonBaseStyle} text-red-700 bg-red-100 border border-transparent hover:bg-red-200 focus:ring-red-500`;
+    const applyButtonStyle = `${buttonBaseStyle} text-white bg-indigo-600 border border-transparent hover:bg-indigo-700 focus:ring-indigo-500`;
+
+    return (
+        <div>
+            <h3 className="text-lg font-medium mb-4 text-gray-800">Filter Orders</h3>
+            <div className="space-y-4 mb-6">
+                <div>
+                    <label className={labelStyle}>Products:</label>
+                    <div className={checkboxContainerStyle}>
+                        {availableProducts.length === 0 && <p className="text-sm text-gray-500 px-2">No products found.</p>}
+                        {availableProducts.map(product => (
+                            <label key={`prod-${product}`} className={checkboxLabelStyle}>
+                                <input
+                                    type="checkbox"
+                                    name="productNames"
+                                    value={product}
+                                    checked={localFilters.productNames?.includes(product) || false}
+                                    onChange={handleProductCheckboxChange}
+                                    className={checkboxInputStyle}
+                                />
+                                <span className="text-sm">{product}</span>
+                            </label>
+                        ))}
+                    </div>
+                </div>
+                <div>
+                    <label className={labelStyle}>Suppliers:</label>
+                    <div className={checkboxContainerStyle}>
+                        {availableSuppliers.length === 0 && <p className="text-sm text-gray-500 px-2">No suppliers found.</p>}
+                        {availableSuppliers.map(supplier => (
+                            <label key={`supp-${supplier}`} className={checkboxLabelStyle}>
+                                <input
+                                    type="checkbox"
+                                    name="supplierNames"
+                                    value={supplier}
+                                    checked={localFilters.supplierNames?.includes(supplier) || false}
+                                    onChange={handleSupplierCheckboxChange}
+                                    className={checkboxInputStyle}
+                                />
+                                <span className="text-sm">{supplier}</span>
+                            </label>
+                        ))}
+                    </div>
+                </div>
+                <div>
+                    <label htmlFor="deliveryStatusFilter" className={labelStyle}>Delivery Status:</label>
+                    <select
+                        id="deliveryStatusFilter"
+                        name="deliveryStatus"
+                        value={localFilters.deliveryStatus}
+                        onChange={handleChange}
+                        className={selectStyle}
+                    >
+                        <option value="all">All Statuses</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="pending">Pending</option>
+                    </select>
+                </div>
+            </div>
+            <div className="flex justify-end space-x-3">
+                <button type="button" onClick={onClose} className={cancelButtonStyle}> Cancel </button>
+                <button type="button" onClick={handleReset} className={resetButtonStyle}> Reset </button>
+                <button type="button" onClick={handleApply} className={applyButtonStyle}> Apply Filters </button>
+            </div>
+        </div>
+    );
+};
+
+const FilterIcon = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+    </svg>
+);
+const SortIcon = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" />
+    </svg>
+);
+const XMarkIcon = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+);
+
+const OrderHistory = () => {
+    const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [sortConfig, setSortConfig] = useState({ key: 'order_date', direction: 'descending' });
+    const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+    const defaultFilters = useMemo(() => ({ productNames: [], supplierNames: [], deliveryStatus: 'all' }), []);
+    const [activeFilters, setActiveFilters] = useState(defaultFilters);
+
+    useEffect(() => {
+        setLoading(true);
+        setError(null);
+        getDeliveredOrders()
+            .then((data) => {
+                setOrders(Array.isArray(data) ? data : []);
+                setLoading(false);
+            })
+            .catch((err) => {
+                console.error("Error loading orders:", err);
+                setError("Failed to load order history.");
+                setLoading(false);
+            });
+    }, []);
+
+    const availableProducts = useMemo(() => {
+        if (!orders || orders.length === 0) return [];
+        const productSet = new Set();
+        orders.forEach(order => {
+            if (Array.isArray(order.order_detail)) {
+                order.order_detail.forEach(item => {
+                    if (item.products?.product_name) productSet.add(item.products.product_name);
+                });
+            }
+        });
+        return Array.from(productSet).sort((a, b) => a.localeCompare(b));
+    }, [orders]);
+
+    const availableSuppliers = useMemo(() => {
+        if (!orders || orders.length === 0) return [];
+        const supplierSet = new Set();
+        orders.forEach(order => {
+            if (Array.isArray(order.order_detail)) {
+                order.order_detail.forEach(item => {
+                    if (item.products?.supplier?.supplier_name) supplierSet.add(item.products.supplier.supplier_name);
+                });
+            }
+        });
+        return Array.from(supplierSet).sort((a, b) => a.localeCompare(b));
+    }, [orders]);
+
+    const filteredAndSortedOrders = useMemo(() => {
+        let processedOrders = [...orders];
+        const selectedProductNames = activeFilters.productNames || [];
+        const selectedSupplierNames = activeFilters.supplierNames || [];
+        const statusFilter = activeFilters.deliveryStatus;
+
+        processedOrders = processedOrders.filter(order => {
+            let matchesStatus = true;
+            if (statusFilter === 'delivered') matchesStatus = !!order.delivered_date;
+            else if (statusFilter === 'pending') matchesStatus = !order.delivered_date;
+            if (!matchesStatus) return false;
+
+            const matchesProduct = selectedProductNames.length === 0 || (
+                Array.isArray(order.order_detail) &&
+                order.order_detail.some(item =>
+                    item.products?.product_name && selectedProductNames.includes(item.products.product_name)
+                )
+            );
+            if (!matchesProduct) return false;
+
+            const matchesSupplier = selectedSupplierNames.length === 0 || (
+                Array.isArray(order.order_detail) &&
+                order.order_detail.some(item =>
+                    item.products?.supplier?.supplier_name && selectedSupplierNames.includes(item.products.supplier.supplier_name)
+                )
+            );
+            return matchesSupplier;
+        });
+
+        if (sortConfig.key !== null) {
+            processedOrders.sort((a, b) => {
+                let aValue = a[sortConfig.key]; let bValue = b[sortConfig.key];
+                if (sortConfig.key.includes('date')) { aValue = aValue ? new Date(aValue).getTime() : 0; bValue = bValue ? new Date(bValue).getTime() : 0; }
+                else if (sortConfig.key === 'total_amount') { aValue = Number(aValue) || 0; bValue = Number(bValue) || 0; }
+                else if (typeof aValue === 'string' && typeof bValue === 'string') { aValue = aValue.toLowerCase(); bValue = bValue.toLowerCase(); }
+                else { aValue = aValue ?? ''; bValue = bValue ?? ''; }
+                if (aValue < bValue) return sortConfig.direction === 'ascending' ? -1 : 1;
+                if (aValue > bValue) return sortConfig.direction === 'ascending' ? 1 : -1;
+                return 0;
+            });
+        }
+        return processedOrders;
+    }, [orders, sortConfig, activeFilters]);
+
+    const handleSortClick = () => {
+        setSortConfig(prev => ({ ...prev, direction: prev.direction === 'ascending' ? 'descending' : 'ascending' }));
+    };
+    const handleFilterIconClick = () => setIsFilterModalOpen(true);
+    const handleCloseModal = useCallback(() => setIsFilterModalOpen(false), []);
+    const handleApplyFilters = useCallback((filtersFromModal) => {
+        setActiveFilters(filtersFromModal);
+        setIsFilterModalOpen(false);
+    }, []);
+    const handleResetFilters = useCallback(() => {
+        setActiveFilters(defaultFilters);
+    }, [defaultFilters]);
+    const formatDate = (dateStr) => {
+        if (!dateStr) return 'N/A';
+        try {
+            return new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        } catch (e) {
+            console.error("Error formatting date:", dateStr, e);
+            return 'Invalid Date';
+        }
+    };
+
+    const activeFilterCount = useMemo(() => {
+        return Object.entries(activeFilters).reduce((count, [key, value]) => {
+            if (key === 'deliveryStatus' && value !== 'all') return count + 1;
+            if (key === 'productNames' && Array.isArray(value) && value.length > 0) return count + 1;
+            if (key === 'supplierNames' && Array.isArray(value) && value.length > 0) return count + 1;
+            return count;
+        }, 0);
+    }, [activeFilters]);
+
+    if (loading) return <div className="p-6 text-center">Loading order history...</div>;
+    if (error) return <div className="p-6 text-center text-red-600">{error}</div>;
+
+    return (
+        <div className="p-6 bg-gray-50 min-h-screen">
+            <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-[#2F4271]">Order History</h2>
+                <div className="flex items-center space-x-3">
+                    <button
+                        onClick={handleSortClick}
+                        className="p-1 rounded hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500"
+                        aria-label="Sort orders"
+                        title={`Sort by Date (${sortConfig.direction === 'ascending' ? 'Oldest First' : 'Newest First'})`}
+                    >
+                        <SortIcon className="w-5 h-5 text-gray-600 hover:text-gray-800" />
+                    </button>
+                    <button
+                        onClick={handleFilterIconClick}
+                        className="relative p-1 rounded hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500"
+                        aria-label="Filter orders"
+                        title="Filter orders"
+                    >
+                        <FilterIcon className="w-5 h-5 text-gray-600 hover:text-gray-800" />
+                        {activeFilterCount > 0 && (
+                            <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
+                                {activeFilterCount}
+                            </span>
+                        )}
+                    </button>
+                    {activeFilterCount > 0 && (
+                        <button
+                            onClick={handleResetFilters}
+                            className="flex items-center px-2 py-1 text-xs text-red-600 border border-red-300 rounded hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500"
+                            aria-label="Clear active filters"
+                            title="Clear active filters"
+                        >
+                            <XMarkIcon className="w-3 h-3 mr-1" />
+                            Clear Filters
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            <Modal isOpen={isFilterModalOpen} onClose={handleCloseModal}>
+                <OrderFilterModalContent
+                    initialFilters={activeFilters}
+                    onApply={handleApplyFilters}
+                    onReset={handleResetFilters}
+                    onClose={handleCloseModal}
+                    availableProducts={availableProducts}
+                    availableSuppliers={availableSuppliers}
+                />
+            </Modal>
+
+            {filteredAndSortedOrders.length === 0 ? (
+                 <p className="text-gray-600 text-center py-4">
+                     {activeFilterCount > 0 ? 'No orders match filters.' : 'No delivered orders yet.'}
+                 </p>
+             ) : (
+                <div className="space-y-6">
+                    {filteredAndSortedOrders.map((order) => (
+                        <div key={order.orderid} className="border border-gray-300 rounded-lg shadow-sm bg-white overflow-hidden">
+                            <div className="flex justify-between items-center bg-gray-100 px-4 py-3 border-b border-gray-200">
+                                <div className="w-1/3 text-left text-lg font-bold text-[#2F4271]">
+                                   {formatDate(order.order_date)}
+                                </div>
+                                <div className="flex-grow text-center text-sm font-semibold text-gray-900 px-2">
+                                   Total Cost: ${Number(order.total_amount)?.toFixed(2) ?? '0.00'}
+                                </div>
+                                <div className="w-1/3 flex justify-end items-center space-x-2">
+                                    <div className="text-sm text-gray-700 text-right">
+                                        {order.delivered_date ? `Delivered: ${formatDate(order.delivered_date)}` : 'Delivery Pending'}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="p-4">
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full text-sm table-fixed">
+                                        <thead className="bg-gray-50">
+                                            <tr className="border-b border-gray-200">
+                                                <th className="w-4/12 px-3 py-2 text-left font-medium text-gray-600 uppercase tracking-wider">Product</th>
+                                                <th className="w-3/12 px-3 py-2 text-left font-medium text-gray-600 uppercase tracking-wider">Supplier</th>
+                                                <th className="w-1/12 px-3 py-2 text-center font-medium text-gray-600 uppercase tracking-wider">Qty</th>
+                                                <th className="w-2/12 px-3 py-2 text-center font-medium text-gray-600 uppercase tracking-wider">Price/Unit</th>
+                                                <th className="w-2/12 px-3 py-2 text-right font-medium text-gray-600 uppercase tracking-wider">Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {Array.isArray(order.order_detail) && order.order_detail.length > 0 ? (
+                                                order.order_detail.map((item, index) => (
+                                                    <tr key={index}>
+                                                        <td className="px-3 py-2 whitespace-nowrap overflow-hidden text-ellipsis text-left">{item.products?.product_name || 'N/A'}</td>
+                                                        <td className="px-3 py-2 whitespace-nowrap overflow-hidden text-ellipsis text-left">{item.products?.supplier?.supplier_name || 'N/A'}</td>
+                                                        <td className="px-3 py-2 text-center">{item.requested_quantity ?? 'N/A'}</td>
+                                                        <td className="px-3 py-2 text-center">${Number(item.unit_price)?.toFixed(2) ?? '0.00'}</td>
+                                                        <td className="px-3 py-2 text-right font-medium">${(Number(item.unit_price) * Number(item.requested_quantity))?.toFixed(2) ?? '0.00'}</td>
+                                                    </tr>
+                                                ))
+                                            ) : (
+                                                <tr><td colSpan="5" className="px-3 py-2 text-center text-gray-500 italic">Order details not available.</td></tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                 </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default OrderHistory;
+</file>
+
+<file path="client/src/Main/Order/List.jsx">
+// Updated List.jsx that groups items by supplier with edit support
+import React, { useEffect, useState } from "react";
+import { useAuth } from "../../context/AuthContext";
+import { useOrderCart } from "../OrderCartContext";
+import {
+  getInventory,
+  getSuppliers,
+  createOrder,
+  addOrderDetails,
+  updateItem 
+} from "../../api";
+
+function useStateWithLocalStorage(key, initialValue) {
+  const [value, setValue] = useState(() => {
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : initialValue;
+  });
+
+  useEffect(() => {
+    localStorage.setItem(key, JSON.stringify(value));
+  }, [key, value]);
+
+  return [value, setValue];
+}
+
+const OrderList = () => {
+  const { user } = useAuth();
+  const { cartItems, clearCart } = useOrderCart();
+  const [products, setProducts] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
+  const [formData, setFormData] = useState({
+    productid: "",
+    quantity: "",
+    price: "",
+    order_unit: "",
+    supplier_name: "",
+  });
+  const [groupedItems, setGroupedItems] = useStateWithLocalStorage("groupedOrderItems", {});
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [editingSupplier, setEditingSupplier] = useState(null);
+  const [editedItem, setEditedItem] = useState(null);
+
+  useEffect(() => {
+    getInventory().then(setProducts);
+    getSuppliers().then(setSuppliers);
+  }, []);
+
+  useEffect(() => {
+    if (cartItems.length > 0) {
+      const newGrouped = { ...groupedItems };
+      cartItems.forEach(ci => {
+        const supplier = suppliers.find(s => s.supplierid === ci.supplierid)?.supplier_name;
+        if (!supplier) return;
+        if (!newGrouped[supplier]) newGrouped[supplier] = [];
+        newGrouped[supplier].push({
+          productid: ci.productid,
+          product_name: ci.product_name,
+          quantity: ci.requested_quantity,
+          price: ci.unit_price,
+          order_unit: ci.order_unit || "",
+          supplier_name: supplier,
+        });
+      });
+      setGroupedItems(newGrouped);
+      clearCart();
+    }
+  }, [cartItems]);
+
+  const handleAddItem = () => {
+    const { productid, quantity, price, order_unit, supplier_name } = formData;
+    if (productid && quantity && price && order_unit && supplier_name) {
+      const product = products.find(p => p.productid.toString() === productid);
+      const newItem = {
+        productid,
+        quantity: parseInt(quantity),
+        price: parseFloat(price),
+        order_unit: formData.order_unit,
+        product_name: product?.product_name || "",
+        supplier_name,
+      };
+      setGroupedItems(prev => {
+        const current = prev[supplier_name] || [];
+        return { ...prev, [supplier_name]: [...current, newItem] };
+      });
+      setFormData({ productid: "", quantity: "", price: "", order_unit: "", supplier_name: "" });
+    }
+  };
+
+  const handleEditItem = (supplier, index) => {
+    setEditingSupplier(supplier);
+    setEditingIndex(index);
+    setEditedItem({ ...groupedItems[supplier][index] });
+  };
+
+  const handleSaveEdit = () => {
+    setGroupedItems(prev => {
+      const updated = [...prev[editingSupplier]];
+      updated[editingIndex] = editedItem;
+      return { ...prev, [editingSupplier]: updated };
+    });
+    setEditingIndex(null);
+    setEditedItem(null);
+    setEditingSupplier(null);
+  };
+
+  const handleDeleteItem = (supplier, index) => {
+    setGroupedItems(prev => {
+      const updated = [...prev[supplier]];
+      updated.splice(index, 1);
+      if (updated.length === 0) {
+        const { [supplier]: _, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [supplier]: updated };
+    });
+  };
+
+  const handlePlaceOrderForSupplier = async (supplierName, items) => {
+    const supplierid = suppliers.find(s => s.supplier_name === supplierName)?.supplierid;
+    if (!supplierid) return alert("Supplier not found");
+  
+    const subtotal = items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+    const tax = subtotal * 0.05;
+    const total = subtotal + tax;
+  
+    const order = await createOrder({
+      order_date: new Date().toISOString().split("T")[0],
+      total_amount: total,
+      supplierid,
+      userid: user.userid,
+    });
+  
+    const detailItems = items.map(item => ({
+      orderid: order.orderid,
+      productid: item.productid,
+      supplierid,
+      unit_price: item.price,
+      requested_quantity: item.quantity,
+      order_unit: item.order_unit,
+    }));
+  
+    await addOrderDetails(detailItems);
+  
+    // 🛠️ Patch supplierid in products if missing
+    for (const item of detailItems) {
+      const product = products.find(p => p.productid === item.productid);
+      if (!product?.supplierid || product?.supplier?.supplier_name === "N/A") {
+        try {
+          await updateItem(item.productid, { supplierid: item.supplierid });
+        } catch (err) {
+          console.warn(`Could not update product ${item.productid}:`, err.message);
+        }
+      }
+    }
+  
+    alert(`Order placed for ${supplierName}`);
+  
+    setGroupedItems(prev => {
+      const copy = { ...prev };
+      delete copy[supplierName];
+      return copy;
+    });
+  };  
+
+  return (
+    <div className="p-6">
+      <h2 className="text-xl font-bold text-center mb-4">
+        {new Date().toLocaleDateString()}
+      </h2>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        <select
+          name="productid"
+          value={formData.productid}
+          onChange={e => setFormData({ ...formData, productid: e.target.value })}
+          className="border rounded px-3 py-2"
+        >
+          <option value="">Select Product</option>
+          {products.map(p => (
+            <option key={p.productid} value={p.productid}>{p.product_name}</option>
+          ))}
+        </select>
+        <input type="number" name="quantity" value={formData.quantity}
+          onChange={e => setFormData({ ...formData, quantity: e.target.value })}
+          placeholder="Quantity" className="border rounded px-3 py-2" />
+        <input type="number" name="price" value={formData.price}
+          onChange={e => setFormData({ ...formData, price: e.target.value })}
+          placeholder="Price" className="border rounded px-3 py-2" />
+        <input
+            name="order_unit"
+            value={formData.order_unit}
+            onChange={e => setFormData({ ...formData, order_unit: e.target.value })}
+            placeholder="Order Unit (e.g. case, box)"
+            className="border rounded px-3 py-2"
+        />
+        <input name="supplier_name" list="supplier-options" value={formData.supplier_name}
+          onChange={e => setFormData({ ...formData, supplier_name: e.target.value })}
+          placeholder="Supplier Name" className="border rounded px-3 py-2" />
+        <datalist id="supplier-options">
+          {suppliers.map(s => <option key={s.supplierid} value={s.supplier_name} />)}
+        </datalist>
+        <button className="bg-[#7E82A4] text-white rounded px-4 py-2 shadow" onClick={handleAddItem}>
+          Add
+        </button>
+      </div>
+
+      {Object.entries(groupedItems).map(([supplier, items]) => {
+        const subtotal = items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+        const tax = subtotal * 0.05;
+        const total = subtotal + tax;
+
+        return (
+          <div key={supplier} className="mb-8 border p-4 rounded shadow bg-white">
+            <h3 className="text-lg font-semibold mb-2">Supplier: {supplier}</h3>
+            <table className="min-w-full mb-4">
+              <thead>
+                <tr className="bg-gray-100 text-left">
+                  <th className="px-3 py-2">Product</th>
+                  <th className="px-3 py-2">Quantity</th>
+                  <th className="px-3 py-2">Price</th>
+                  <th className="px-3 py-2">Total</th>
+                  <th className="px-3 py-2">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item, idx) => (
+                  <tr key={idx} className="border-t">
+                    <td className="px-3 py-2">{item.product_name}</td>
+                    <td className="px-3 py-2">
+                      {editingIndex === idx && editingSupplier === supplier ? (
+                        <input
+                          type="number"
+                          value={editedItem.quantity}
+                          onChange={e => setEditedItem({ ...editedItem, quantity: e.target.value })}
+                          className="border rounded px-2 py-1 w-20"
+                        />
+                      ) : item.quantity}
+                    </td>
+                    <td className="px-3 py-2">
+                      {editingIndex === idx && editingSupplier === supplier ? (
+                        <input
+                          type="number"
+                          value={editedItem.price}
+                          onChange={e => setEditedItem({ ...editedItem, price: e.target.value })}
+                          className="border rounded px-2 py-1 w-20"
+                        />
+                      ) : `$${parseFloat(item.price).toFixed(2)}`}
+                    </td>
+                    <td className="px-3 py-2">
+                      ${(item.quantity * item.price).toFixed(2)}
+                    </td>
+                    <td className="px-3 py-2 space-x-2">
+                      {editingIndex === idx && editingSupplier === supplier ? (
+                        <>
+                          <button onClick={handleSaveEdit} className="bg-[#7E82A4] text-white px-3 py-1 rounded text-sm">Save</button>
+                          <button onClick={() => { setEditingIndex(null); setEditedItem(null); setEditingSupplier(null); }} className="bg-gray-300 text-black px-3 py-1 rounded text-sm">Cancel</button>
+                        </>
+                      ) : (
+                        <button onClick={() => handleEditItem(supplier, idx)} className="bg-[#7E82A4] text-white px-3 py-1 rounded text-sm">Edit</button>
+                      )}
+                      <button onClick={() => handleDeleteItem(supplier, idx)} className="bg-[#D99292] text-white px-3 py-1 rounded text-sm">Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="text-right mb-2">
+              <p>Subtotal: ${subtotal.toFixed(2)}</p>
+              <p>Tax (5%): ${tax.toFixed(2)}</p>
+              <p className="font-bold">Total: ${total.toFixed(2)}</p>
+            </div>
+            {user?.role === "admin" ? (
+              <button className="bg-[#7E82A4] text-white px-4 py-2 rounded" onClick={() => handlePlaceOrderForSupplier(supplier, items)}>
+                Place Order for {supplier}
+              </button>
+            ) : (
+              <p className="italic text-sm text-gray-500">Only admins can place orders.</p>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+export default OrderList;
+</file>
+
+<file path="client/src/Main/Order/Pending.jsx">
+import React, { useEffect, useState } from "react";
+import {
+  getPendingOrders,
+  getProcessingOrders,
+  updateOrderStatus,
+  addInventoryStock,
+} from "../../api";
+
+const OrderPending = () => {
+  const [orders, setOrders] = useState([]);
+  const [expanded, setExpanded] = useState(null);
+  const [deliveryDates, setDeliveryDates] = useState({});
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const pending = await getPendingOrders();
+        const processing = await getProcessingOrders();
+        const all = [...pending, ...processing];
+
+        setOrders(all);
+
+        const defaults = {};
+        all.forEach((order) => {
+          const defaultDate = new Date(
+            new Date(order.order_date).getTime() + 7 * 24 * 60 * 60 * 1000
+          )
+            .toISOString()
+            .split("T")[0];
+          defaults[order.orderid] = defaultDate;
+        });
+        setDeliveryDates(defaults);
+      } catch (err) {
+        console.error("Error loading orders:", err);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
+  const toggleExpand = (orderid) => {
+    setExpanded((prev) => (prev === orderid ? null : orderid));
+  };
+
+  const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString();
+
+  const handleStatusChange = async (orderid, newStatus) => {
+    const updated = orders.map((order) =>
+      order.orderid === orderid ? { ...order, order_status: newStatus } : order
+    );
+    setOrders(updated);
+    await updateOrderStatus(orderid, newStatus);
+
+    if (newStatus === "processing") {
+      const processing = await getProcessingOrders();
+      const newlyUpdated = processing.find((o) => o.orderid === orderid);
+      if (newlyUpdated) {
+        setOrders((prev) => [
+          ...prev.filter((o) => o.orderid !== orderid),
+          newlyUpdated,
+        ]);
+        setDeliveryDates((prev) => ({
+          ...prev,
+          [orderid]: new Date(
+            new Date(newlyUpdated.order_date).getTime() +
+              7 * 24 * 60 * 60 * 1000
+          )
+            .toISOString()
+            .split("T")[0],
+        }));
+      }
+    }
+  };
+
+  const handleDateChange = (orderid, newDate) => {
+    setDeliveryDates((prev) => ({ ...prev, [orderid]: newDate }));
+  };
+
+  const markAsDelivered = async (orderid) => {
+    try {
+      const order = orders.find((o) => o.orderid === orderid);
+      if (!order) return;
+
+      if (!order.order_detail || order.order_detail.length === 0) {
+        alert("This order has no details.");
+        return;
+      }
+
+      for (const item of order.order_detail) {
+        const productid = item.products?.productid || item.productid;
+
+        if (!productid) {
+          //console.error(" Missing productid in item:", item);
+          alert("Cannot update inventory: product ID is missing.");
+          return;
+        }
+
+        //console.log(" Adding stock for productid:", productid);
+        await addInventoryStock(productid, item.requested_quantity);
+      }
+
+      await updateOrderStatus(orderid, "delivered");
+      setOrders((prev) => prev.filter((order) => order.orderid !== orderid));
+    } catch (error) {
+      console.error("Failed to mark as delivered and update stock:", error);
+      alert("Something went wrong while marking as delivered.");
+    }
+  };
+
+  const cancelOrder = async (orderid) => {
+    try {
+      await updateOrderStatus(orderid, "cancelled");
+      setOrders((prev) => prev.filter((order) => order.orderid !== orderid));
+    } catch (error) {
+      console.error("Failed to cancel order:", error);
+    }
+  };
+
+  const renderOrderSection = (title, filterStatus) => {
+    const filtered = orders.filter((o) => o.order_status === filterStatus);
+    return (
+      <div className="mb-8">
+        <h2 className="text-lg font-semibold mb-4">{title}</h2>
+        {filtered.length === 0 ? (
+          <p>No {filterStatus} orders at the moment.</p>
+        ) : (
+          filtered.map((order) => (
+            <div key={order.orderid} className="mb-4 border rounded-lg">
+              <div
+                className="flex justify-between items-center bg-gray-100 px-4 py-3 rounded-t-lg cursor-pointer"
+                onClick={() => toggleExpand(order.orderid)}
+              >
+                <div>
+                  <h3 className="text-lg font-semibold text-[#2F4271]">
+                    Order #{order.orderid} — {formatDate(order.order_date)}
+                  </h3>
+                  <p>Total Cost: ${order.total_amount?.toFixed(2)}</p>
+                  <div className="flex gap-2 items-center text-sm">
+                    <label htmlFor={`delivery-${order.orderid}`}>
+                      Expected Delivery:
+                    </label>
+                    <input
+                      id={`delivery-${order.orderid}`}
+                      type="date"
+                      value={deliveryDates[order.orderid] || ""}
+                      onChange={(e) =>
+                        handleDateChange(order.orderid, e.target.value)
+                      }
+                      className="border px-2 py-1 rounded"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2 items-center">
+                  <select
+                    className="border rounded px-2 py-1 text-sm"
+                    value={order.order_status}
+                    onChange={(e) =>
+                      handleStatusChange(order.orderid, e.target.value)
+                    }
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="processing">Processing</option>
+                  </select>
+                  <button
+                    className="text-xs bg-[#7E82A4] text-white px-3 py-1 rounded"
+                    onClick={() => markAsDelivered(order.orderid)}
+                  >
+                    Mark Delivered
+                  </button>
+                  {order.order_status === "pending" && (
+                    <button
+                      className="text-xs bg-red-500 text-white px-3 py-1 rounded"
+                      onClick={() => cancelOrder(order.orderid)}
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
+                <span className="text-xl">
+                  {expanded === order.orderid ? "▲" : "▼"}
+                </span>
+              </div>
+              {expanded === order.orderid && (
+                <div className="bg-white p-4 border-t">
+                  <table className="min-w-full text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-2">Product</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                        <th>Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {order.order_detail.map((item, index) => (
+                        <tr key={index} className="border-t">
+                          <td className="py-2">{item.products.product_name}</td>
+                          <td className="text-center">
+                            {item.requested_quantity}
+                          </td>
+                          <td className="text-center">
+                            ${item.unit_price.toFixed(2)}
+                          </td>
+                          <td className="text-center">
+                            $
+                            {(
+                              item.unit_price * item.requested_quantity
+                            ).toFixed(2)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="p-6">
+      {renderOrderSection("Pending Orders", "pending")}
+      {renderOrderSection("Processing Orders", "processing")}
+    </div>
+  );
+};
+
+export default OrderPending;
+</file>
+
+<file path="client/src/Main/Order/Restock.jsx">
+import React, { useEffect, useState } from "react";
+import { getInventory } from "../../api";
+import { useOrderCart } from "../OrderCartContext";
+
+const getStatusColor = (stock, min) => {
+  if (stock == 0) return "red";
+  if (stock < min) return "yellow";
+  return "green";
+};
+
+const getColorClass = (color) => {
+  switch (color) {
+    case "red":
+      return "bg-red-300";
+    case "yellow":
+      return "bg-yellow-200";
+    case "green":
+      return "bg-green-300";
+    default:
+      return "";
+  }
+};
+
+const sectionTitles = {
+  red: "Out of Stock",
+  yellow: "Low Stock",
+  green: "In Stock",
+};
+
+const OrderRestock = () => {
+  const { addToCart } = useOrderCart();
+  const [grouped, setGrouped] = useState({ red: [], yellow: [], green: [] });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await getInventory();
+        const groupedData = { red: [], yellow: [], green: [] };
+
+        data.forEach((item) => {
+          const color = getStatusColor(item.current_stock, item.min_quantity);
+          groupedData[color].push(item);
+        });
+
+        setGrouped(groupedData);
+      } catch (err) {
+        console.error("Failed to fetch inventory:", err);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const renderScrollableRow = (items, color) => (
+    <div className="mb-6">
+      <h2 className="text-xl font-semibold mb-2">{sectionTitles[color]}</h2>
+      <div className="flex overflow-x-auto space-x-4 pb-4">
+        {items.map((item) => {
+          const restockQty = item.min_quantity - item.current_stock;
+
+          return (
+            <div
+              key={item.productid}
+              className={`min-w-[200px] rounded-xl p-4 shadow-md shrink-0 ${getColorClass(
+                color
+              )}`}
+            >
+              <h2 className="font-semibold text-md">{item.product_name}</h2>
+              <p className="text-sm">
+                {item.current_stock} in stock
+                <br />
+                Min: {item.min_quantity}
+              </p>
+              <button
+                className="mt-2 bg-white px-4 py-1 rounded border shadow text-sm hover:bg-gray-100"
+                onClick={() => {
+                  console.log("🧪 Adding item:", item);
+
+                  const supplierName =
+                    item.supplier?.supplier_name ||
+                    item.supplier_name ||
+                    "Unknown Supplier";
+
+                  const hasRequiredFields =
+                    item.case_price !== undefined &&
+                    item.min_quantity !== undefined &&
+                    item.current_stock !== undefined;
+
+                  if (hasRequiredFields) {
+                    addToCart({
+                      ...item,
+                      supplier_name: supplierName,
+                    });
+                    alert(`${item.product_name} added to order list!`);
+                  } else {
+                    console.warn("❌ Missing product fields:", item);
+                    alert("This item is missing data and cannot be added.");
+                  }
+                }}
+                disabled={restockQty <= 0}
+              >
+                Restock Now
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="p-6">
+      {renderScrollableRow(grouped.red, "red")}
+      {renderScrollableRow(grouped.yellow, "yellow")}
+      {renderScrollableRow(grouped.green, "green")}
+    </div>
+  );
+};
+
+export default OrderRestock;
+</file>
+
+<file path="client/src/Main/FilterModal.js">
+import React, { useState, useEffect } from 'react';
+
+const Modal = ({ children, onClose }) => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+        <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full relative">
+        <button
+            onClick={onClose}
+            className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-2xl font-bold"
+            aria-label="Close modal"
+        >
+            ×
+        </button>
+        {children}
+        </div>
+    </div>
+    );
+
+function FilterModal({
+    isOpen,
+    onClose,
+    onApplyFilters,
+    initialFilters,
+    availableSuppliers = [],
+    availableStatuses = [],
+    }) {
+    const [selectedSuppliers, setSelectedSuppliers] = useState(initialFilters.suppliers || []);
+    const [selectedStatuses, setSelectedStatuses] = useState(initialFilters.statuses || []);
+
+    useEffect(() => {
+        setSelectedSuppliers(initialFilters.suppliers || []);
+        setSelectedStatuses(initialFilters.statuses || []);
+    }, [initialFilters]);
+
+    const handleSupplierChange = (supplier) => {
+        setSelectedSuppliers(prev =>
+        prev.includes(supplier)
+            ? prev.filter(s => s !== supplier)
+            : [...prev, supplier]
+        );
+    };
+
+    const handleStatusChange = (status) => {
+        setSelectedStatuses(prev =>
+        prev.includes(status)
+            ? prev.filter(s => s !== status)
+            : [...prev, status]
+        );
+    };
+
+    const handleApply = () => {
+        onApplyFilters({
+        suppliers: selectedSuppliers,
+        statuses: selectedStatuses,
+        });
+    };
+
+    const handleReset = () => {
+        setSelectedSuppliers([]);
+        setSelectedStatuses([]);
+    }
+
+    if (!isOpen) return null;
+
+    return (
+        <Modal onClose={onClose}>
+        <h2 className="text-xl font-semibold mb-4">Filter Inventory</h2>
+
+        <div className="mb-4">
+            <h3 className="font-medium mb-2">Supplier</h3>
+            <div className="max-h-40 overflow-y-auto border rounded p-2 space-y-1">
+            {availableSuppliers.length > 0 ? availableSuppliers.map(supplier => (
+                <label key={supplier} className="flex items-center space-x-2 cursor-pointer">
+                <input
+                    type="checkbox"
+                    checked={selectedSuppliers.includes(supplier)}
+                    onChange={() => handleSupplierChange(supplier)}
+                    className="rounded"
+                />
+                <span>{supplier}</span>
+                </label>
+            )) : <p className="text-gray-500 text-sm">No suppliers found</p>}
+            </div>
+        </div>
+
+        <div className="mb-6">
+            <h3 className="font-medium mb-2">Stock Status</h3>
+            <div className="space-y-1">
+            {availableStatuses.map(status => (
+                <label key={status} className="flex items-center space-x-2 cursor-pointer">
+                <input
+                    type="checkbox"
+                    checked={selectedStatuses.includes(status)}
+                    onChange={() => handleStatusChange(status)}
+                    className="rounded"
+                />
+                <span>{status}</span>
+                </label>
+            ))}
+            </div>
+        </div>
+
+        <div className="flex justify-end gap-3 mt-6">
+            <button
+            onClick={handleReset}
+            className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-100"
+            >
+            Reset Filters
+            </button>
+            <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-100"
+            >
+            Cancel
+            </button>
+            <button
+            onClick={handleApply}
+            className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+            Apply Filters
+            </button>
+        </div>
+        </Modal>
+    );
+}
+
+export default FilterModal;
+</file>
+
+<file path="client/src/Main/Inventory.jsx">
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { getInventory, addItem, updateItem, deleteItem } from "../api";
+import { useAuth } from "../context/AuthContext";
+import InventoryItemModal from "./InventoryItemModal";
+import FilterModal from "./FilterModal";
+
+const SearchIcon = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+  </svg>
+);
+
+const FilterIcon = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+  </svg>
+);
+
+
+function Inventory() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentItem, setCurrentItem] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [appliedFilters, setAppliedFilters] = useState({});
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const getStockStatusInfo = (stock, minQty) => {
+    if (stock <= 0) return { text: "Out of Stock", color: "bg-[#D99292] text-red-800" };
+    if (stock < minQty) return { text: "Low Stock", color: "bg-[#F4D98E] text-yellow-800" };
+    return { text: "In Stock", color: "bg-[#A3C18F] text-green-800" };
+  };
+  const definedStatuses = ["Out of Stock", "Low Stock", "In Stock"];
+
+  const fetchInventory = useCallback(async () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getInventory();
+      setItems(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Error fetching inventory:", err);
+      if (err.response?.status === 401 || err.message.includes("401")) {
+        navigate("/login");
+      } else {
+        setError("Failed to load inventory. Please try again later.");
+      }
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [user, navigate]);
+
+  useEffect(() => {
+    fetchInventory();
+  }, [fetchInventory]);
+
+  const availableSuppliers = useMemo(() => {
+    const supplierNames = items
+        .map(item => item.supplier?.supplier_name)
+        .filter(Boolean);
+    return [...new Set(supplierNames)].sort();
+  }, [items]);
+
+  const displayItems = useMemo(() => {
+    let filtered = [...items];
+
+    if (appliedFilters.suppliers && appliedFilters.suppliers.length > 0) {
+        filtered = filtered.filter(item =>
+            appliedFilters.suppliers.includes(item.supplier?.supplier_name)
+        );
+    }
+    if (appliedFilters.statuses && appliedFilters.statuses.length > 0) {
+        filtered = filtered.filter(item => {
+            const statusInfo = getStockStatusInfo(item.current_stock, item.min_quantity);
+            return appliedFilters.statuses.includes(statusInfo.text);
+        });
+    }
+
+    if (searchTerm) {
+      const lowerCaseSearchTerm = searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (item) =>
+          item.product_name?.toLowerCase().includes(lowerCaseSearchTerm) ||
+          item.supplier?.supplier_name
+            ?.toLowerCase()
+            .includes(lowerCaseSearchTerm)
+      );
+    }
+
+    return filtered.sort((a, b) =>
+      (a.product_name || "").localeCompare(b.product_name || "")
+    );
+  }, [items, searchTerm, appliedFilters]);
+
+  const handleOpenAddModal = () => {
+    setCurrentItem(null);
+    setError(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEditModal = (item) => {
+    if (!item || typeof item !== "object") {
+      console.error("handleOpenEditModal: Invalid item provided", item);
+      setError("Could not load item data for editing.");
+      return;
+    }
+    setCurrentItem(item);
+    setError(null);
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setIsFilterModalOpen(false);
+    setCurrentItem(null);
+    setError(null);
+  };
+
+  const handleFormSubmit = async (formData) => {
+    const primaryKey = "productid";
+    const isEditing = currentItem && currentItem[primaryKey];
+
+    try {
+      setLoading(true);
+      setError(null);
+      if (isEditing) {
+        const updatedData = { ...formData, [primaryKey]: currentItem[primaryKey] };
+        await updateItem(currentItem[primaryKey], updatedData);
+      } else {
+        await addItem(formData);
+      }
+      handleModalClose();
+      await fetchInventory();
+    } catch (err) {
+      console.error(`Error ${isEditing ? "updating" : "adding"} item:`, err);
+      setError(`Failed to ${isEditing ? "update" : "add"} item. ${ err.response?.data?.error || err.message || "" }`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    const itemToDelete = items.find((item) => item.productid === id);
+    if (!itemToDelete) {
+      setError("Item not found.");
+      return;
+    }
+    if ( window.confirm(`Are you sure you want to delete "${itemToDelete.product_name || "this item"}"?`) ) {
+      try {
+        setLoading(true);
+        setError(null);
+        await deleteItem(id);
+        await fetchInventory();
+      } catch (err) {
+        console.error("Error deleting item:", err);
+        setError(`Failed to delete item. ${err.response?.data?.error || ""}`);
+        if (err.response?.status === 401) {
+          navigate("/login");
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleOpenFilterModal = () => setIsFilterModalOpen(true);
+  const handleCloseFilterModal = () => setIsFilterModalOpen(false);
+
+  const handleApplyFilters = (filtersFromModal) => {
+    setAppliedFilters(filtersFromModal);
+    handleCloseFilterModal();
+  };
+
+  const handleClearFilters = () => {
+    setAppliedFilters({});
+  };
+
+
+  if (loading && items.length === 0) {
+    return <div className="p-6 text-center">Loading inventory...</div>;
+  }
+
+
+  return (
+    <div className="p-6 max-w-7xl mx-auto">
+      <div className="mb-6 flex justify-between items-start gap-4">
+        <div>
+          {user?.role === "admin" && (
+            <div className="text-5xl font-medium text-gray-700 mb-2">
+              Hello Admin
+            </div>
+          )}
+          <h2 className="text-2xl font-bold text-green-900">Product List</h2>
+        </div>
+
+        <div className="flex flex-col items-end gap-2">
+            <div className="relative w-full sm:w-72 lg:w-80">
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                aria-label="Search inventory items"
+              />
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <SearchIcon className="h-5 w-5 text-gray-400" />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+                {Object.keys(appliedFilters).some(key => appliedFilters[key]?.length > 0) && (
+                    <button
+                        onClick={handleClearFilters}
+                        className="p-2 text-sm text-red-600 border border-red-300 rounded-md shadow-sm hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                        aria-label="Clear applied filters"
+                        title="Clear Filters"
+                    >
+                        Clear Filters
+                    </button>
+                )}
+
+                {user?.role === 'admin' && (
+                  <button
+                      onClick={handleOpenFilterModal}
+                      className="p-2 text-gray-600 border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      aria-label="Open filters"
+                      title="Filters"
+                  >
+                      <FilterIcon className="h-5 w-5" />
+                  </button>
+                )}
+
+                {user?.role === 'admin' && (
+                  <button
+                    onClick={handleOpenAddModal}
+                    className="text-black px-4 py-2 rounded shadow whitespace-nowrap"
+                    style={{ backgroundColor: "#8DACE5" }}
+                  >
+                    + Add Product
+                  </button>
+                )}
+            </div>
+        </div>
+      </div>
+
+      {error && !isModalOpen && !isFilterModalOpen && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 relative">
+          {error}
+          <button
+            onClick={() => setError(null)}
+            className="absolute top-0 bottom-0 right-0 px-4 py-3 text-red-700 hover:text-red-900"
+            aria-label="Close error message"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {loading && items.length > 0 && (
+        <div className="text-center py-4 text-gray-500">Updating list...</div>
+      )}
+
+      <div className="overflow-x-auto bg-gray-100 p-4 rounded-lg shadow">
+        <table className="min-w-full text-left">
+          <thead>
+            <tr className="text-gray-700">
+              <th className="px-4 py-2" style={{ backgroundColor: "#D9BE92" }}>Product</th>
+              <th className="px-4 py-2" style={{ backgroundColor: "#D9BE92" }}>Quantity</th>
+              <th className="px-4 py-2" style={{ backgroundColor: "#D9BE92" }}>Price</th>
+              <th className="px-4 py-2" style={{ backgroundColor: "#D9BE92" }}>Stock Status</th>
+              <th className="px-4 py-2" style={{ backgroundColor: "#D9BE92" }}>Supplier</th>
+              {user?.role === "admin" && (
+                <th className="px-4 py-2" style={{ backgroundColor: "#D9BE92" }}>Action</th>
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {displayItems.length > 0 ? (
+              displayItems.map((item) => {
+                const { text: statusText, color: statusColor } =
+                  getStockStatusInfo(item.current_stock, item.min_quantity);
+                return (
+                  <tr key={item.productid} className="border-t border-gray-200">
+                    <td className="px-4 py-2">{item.product_name}</td>
+                    <td className="px-4 py-2">{item.current_stock}</td>
+                    <td className="px-4 py-2">${item.case_price?.toFixed(2)}/{item.order_unit}</td>
+                    <td className="px-4 py-2">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColor}`}>
+                        {statusText}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2">{item.supplier?.supplier_name || "N/A"}</td>
+                    {user?.role === "admin" && (
+                      <td className="px-4 py-2 flex space-x-2">
+                        <button
+                          onClick={() => handleOpenEditModal(item)}
+                          className="text-white text-sm font-semibold px-3 py-1 rounded hover:opacity-80 transition-opacity"
+                          style={{ backgroundColor: "#7E82A4" }}
+                          aria-label={`Edit ${item.product_name}`}
+                        > Edit </button>
+                        <button
+                          onClick={() => handleDelete(item.productid)}
+                          className="text-white text-sm font-semibold px-3 py-1 rounded hover:opacity-80 transition-opacity"
+                          style={{ backgroundColor: "#D99292" }}
+                          aria-label={`Delete ${item.product_name}`}
+                        > Delete </button>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan={user?.role === "admin" ? 6 : 5} className="text-center py-4 text-gray-500">
+                  {searchTerm || Object.keys(appliedFilters).some(key => appliedFilters[key]?.length > 0)
+                    ? "No products found matching your search/filters."
+                    : "No products in inventory."}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {isModalOpen && (
+        <InventoryItemModal
+          item={currentItem}
+          onClose={handleModalClose}
+          onSubmit={handleFormSubmit}
+          initialError={ error && !error.toLowerCase().includes("load inventory") ? error : null }
+        />
+      )}
+      <FilterModal
+        isOpen={isFilterModalOpen}
+        onClose={handleCloseFilterModal}
+        onApplyFilters={handleApplyFilters}
+        initialFilters={appliedFilters}
+        availableSuppliers={availableSuppliers}
+        availableStatuses={definedStatuses}
+      />
+
+    </div>
+  );
+}
+
+export default Inventory;
+</file>
+
+<file path="client/src/Main/InventoryItemModal.jsx">
+import React, { useState } from "react";
+
+function InventoryItemModal({ item, onClose, onSubmit, initialError }) {
+  const isEditing = item !== null;
+
+  const [formData, setFormData] = useState({
+    product_name: item?.product_name || "",
+    current_stock: item?.current_stock ?? "",
+    max_quantity: item?.max_quantity ?? "",
+    min_quantity: item?.min_quantity ?? "",
+    expiration: item?.expiration
+      ? new Date(item.expiration).toISOString().split("T")[0]
+      : "",
+    categoryid: item?.categoryid ?? "",
+    supplierid: item?.supplierid ?? "",
+  });
+
+  const [error, setError] = useState(initialError);
+
+  const handleChange = (e) => {
+    const { name, value, type } = e.target;
+    const val =
+      type === "number" ? (value === "" ? "" : parseFloat(value)) : value;
+    const finalValue =
+      ["categoryid", "supplierid", "current_stock", "max_quantity", "min_quantity"].includes(name) && val === ""
+        ? ""
+        : val;
+    setFormData((prev) => ({ ...prev, [name]: finalValue }));
+    setError(null);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!formData.product_name || formData.current_stock === "") {
+      setError("Product Name and Current Stock are required.");
+      return;
+    }
+
+    const dataToSubmit = { ...formData };
+    for (const key of [
+      "current_stock",
+      "max_quantity",
+      "min_quantity",
+      "categoryid",
+      "supplierid",
+    ]) {
+      if (dataToSubmit[key] === "") {
+        dataToSubmit[key] = null;
+      }
+    }
+    if (dataToSubmit.expiration === "") dataToSubmit.expiration = null;
+
+    try {
+      await onSubmit(dataToSubmit);
+    } catch (err) {
+      setError(
+        err.response?.data?.error ||
+          err.message ||
+          "An unexpected error occurred."
+      );
+      console.error("Modal Submit Error:", err);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-lg shadow-xl w-full max-w-2xl p-6 space-y-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 className="text-xl font-semibold text-gray-800">
+          {isEditing ? "Edit Item" : "Add New Item"}
+        </h3>
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+            {error}
+            <button
+              onClick={() => setError(null)}
+              className="absolute top-0 right-0 px-2 py-1 text-red-500"
+            >
+              ×
+            </button>
+          </div>
+        )}
+        <form
+          onSubmit={handleSubmit}
+          className="grid grid-cols-1 md:grid-cols-2 gap-4"
+        >
+          {[
+            { label: "Product Name *", name: "product_name", type: "text" },
+            { label: "Current Stock *", name: "current_stock", type: "number" },
+            { label: "Max Quantity", name: "max_quantity", type: "number" },
+            { label: "Min Quantity", name: "min_quantity", type: "number" },
+            { label: "Expiration Date", name: "expiration", type: "date" },
+            { label: "Category ID", name: "categoryid", type: "number" },
+            { label: "Supplier ID", name: "supplierid", type: "number" },
+          ].map(({ label, name, type }) => (
+            <input
+              key={name}
+              className="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder={label}
+              name={name}
+              type={type}
+              value={formData[name]}
+              onChange={handleChange}
+              required={label.includes("*")}
+            />
+          ))}
+
+          <div className="col-span-2 flex justify-end gap-3">
+            <button
+              type="submit"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded"
+            >
+              {isEditing ? "Update Item" : "Add Item"}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="bg-gray-300 hover:bg-gray-400 text-black font-semibold px-4 py-2 rounded"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+export default InventoryItemModal;
+</file>
+
+<file path="client/src/Main/Order.jsx">
+import React from 'react';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
+
+const tabs = [
+  { path: 'restock', label: 'Restock Recommendations' },
+  { path: 'list', label: 'Order List' },
+  { path: 'pending', label: 'Pending Order' },
+  { path: 'history', label: 'Order History' },
+];
+
+const Order = () => {
+  const location = useLocation();
+  const activePath = location.pathname.split('/').pop();
+
+  return (
+    <div className="max-w-7xl mx-auto p-6">
+      <div className="flex gap-8 border-b border-gray-200 pb-4">
+        {tabs.map(({ path, label }) => (
+          <NavLink
+            key={path}
+            to={path}
+            className={({ isActive }) =>
+              `text-md font-semibold px-4 py-2 transition-colors ${
+                isActive || activePath === path
+                  ? 'bg-[#8DACE5] text-white rounded'
+                  : 'text-gray-700 hover:text-black'
+              }`
+            }
+          >
+            {label}
+          </NavLink>
+        ))}
+      </div>
+      <div className="mt-6">
+        <Outlet />
+      </div>
+    </div>
+  );
+};
+
+export default Order;
+</file>
+
+<file path="client/src/Main/OrderCartContext.js">
+import React, { createContext, useContext, useState } from "react";
+
+const OrderCartContext = createContext();
+
+export const useOrderCart = () => useContext(OrderCartContext);
+
+export function createOrderItemFromProduct(product) {
+  const quantity = product.min_quantity - product.current_stock;
+  const price = parseFloat(product.case_price);
+
+  return {
+    productid: product.productid,
+    product_name: product.product_name || "",
+    requested_quantity: isNaN(quantity) ? 0 : quantity,
+    unit_price: isNaN(price) ? 0 : price,
+    supplierid: product.supplierid,
+    supplier_name:
+      product.supplier?.supplier_name || product.supplier_name || "",
+  };
+}
+
+export const OrderCartProvider = ({ children }) => {
+  const [cartItems, setCartItems] = useState([]);
+
+  const addToCart = (product) => {
+    const alreadyExists = cartItems.find(
+      (item) => item.productid === product.productid
+    );
+    if (alreadyExists) return;
+
+    const newItem = createOrderItemFromProduct(product);
+    setCartItems((prev) => [...prev, newItem]);
+    console.log("Added to cart:", newItem);
+  };
+
+  const removeItem = (productid) => {
+    setCartItems((prev) => prev.filter((item) => item.productid !== productid));
+  };
+
+  const clearCart = () => setCartItems([]);
+
+  return (
+    <OrderCartContext.Provider
+      value={{ cartItems, addToCart, removeItem, clearCart }}
+    >
+      {children}
+    </OrderCartContext.Provider>
+  );
+};
+</file>
+
+<file path="client/src/api.js">
+// src/api.js
+import axios from "axios";
+
+// Define the base URL without template literals
+const BASE_URL = "http://localhost:5000";
+const API_URL = `${BASE_URL}/api`;
+
+const getAuthHeader = () => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    console.warn("No auth token found in localStorage");
+    return {};
+  }
+
+  const headers = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
+  console.log("Using auth header:", headers);
+  return headers;
+};
+
+export const getInventory = async () => {
+  try {
+    // Construct the URL properly
+    const url = `${API_URL}/inventory`;
+    console.log("Fetching products from:", url);
+    const response = await axios.get(url, getAuthHeader());
+    console.log("Products response:", response.data);
+    return response.data || [];
+  } catch (error) {
+    console.error("Error fetching products:", error.response || error);
+    throw error;
+  }
+};
+
+export const addItem = async (item) => {
+  try {
+    const url = `${API_URL}/inventory`;
+    console.log("Adding product:", item);
+    const response = await axios.post(url, item, getAuthHeader());
+    return response.data;
+  } catch (error) {
+    console.error("Error adding product:", error.response || error);
+    throw error;
+  }
+};
+
+export const updateItem = async (id, item) => {
+  try {
+    const url = `${API_URL}/inventory/${id}`;
+    console.log(`Updating product with ID ${id}:`, item);
+    const response = await axios.put(url, item, getAuthHeader());
+    return response.data;
+  } catch (error) {
+    console.error(
+      `Error updating product with ID ${id}:`,
+      error.response || error
+    );
+    throw error;
+  }
+};
+
+export const deleteItem = async (id) => {
+  try {
+    const url = `${API_URL}/inventory/${id}`;
+    console.log(`Deleting product with ID ${id}`);
+    const response = await axios.delete(url, getAuthHeader());
+    return response.data;
+  } catch (error) {
+    console.error(
+      `Error deleting product with ID ${id}:`,
+      error.response || error
+    );
+    throw error;
+  }
+};
+
+export const createOrder = async (order) => {
+  try {
+    const url = `${API_URL}/orders`;
+    const response = await axios.post(url, order, getAuthHeader());
+    return response.data; // should return { orderid, ... }
+  } catch (error) {
+    console.error("Error creating order:", error.response || error);
+    throw error;
+  }
+};
+
+export const addOrderDetails = async (orderDetailsArray) => {
+  try {
+    const url = `${API_URL}/order-detail/bulk`;
+    const response = await axios.post(url, orderDetailsArray, getAuthHeader());
+    return response.data; // should return inserted rows
+  } catch (error) {
+    console.error(
+      "Error inserting bulk order details:",
+      error.response || error
+    );
+    throw error;
+  }
+};
+
+export const getSuppliers = async () => {
+  try {
+    const url = `${API_URL}/suppliers`;
+    const response = await axios.get(url, getAuthHeader());
+    return response.data || [];
+  } catch (error) {
+    console.error("Error fetching suppliers:", error.response || error);
+    throw error;
+  }
+};
+
+export const createSupplier = async (supplierData) => {
+  const response = await axios.post(
+    `${API_URL}/suppliers`,
+    supplierData,
+    getAuthHeader()
+  );
+  return response.data;
+};
+
+export const getSupplierByName = async (name) => {
+  const response = await axios.get(
+    `${API_URL}/suppliers?supplier_name=eq.${encodeURIComponent(name)}`,
+    getAuthHeader()
+  );
+  return response.data; // returns an array
+};
+
+export const getRestockRecommendations = async () => {
+  const url = `${API_URL}/inventory/restock`;
+  const response = await axios.get(url, getAuthHeader());
+  return response.data || [];
+};
+
+export const getPendingOrders = async () => {
+  try {
+    const url = `${API_URL}/orders/pending`;
+    const response = await axios.get(url, getAuthHeader());
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching pending orders:", error.response || error);
+    throw error;
+  }
+};
+
+export const getProcessingOrders = async () => {
+  try {
+    const url = `${API_URL}/orders/processing`;
+    const response = await axios.get(url, getAuthHeader());
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching processing orders:", error.response || error);
+    throw error;
+  }
+};
+
+export const updateOrderStatus = async (orderid, newStatus) => {
+  try {
+    const url = `${API_URL}/orders/${orderid}/status`;
+    const response = await axios.put(
+      url,
+      { order_status: newStatus },
+      getAuthHeader()
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating order status:", error.response || error);
+    throw error;
+  }
+};
+
+export const getDeliveredOrders = async () => {
+  try {
+    const url = `${API_URL}/orders/delivered`;
+    const response = await axios.get(url, getAuthHeader());
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching delivered orders:", error.response || error);
+    throw error;
+  }
+};
+
+export const addInventoryStock = async (productid, quantity) => {
+  const url = `${API_URL}/inventory/${productid}/add-stock`;
+  const response = await axios.post(url, { quantity }, getAuthHeader());
+  return response.data;
+};
+
+// Auth endpoints
+export const login = async (credentials) => {
+  try {
+    const url = `${API_URL}/auth/login`;
+    console.log("Logging in with credentials:", credentials);
+    const response = await axios.post(url, credentials);
+    return response.data;
+  } catch (error) {
+    console.error("Login error:", error.response || error);
+    throw error;
+  }
+};
+
+export const register = async (userData) => {
+  try {
+    const url = `${API_URL}/auth/register`;
+    console.log("Registering user with data:", userData);
+    const response = await axios.post(url, userData);
+    return response.data;
+  } catch (error) {
+    console.error("Registration error:", error.response || error);
+    throw error;
+  }
+};
+
+export const getUserProfile = async () => {
+  try {
+    const url = `${API_URL}/users/profile`;
+    console.log("Fetching user profile");
+    const response = await axios.get(url, getAuthHeader());
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching user profile:", error.response || error);
+    throw error;
+  }
+};
+
+export const getAllUsers = async () => {
+  try {
+    const url = `${API_URL}/users`; // Backend endpoint should be protected by isAdmin middleware
+    console.log("Fetching all users (admin) from:", url);
+    const response = await axios.get(url, getAuthHeader()); // Requires admin token
+    console.log("All users response:", response.data);
+    return response.data || []; // Return data or empty array
+  } catch (error) {
+    console.error("Error fetching all users:", error.response || error);
+    throw error; // Re-throw to be caught by the component
+  }
+};
+
+export const updateUserRole = async (userId, newRole) => {
+  // Basic client-side validation
+  if (newRole !== "admin" && newRole !== "user") {
+    console.error("Invalid role specified in API call:", newRole);
+    // Throw an error that the component can catch and display
+    throw new Error("Invalid role specified. Must be 'admin' or 'user'.");
+  }
+  try {
+    // Backend endpoint should be protected by isAdmin middleware
+    const url = `${API_URL}/users/${userId}/role`;
+    console.log(`Updating role for user ${userId} to ${newRole} at:`, url);
+    // Send the new role in the request body as expected by the backend
+    const response = await axios.put(url, { role: newRole }, getAuthHeader()); // Requires admin token
+    console.log("Update user role response:", response.data); // Should return the updated user object
+    return response.data;
+  } catch (error) {
+    console.error(
+      `Error updating role for user ${userId}:`,
+      error.response || error
+    );
+    throw error; // Re-throw to be caught by the component
+  }
+};
+
+export const deleteUser = async (userId) => {
+  const url = `${API_URL}/users/${userId}`;
+  const response = await axios.delete(url, getAuthHeader());
+  return response.data;
+};
+</file>
+
+<file path="client/src/App.js">
+// src/App.js
+import React from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  NavLink,
+  Navigate,
+  Outlet,
+} from "react-router-dom";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import Inventory from "./Main/Inventory";
+import { OrderCartProvider } from "./Main/OrderCartContext";
+import Order from "./Main/Order";
+import OrderRestock from "./Main/Order/Restock";
+import OrderList from "./Main/Order/List";
+import OrderPending from "./Main/Order/Pending";
+import OrderHistory from "./Main/Order/History";
+
+import Home from "./Home";
+import Login from "./Login/Login";
+import Register from "./Login/Register";
+import AdminUserListPage from "./Login/AdminUserList";
+
+const StyledLink = ({ to, end = false, children }) => (
+  <NavLink
+    to={to}
+    end={end}
+    className={({ isActive }) =>
+      `px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+        isActive
+          ? "bg-gray-900 text-white"
+          : "text-gray-300 hover:bg-gray-700 hover:text-white"
+      }`
+    }
+  >
+    {children}
+  </NavLink>
+);
+
+const ProtectedRoute = ({ allowedRoles }) => {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="p-6 text-center">Authenticating…</div>;
+  if (!user) return <Navigate to="/login" replace />;
+  if (allowedRoles && !allowedRoles.includes(user.role?.toLowerCase()))
+    return <Navigate to="/" replace />;
+  return <Outlet />;
+};
+
+const Navigation = () => {
+  const { user, logout } = useAuth();
+  return (
+    <nav className="bg-gray-800">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
+          {/* Left links */}
+          <div className="flex space-x-4">
+            <StyledLink to="/" end>
+              Home
+            </StyledLink>
+
+            {user && <StyledLink to="/inventory">Inventory</StyledLink>}
+
+            {user && <StyledLink to="/orders">Orders</StyledLink>}
+
+            {user?.role?.toLowerCase() === "admin" && (
+              <StyledLink to="/admin/users">Manage Users</StyledLink>
+            )}
+          </div>
+
+          {/* Right links */}
+          <div className="flex items-center space-x-4">
+            {!user && (
+              <>
+                <StyledLink to="/login">Login</StyledLink>
+                <StyledLink to="/register">Register</StyledLink>
+              </>
+            )}
+
+            {user && (
+              <button
+                onClick={logout}
+                className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+              >
+                Logout ({user.username || user.email})
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+};
+
+function App() {
+  const AppRoutes = () => {
+    const { user, loading } = useAuth();
+    if (loading)
+      return <div className="p-6 text-center">Loading Application…</div>;
+
+    return (
+      <OrderCartProvider>
+        <div className="min-h-screen flex flex-col bg-gray-50">
+          <Navigation />
+          <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
+            <Routes>
+              {/* Public */}
+              <Route path="/" element={<Home />} />
+              <Route
+                path="/login"
+                element={
+                  !user ? <Login /> : <Navigate to="/inventory" replace />
+                }
+              />
+              <Route
+                path="/register"
+                element={
+                  !user ? <Register /> : <Navigate to="/inventory" replace />
+                }
+              />
+
+              {/* Protected (any logged‑in user) */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/inventory" element={<Inventory />} />
+                <Route path="/orders" element={<Order />}>
+                  <Route path="restock" element={<OrderRestock />} />
+                  <Route path="list" element={<OrderList />} />
+                  <Route path="pending" element={<OrderPending />} />
+                  <Route path="history" element={<OrderHistory />} />
+                </Route>
+              </Route>
+
+              {/* Admin‑only */}
+              <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+                <Route path="/admin/users" element={<AdminUserListPage />} />
+              </Route>
+
+              {/* Fallback */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </main>
+        </div>
+      </OrderCartProvider>
+    );
+  };
+
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}
+
+export default App;
+</file>
+
+<file path="client/src/App.test.js">
+import { render, screen } from '@testing-library/react';
+import App from './App';
+
+test('renders learn react link', () => {
+  render(<App />);
+  const linkElement = screen.getByText(/learn react/i);
+  expect(linkElement).toBeInTheDocument();
+});
+</file>
+
+<file path="client/src/Home.js">
+import { NavLink } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
+
+function Home() {
+  const { user, logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
+  return (
+    <div className="bg-[#f9f5f0] min-h-screen flex items-center justify-center px-4">
+      <section className="max-w-xl bg-white shadow rounded-lg p-8 text-center space-y-6">
+        <h1 className="text-2xl font-bold text-[#3c4b2c]">
+          Welcome to the Inventory Management System
+        </h1>
+        <p className="text-gray-700">
+          Streamline your inventory operations with our easy-to-use system. Add,
+          update, and manage products effortlessly.
+        </p>
+
+        {user ? (
+          <div className="space-y-2">
+            <span className="block text-sm text-gray-600">
+              Logged in as: <span className="font-medium">{user.email}</span>
+            </span>
+            <button
+              onClick={handleLogout}
+              className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 text-sm rounded-md font-medium"
+            >
+              Logout
+            </button>
+          </div>
+        ) : (
+          <NavLink
+            to="/login"
+            className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 text-sm rounded-md font-medium transition"
+          >
+            Login to Access Inventory
+          </NavLink>
+        )}
+      </section>
+    </div>
+  );
+}
+
+export default Home;
+</file>
+
+<file path="client/src/index.css">
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import url("https://fonts.googleapis.com/css2?family=Macondo+Swash+Caps&display=swap");
+
+body {
+  margin: 0;
+  padding:0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  height: 100%;
+  width: 100%;
+}
+
+.macondo-swash {
+  font-family: "Macondo Swash Caps", cursive;
+  font-weight: 400;
+  font-style: normal;
+}
+</file>
+
+<file path="client/src/index.js">
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import App from './App';
+import reportWebVitals from './reportWebVitals';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+
+reportWebVitals();
+</file>
+
+<file path="client/src/logo.svg">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 595.3"><g fill="#61DAFB"><path d="M666.3 296.5c0-32.5-40.7-63.3-103.1-82.4 14.4-63.6 8-114.2-20.2-130.4-6.5-3.8-14.1-5.6-22.4-5.6v22.3c4.6 0 8.3.9 11.4 2.6 13.6 7.8 19.5 37.5 14.9 75.7-1.1 9.4-2.9 19.3-5.1 29.4-19.6-4.8-41-8.5-63.5-10.9-13.5-18.5-27.5-35.3-41.6-50 32.6-30.3 63.2-46.9 84-46.9V78c-27.5 0-63.5 19.6-99.9 53.6-36.4-33.8-72.4-53.2-99.9-53.2v22.3c20.7 0 51.4 16.5 84 46.6-14 14.7-28 31.4-41.3 49.9-22.6 2.4-44 6.1-63.6 11-2.3-10-4-19.7-5.2-29-4.7-38.2 1.1-67.9 14.6-75.8 3-1.8 6.9-2.6 11.5-2.6V78.5c-8.4 0-16 1.8-22.6 5.6-28.1 16.2-34.4 66.7-19.9 130.1-62.2 19.2-102.7 49.9-102.7 82.3 0 32.5 40.7 63.3 103.1 82.4-14.4 63.6-8 114.2 20.2 130.4 6.5 3.8 14.1 5.6 22.5 5.6 27.5 0 63.5-19.6 99.9-53.6 36.4 33.8 72.4 53.2 99.9 53.2 8.4 0 16-1.8 22.6-5.6 28.1-16.2 34.4-66.7 19.9-130.1 62-19.1 102.5-49.9 102.5-82.3zm-130.2-66.7c-3.7 12.9-8.3 26.2-13.5 39.5-4.1-8-8.4-16-13.1-24-4.6-8-9.5-15.8-14.4-23.4 14.2 2.1 27.9 4.7 41 7.9zm-45.8 106.5c-7.8 13.5-15.8 26.3-24.1 38.2-14.9 1.3-30 2-45.2 2-15.1 0-30.2-.7-45-1.9-8.3-11.9-16.4-24.6-24.2-38-7.6-13.1-14.5-26.4-20.8-39.8 6.2-13.4 13.2-26.8 20.7-39.9 7.8-13.5 15.8-26.3 24.1-38.2 14.9-1.3 30-2 45.2-2 15.1 0 30.2.7 45 1.9 8.3 11.9 16.4 24.6 24.2 38 7.6 13.1 14.5 26.4 20.8 39.8-6.3 13.4-13.2 26.8-20.7 39.9zm32.3-13c5.4 13.4 10 26.8 13.8 39.8-13.1 3.2-26.9 5.9-41.2 8 4.9-7.7 9.8-15.6 14.4-23.7 4.6-8 8.9-16.1 13-24.1zM421.2 430c-9.3-9.6-18.6-20.3-27.8-32 9 .4 18.2.7 27.5.7 9.4 0 18.7-.2 27.8-.7-9 11.7-18.3 22.4-27.5 32zm-74.4-58.9c-14.2-2.1-27.9-4.7-41-7.9 3.7-12.9 8.3-26.2 13.5-39.5 4.1 8 8.4 16 13.1 24 4.7 8 9.5 15.8 14.4 23.4zM420.7 163c9.3 9.6 18.6 20.3 27.8 32-9-.4-18.2-.7-27.5-.7-9.4 0-18.7.2-27.8.7 9-11.7 18.3-22.4 27.5-32zm-74 58.9c-4.9 7.7-9.8 15.6-14.4 23.7-4.6 8-8.9 16-13 24-5.4-13.4-10-26.8-13.8-39.8 13.1-3.1 26.9-5.8 41.2-7.9zm-90.5 125.2c-35.4-15.1-58.3-34.9-58.3-50.6 0-15.7 22.9-35.6 58.3-50.6 8.6-3.7 18-7 27.7-10.1 5.7 19.6 13.2 40 22.5 60.9-9.2 20.8-16.6 41.1-22.2 60.6-9.9-3.1-19.3-6.5-28-10.2zM310 490c-13.6-7.8-19.5-37.5-14.9-75.7 1.1-9.4 2.9-19.3 5.1-29.4 19.6 4.8 41 8.5 63.5 10.9 13.5 18.5 27.5 35.3 41.6 50-32.6 30.3-63.2 46.9-84 46.9-4.5-.1-8.3-1-11.3-2.7zm237.2-76.2c4.7 38.2-1.1 67.9-14.6 75.8-3 1.8-6.9 2.6-11.5 2.6-20.7 0-51.4-16.5-84-46.6 14-14.7 28-31.4 41.3-49.9 22.6-2.4 44-6.1 63.6-11 2.3 10.1 4.1 19.8 5.2 29.1zm38.5-66.7c-8.6 3.7-18 7-27.7 10.1-5.7-19.6-13.2-40-22.5-60.9 9.2-20.8 16.6-41.1 22.2-60.6 9.9 3.1 19.3 6.5 28.1 10.2 35.4 15.1 58.3 34.9 58.3 50.6-.1 15.7-23 35.6-58.4 50.6zM320.8 78.4z"/><circle cx="420.9" cy="296.5" r="45.7"/><path d="M520.5 78.1z"/></g></svg>
+</file>
+
+<file path="client/src/reportWebVitals.js">
+const reportWebVitals = onPerfEntry => {
+  if (onPerfEntry && onPerfEntry instanceof Function) {
+    import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
+      getCLS(onPerfEntry);
+      getFID(onPerfEntry);
+      getFCP(onPerfEntry);
+      getLCP(onPerfEntry);
+      getTTFB(onPerfEntry);
+    });
+  }
+};
+
+export default reportWebVitals;
+</file>
+
+<file path="client/src/setupTests.js">
+// jest-dom adds custom jest matchers for asserting on DOM nodes.
+// allows you to do things like:
+// expect(element).toHaveTextContent(/react/i)
+// learn more: https://github.com/testing-library/jest-dom
+import '@testing-library/jest-dom';
+</file>
+
+<file path="client/.gitignore">
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# production
+/build
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+</file>
+
+<file path="client/package.json">
+{
+  "name": "cpsc471project",
+  "version": "0.1.0",
+  "private": true,
+  "proxy": "http://localhost:5000",
+  "dependencies": {
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.2.0",
+    "@testing-library/user-event": "^13.5.0",
+    "axios": "^1.8.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-icons": "^5.5.0",
+    "react-router-dom": "^7.3.0",
+    "react-scripts": "5.0.1",
+    "web-vitals": "^2.1.4"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17"
+  }
+}
+</file>
+
+<file path="client/postcss.config.js">
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+</file>
+
+<file path="client/tailwind.config.js">
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ["./public/index.html", "./src/**/*.{js,jsx,ts,tsx}"],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};
+</file>
+
+<file path="server/middleware/auth.js">
+const jwt = require('jsonwebtoken');
+const { supabase } = require('../utils/supabase');
+
+const authenticateToken = async (req, res, next) => {
+  const token = req.headers['authorization']?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'Access denied. No token provided.' });
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('userid, email, username, role')
+      .eq('userid', decoded.userId)
+      .single();
+
+    if (error || !user) return res.status(401).json({ error: 'Invalid token' });
+    req.user = user;
+    next();
+  } catch (error) {
+    res.status(401).json({ error: 'Invalid token' });
+  }
+};
+
+const isAdmin = (req, res, next) => {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  next();
+};
+
+module.exports = { authenticateToken, isAdmin };
+</file>
+
+<file path="server/routes/auth.js">
+const express = require('express');
+const router = express.Router();
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const { supabase } = require('../utils/supabase');
+
+router.post('/register', async (req, res) => {
+  const { email, password, username } = req.body;
+  if (!email || !password || !username)
+    return res.status(400).json({ error: 'All fields required' });
+
+  const { data: existingUser } = await supabase
+    .from('users')
+    .select('userid')
+    .or(`email.eq.${email},username.eq.${username}`)
+    .maybeSingle();
+
+  if (existingUser) return res.status(400).json({ error: 'User already exists' });
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const { data: newUser, error } = await supabase
+    .from('users')
+    .insert({ email, username, password: hashedPassword, role: 'user' })
+    .select('userid, email, username, role')
+    .single();
+
+  if (error) return res.status(500).json({ error: 'Failed to create user' });
+
+  const token = jwt.sign({ userId: newUser.userid }, process.env.JWT_SECRET, { expiresIn: '24h' });
+  res.status(201).json({ token, user: newUser });
+});
+
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  const { data: user } = await supabase
+    .from('users')
+    .select('*')
+    .eq('email', email)
+    .single();
+
+  if (!user || !(await bcrypt.compare(password, user.password))) {
+    return res.status(400).json({ error: 'Invalid credentials' });
+  }
+
+  const token = jwt.sign({ userId: user.userid }, process.env.JWT_SECRET, { expiresIn: '24h' });
+  const { password: _, ...userWithoutPass } = user;
+  res.json({ token, user: userWithoutPass });
+});
+
+module.exports = router;
+</file>
+
+<file path="server/routes/inventory.js">
+const express = require("express");
+const router = express.Router();
+const { supabase } = require("../utils/supabase");
+const { authenticateToken, isAdmin } = require("../middleware/auth");
+
+router.get("/", authenticateToken, async (req, res) => {
+  const { data, error } = await supabase
+    .from("products")
+    .select(`
+      *,
+      supplier: supplierid (supplier_name),
+      order_detail (
+        unit_price,
+        requested_quantity,
+        order_unit,
+        orders (order_status, delivered_date)
+      )
+    `)
+  .eq("is_active", true);
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  const updated = data.map(product => {
+    const delivered = (product.order_detail || []).filter(
+      od => od.orders?.order_status === "delivered"
+    );
+    const latest = delivered.sort(
+      (a, b) => new Date(b.orders?.delivered_date) - new Date(a.orders?.delivered_date)
+    )[0];
+
+    return {
+      ...product,
+      case_price: latest?.unit_price ?? null,
+      case_quantity: latest?.requested_quantity ?? null,
+      order_unit: latest?.order_unit ?? null
+    };
+  });
+
+  res.json(updated);
+});
+
+router.post("/", authenticateToken, isAdmin, async (req, res) => {
+  const { data, error } = await supabase
+    .from("products")
+    .insert([req.body])
+    .select();
+  if (error) return res.status(500).json({ error: error.message });
+  res.status(201).json(data);
+});
+
+router.put("/:id", authenticateToken, isAdmin, async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  const { data, error } = await supabase
+    .from("products")
+    .update(req.body)
+    .eq("productid", id)
+    .select();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data[0]);
+});
+
+router.delete("/:id", authenticateToken, isAdmin, async (req, res) => {
+  const productid = parseInt(req.params.id, 10);
+
+  // add a check to prevent deleting if pending orders exist
+  const { data: orderDetails, error: fetchError } = await supabase
+    .from("order_detail")
+    .select("orderid, orders (order_status)")
+    .eq("productid", productid);
+
+  if (fetchError) return res.status(500).json({ error: fetchError.message });
+
+  const hasPending = orderDetails.some(
+    (od) => od.orders?.order_status && od.orders.order_status !== "delivered"
+  );
+
+  if (hasPending) {
+    return res.status(400).json({
+      error: "Cannot delete product with active or pending orders.",
+    });
+  }
+
+  //setting is_active to false
+  const { data, error } = await supabase
+    .from("products")
+    .update({ is_active: false })
+    .eq("productid", productid)
+    .select();
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  res.json({ message: "Product archived successfully" });
+});
+
+
+router.get("/restock", authenticateToken, async (req, res) => {
+  const { data, error } = await supabase
+  .from("products")
+  .select(`
+    *,
+    supplier: supplierid (supplier_name),
+    order_detail (
+      unit_price,
+      requested_quantity,
+      order_unit,
+      orders (order_status, delivered_date)
+    )
+  `)
+  .eq("is_active", true); 
+
+
+  if (error) {
+    console.error("Error fetching restock recommendations:", error); 
+    return res.status(500).json({ error: error.message });
+  }
+
+  const filtered = data.filter(
+    product => product.current_stock < product.min_quantity
+  );
+
+  res.json(filtered);
+});
+
+router.post("/:productid/add-stock", authenticateToken, isAdmin, async (req, res) => {
+  const productid = parseInt(req.params.productid, 10);
+  const { quantity } = req.body;
+
+  if (isNaN(productid)) {
+    return res.status(400).json({ error: "Invalid product ID" });
+  }
+
+  if (!Number.isFinite(quantity)) {
+    return res.status(400).json({ error: "Invalid or missing quantity" });
+  }
+
+  const { data: currentData, error: fetchError } = await supabase
+    .from("products")
+    .select("current_stock")
+    .eq("productid", productid)
+    .single();
+
+  if (fetchError) return res.status(500).json({ error: fetchError.message });
+  if (!currentData)
+    return res.status(404).json({ error: "Product not found" });
+
+  const newStock = currentData.current_stock + quantity;
+
+  const { data, error } = await supabase
+    .from("products")
+    .update({ current_stock: newStock })
+    .eq("productid", productid)
+    .select();
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  res.json(data[0]);
+});
+
+module.exports = router;
+</file>
+
+<file path="server/routes/orderDetail.js">
+const express = require('express');
+const router = express.Router();
+const { supabase } = require('../utils/supabase');
+const { authenticateToken } = require('../middleware/auth');
+
+// GET enriched order details
+router.get('/', authenticateToken, async (req, res) => {
+  const { data, error } = await supabase
+    .from('order_detail')
+    .select(`
+      *,
+      products (product_name),
+      suppliers (supplier_name)
+    `)
+    .order('orderid', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching order details:', error);
+    return res.status(500).json({ error: error.message });
+  }
+
+  const formatted = data.map(row => ({
+    ...row,
+    product_name: row.products?.product_name || 'Unknown',
+    supplier_name: row.suppliers?.supplier_name || 'Unknown'
+  }));
+
+  res.json(formatted);
+});
+
+// 
+router.post('/', authenticateToken, async (req, res) => {
+  const { orderid, items } = req.body;
+
+  if (!orderid || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ error: 'Missing or invalid orderid/items' });
+  }
+
+  const rows = items.map(item => ({
+    orderid,
+    productid: item.productid,
+    supplierid: item.supplierid,
+    unit_price: item.unit_price,
+    requested_quantity: item.requested_quantity,
+    order_unit: item.order_unit,
+    received_quantity: 0,
+    received_date: null
+  }));
+
+  const { data, error } = await supabase
+    .from('order_detail')
+    .insert(rows)
+    .select(`*, products (product_name), suppliers (supplier_name)`);
+
+  if (error) {
+    console.error('Error inserting order details:', error);
+    return res.status(500).json({ error: error.message });
+  }
+
+  const enriched = data.map(row => ({
+    ...row,
+    product_name: row.products?.product_name || 'Unknown',
+    supplier_name: row.suppliers?.supplier_name || 'Unknown'
+  }));
+
+  res.status(201).json(enriched);
+});
+
+// 
+router.post('/bulk', authenticateToken, async (req, res) => {
+  const orderDetails = req.body;
+
+  if (!Array.isArray(orderDetails) || orderDetails.length === 0) {
+    return res.status(400).json({ error: 'No order details provided' });
+  }
+
+  const rows = orderDetails.map(item => ({
+    orderid: item.orderid,
+    productid: item.productid,
+    supplierid: item.supplierid,
+    unit_price: item.unit_price,
+    requested_quantity: item.requested_quantity,
+    order_unit: item.order_unit,
+    received_quantity: 0,
+    received_date: null
+  }));
+
+  const { data, error } = await supabase
+    .from('order_detail')
+    .insert(rows)
+    .select(`*, products (product_name), suppliers (supplier_name)`);
+
+  if (error) {
+    console.error('Error in /bulk insert:', error);
+    return res.status(500).json({ error: error.message });
+  }
+
+  const enriched = data.map(row => ({
+    ...row,
+    product_name: row.products?.product_name || 'Unknown',
+    supplier_name: row.suppliers?.supplier_name || 'Unknown'
+  }));
+
+  res.status(201).json(enriched);
+});
+
+module.exports = router;
+</file>
+
+<file path="server/routes/orders.js">
+// routes/orders.js
+const express = require("express");
+const router = express.Router();
+const { supabase } = require("../utils/supabase");
+const { authenticateToken } = require("../middleware/auth");
+
+router.get("/pending", authenticateToken, async (req, res) => {
+  const { data, error } = await supabase
+    .from("orders")
+    .select(
+      `
+        orderid,
+        order_date,
+        order_status,
+        total_amount,
+        suppliers (supplier_name),
+        order_detail (
+          requested_quantity,
+          unit_price,
+          products (productid, product_name)
+        )
+      `
+    )
+    .eq("order_status", "pending")
+    .order("orderid", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching pending orders:", error);
+    return res.status(500).json({ error: error.message });
+  }
+
+  res.json(data);
+});
+
+// GET /api/orders/processing
+router.get("/processing", authenticateToken, async (req, res) => {
+  const { data, error } = await supabase
+      .from("orders")
+      .select(
+          `
+            orderid, order_date, order_status, total_amount,
+            order_detail (
+              requested_quantity, unit_price,
+              products (
+                product_name,
+                supplier:suppliers!supplierid ( supplier_name )
+              )
+            )
+          `
+      )
+      .eq("order_status", "processing")
+      .order("order_date", { ascending: false });
+
+  if (error) {
+      console.error("Error fetching processing orders:", error.message);
+      return res.status(500).json({ error: error.message || "Failed to fetch processing orders" });
+  }
+  res.json(data);
+});
+
+// GET /api/orders/delivered
+router.get("/delivered", authenticateToken, async (req, res) => {
+  const { data, error } = await supabase
+      .from("orders")
+      .select(
+          `
+            orderid, order_date, delivered_date, total_amount,
+            order_detail (
+              requested_quantity, unit_price,
+              products (               
+                product_name,
+                supplier:suppliers!supplierid ( supplier_name ) 
+              )
+            )
+          `
+      )
+      .eq("order_status", "delivered")
+      .order("delivered_date", { ascending: false, nullsFirst: false })
+      .order("orderid", { ascending: false });
+
+  if (error) {
+      console.error("Error fetching delivered orders:", error.message);
+      return res.status(500).json({ error: error.message || "Failed to fetch delivered orders" });
+  }
+
+  res.json(data);
+});
+
+// POST /api/orders
+router.post("/", authenticateToken, async (req, res) => {
+  const { order_date, total_amount, supplierid, userid } = req.body;
+
+  if (!order_date || total_amount === undefined || !supplierid || !userid) {
+    return res.status(400).json({
+      error:
+        "Missing required fields (order_date, total_amount, supplierid, userid)",
+    });
+  }
+
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ error: "Only admins can place orders." });
+  }
+
+  const { data, error } = await supabase
+    .from("orders")
+    .insert([
+      {
+        order_date,
+        total_amount,
+        supplierid,
+        userid,
+        order_status: "pending",
+      },
+    ])
+    .select();
+
+  if (error) {
+    console.error("Error creating order:", error);
+    return res.status(500).json({ error: error.message });
+  }
+
+  res.status(201).json(data[0]);
+});
+
+// PUT /api/orders/:orderid/status
+router.put("/:orderid/status", authenticateToken, async (req, res) => {
+  const { orderid } = req.params;
+  const { order_status } = req.body;
+  const updates = { order_status };
+
+  if (
+    !["pending", "processing", "delivered", "cancelled"].includes(order_status)
+  ) {
+    return res.status(400).json({ error: "Invalid order status" });
+  }
+
+  if (order_status === "delivered") {
+    updates.delivered_date = new Date().toISOString().split("T")[0];
+  }
+
+  const { data, error } = await supabase
+    .from("orders")
+    .update(updates)
+    .eq("orderid", orderid)
+    .select();
+
+  if (error) {
+    console.error("Error updating order status:", error);
+    return res.status(500).json({ error: error.message });
+  }
+
+  res.json(data[0]);
+});
+
+module.exports = router;
+</file>
+
+<file path="server/routes/suppliers.js">
+// routes/suppliers.js
+const express = require("express");
+const router = express.Router();
+const { supabase } = require("../utils/supabase");
+const { authenticateToken } = require("../middleware/auth");
+
+// GET /api/suppliers
+router.get("/", authenticateToken, async (req, res) => {
+  const { data, error } = await supabase.from("suppliers").select("*");
+
+  if (error) {
+    console.error("Error fetching suppliers:", error);
+    return res.status(500).json({ error: error.message });
+  }
+
+  res.json(data);
+});
+
+// POST /api/suppliers
+router.post("/", authenticateToken, async (req, res) => {
+  const { supplier_name, contact, email, address } = req.body;
+
+  if (!supplier_name || !contact || !email || !address) {
+    return res.status(400).json({ error: "Missing required fields." });
+  }
+
+  const { data, error } = await supabase
+    .from("suppliers")
+    .insert([{ supplier_name, contact, email, address }])
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error inserting supplier:", error);
+    return res.status(500).json({ error: error.message });
+  }
+
+  res.json(data);
+});
+
+module.exports = router;
+</file>
+
+<file path="server/routes/users.js">
+const express = require("express");
+const router = express.Router();
+const { supabase } = require("../utils/supabase");
+const { authenticateToken, isAdmin } = require("../middleware/auth");
+
+router.get("/profile", authenticateToken, (req, res) => {
+  res.json(req.user);
+});
+
+router.get("/", authenticateToken, isAdmin, async (req, res) => {
+  const { data, error } = await supabase
+    .from("users")
+    .select("userid, email, username, role");
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+router.put("/:id/role", authenticateToken, isAdmin, async (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+  const { role } = req.body;
+  if (!["admin", "user"].includes(role))
+    return res.status(400).json({ error: "Invalid role" });
+
+  const { data, error } = await supabase
+    .from("users")
+    .update({ role })
+    .eq("userid", userId)
+    .select("userid, email, username, role")
+    .single();
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+router.delete("/:id", authenticateToken, isAdmin, async (req, res) => {
+  const userId = req.params.id;
+
+  try {
+    console.log("Attempting to nullify and delete user:", userId);
+
+    // 1. Nullify userid in order_detail (if needed)
+    const { data: orders, error: ordersFetchErr } = await supabase
+      .from("orders")
+      .select("orderid")
+      .eq("userid", userId);
+
+    if (ordersFetchErr) {
+      throw new Error("Failed to fetch user orders: " + ordersFetchErr.message);
+    }
+
+    const orderIds = (orders || []).map((o) => o.orderid);
+
+    if (orderIds.length > 0) {
+      const { error: orderDetailsErr } = await supabase
+        .from("order_detail")
+        .update({ userid: null }) // if order_detail has userid
+        .in("orderid", orderIds); // if you want to clear by orderid instead
+
+      if (orderDetailsErr) {
+        console.error(
+          "Failed to nullify order_detail.userid:",
+          orderDetailsErr.message
+        );
+        // optional: don't throw, continue
+      }
+    }
+
+    // 2. Nullify userid in orders
+    const { error: ordersUpdateErr } = await supabase
+      .from("orders")
+      .update({ userid: null })
+      .eq("userid", userId);
+
+    if (ordersUpdateErr) {
+      throw new Error(
+        "Failed to nullify orders.userid: " + ordersUpdateErr.message
+      );
+    }
+
+    // 3. Nullify userid in products
+    const { error: productsUpdateErr } = await supabase
+      .from("products")
+      .update({ userid: null })
+      .eq("userid", userId);
+
+    if (productsUpdateErr) {
+      throw new Error(
+        "Failed to nullify products.userid: " + productsUpdateErr.message
+      );
+    }
+
+    // 4. Delete from admin_managers
+    const { error: adminMgrErr } = await supabase
+      .from("admin_managers")
+      .delete()
+      .eq("userid", userId);
+
+    if (adminMgrErr) {
+      throw new Error(
+        "Failed to delete from admin_managers: " + adminMgrErr.message
+      );
+    }
+
+    // 5. Delete user
+    const { error: userDelErr } = await supabase
+      .from("users")
+      .delete()
+      .eq("userid", userId);
+
+    if (userDelErr) {
+      console.error("Delete from users failed:", userDelErr.message);
+      return res.status(500).json({ error: userDelErr.message });
+    }
+
+    console.log("Successfully deleted user:", userId);
+    res.status(204).send();
+  } catch (err) {
+    console.error("Manual delete failed:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+module.exports = router;
+</file>
+
+<file path="server/utils/supabase.js">
+const { createClient } = require('@supabase/supabase-js');
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+module.exports = { supabase };
+</file>
+
+<file path="server/.env">
+JWT_SECRET=7638792f4de7743cc02ca5752684c38f7c9740e8d608d4b52222e912d424cd237b1e
+SUPABASE_URL="https://asqbvsvrmmutlxcpysel.supabase.co"
+SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzcWJ2c3ZybW11dGx4Y3B5c2VsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE2NTU2MDUsImV4cCI6MjA1NzIzMTYwNX0.Se8oFO-a39GhXSJ_I0UvJloY3AyNP7fk-ad7YnYYO24"
+SUPABASE_SERVICE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzcWJ2c3ZybW11dGx4Y3B5c2VsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MTY1NTYwNSwiZXhwIjoyMDU3MjMxNjA1fQ.NW6dR5nTeYqgfZC_K_faOWk58xPAnZLrkWLePOeahc4
+PORT=5000
+</file>
+
+<file path="server/package.json">
+{
+  "name": "server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.14.2",
+    "mongoose": "^8.12.1"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "nodemon": "^3.1.9"
+  }
+}
+</file>
+
+<file path="server/server.js">
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// Modular route imports
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users');
+const inventoryRoutes = require('./routes/inventory');
+const orderRoutes = require('./routes/orderDetail');
+const ordersRoutes = require('./routes/orders'); 
+const supplierRoutes = require('./routes/suppliers');
+// Mount routes
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/inventory', inventoryRoutes);
+app.use('/api/order-detail', orderRoutes);
+app.use('/api/orders', ordersRoutes); 
+app.use('/api/suppliers', supplierRoutes);
+
+// Test route
+app.get('/api/test', (req, res) => res.json({ message: 'Server is running!' }));
+
+// Start server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+</file>
+
+<file path="package.json">
+{
+  "name": "cpsc471project",
+  "version": "1.0.0",
+  "description": "npm start npx nodemon server.js",
+  "main": "index.js",
+  "scripts": {
+    "install-all": "npm install && npm run install-client && npm run install-server",
+    "install-client": "cd client && npm install",
+    "install-server": "cd server && npm install",
+    "server": "cd server && node server.js",
+    "client": "cd client && npm start",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "start": "npm run install-all && npm run dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1"
+  }
+}
+</file>
+
+<file path="README.md">
+# CPSC471 Inventory Management System
+
+A full-stack web application for managing inventory with user authentication.
+
+## Technology Stack
+
+### Frontend
+- **React.js** - UI library for building the user interface
+- **React Router** - For client-side routing
+- **Axios** - Promise-based HTTP client for API requests
+- **Context API** - For state management (authentication)
+
+### Backend
+- **Node.js** - JavaScript runtime environment
+- **Express.js** - Web application framework
+- **Supabase** - PostgreSQL database with built-in authentication
+- **JWT** - For secure user authentication and authorization
+
+## Project Structure
+cpsc471project/
+
+├── client/ # React frontend application
+
+├── server/ # Node.js backend application
+
+│ └── server.js # Main server file
+
+└── package.json # Root project config with scripts
+
+
+## Getting Started
+
+### Prerequisites
+- Node.js (v14 or newer)
+- npm (v6 or newer)
+
+### Installation & Setup
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/cpsc471project.git
+   cd cpsc471project
+   
+2. Install dependencies and start the application:
+
+   ```bash
+    npm run start
+    ```
+    This command:
+- Installs all dependencies (root, client, and server)
+- Starts both client and server concurrently
+
+3. For development (after dependencies are installed):
+
+   ```bash
+    npm run dev
+    ```
+    This starts both client and server without reinstalling dependencies.
+
+## Features
+- User Authentication : Register, login, and protected routes
+- Inventory Management : View, add, update, and delete inventory items
+- Responsive Design : Works across different screen sizes
+
+## Access Points
+- Frontend : http://localhost:3000
+- Backend API : http://localhost:5000/api
+
+## API Endpoints
+- POST /api/auth/register - Register a new user
+- POST /api/auth/login - Login existing user
+- GET /api/inventory - Get all inventory items (requires authentication)
+- POST /api/inventory - Add new inventory item
+- PUT /api/inventory/:id - Update an inventory item
+- DELETE /api/inventory/:id - Delete an inventory item
+</file>
+
+</files>
