@@ -21,6 +21,7 @@ import AdminUserListPage from "./Login/AdminUserList";
 import Inventory from "./Main/Inventory";
 import Order from "./Main/Order"; // Parent layout for /orders/*
 import Reports from "./Main/Reports";
+import Dashboard from "./Main/Dashboard";
 
 // Order Child Components
 import OrderRestock from "./Main/Order/Restock";
@@ -102,7 +103,7 @@ const Navigation = () => {
     <nav className="bg-gray-800 shadow-md sticky top-0 z-40">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          {/* Left Side: Logo (optional) & Desktop Links */}
+          {/* Left Side */}
           <div className="flex items-center">
             <div className="flex-shrink-0">
                <span className="text-white font-bold text-lg">471Cafe</span>
@@ -113,6 +114,7 @@ const Navigation = () => {
                     <StyledLink to="/" end onClick={closeMobileMenu}>Home</StyledLink>
                 )}
                 {/* ====================================== */}
+                {user && <StyledLink to="/dashboard" onClick={closeMobileMenu}>Dashboard</StyledLink>}
                 {user && <StyledLink to="/inventory" onClick={closeMobileMenu}>Inventory</StyledLink>}
                 {user && <StyledLink to="/orders" onClick={closeMobileMenu}>Orders</StyledLink>}
                 {user && <StyledLink to="/reports" onClick={closeMobileMenu}>Reports</StyledLink>} 
@@ -176,11 +178,12 @@ const Navigation = () => {
       <div className={`md:hidden transition-max-height duration-300 ease-in-out overflow-hidden ${isMobileMenuOpen ? 'max-h-screen' : 'max-h-0'}`} id="mobile-menu">
         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
           {/* Mobile Navigation Links */}
-          {/* === Conditionally Render Home Link === */}
+          {/* Conditionally Render Home Link === */}
           {!user && (
             <StyledMobileLink to="/" end onClick={closeMobileMenu}>Home</StyledMobileLink>
           )}
           {/* ====================================== */}
+          {user && <StyledMobileLink to="/dashboard" onClick={closeMobileMenu}>Dashboard</StyledMobileLink>}
           {user && <StyledMobileLink to="/inventory" onClick={closeMobileMenu}>Inventory</StyledMobileLink>}
           {user && <StyledMobileLink to="/orders" onClick={closeMobileMenu}>Orders</StyledMobileLink>}
           {user && <StyledMobileLink to="/reports" onClick={closeMobileMenu}>Reports</StyledMobileLink>}
@@ -251,6 +254,7 @@ function App() {
 
               {/* Protected Routes */}
               <Route element={<ProtectedRoute />}>
+                <Route path="/dashboard" element={<Dashboard />} /> 
                 <Route path="/inventory" element={<Inventory />} />
                 <Route path="/orders" element={<Order />}>
                   <Route index element={<Navigate replace to="restock" />} />

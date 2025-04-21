@@ -3050,9 +3050,7 @@ function Inventory() {
     fetchInventory();
   }, [fetchInventory]);
 
-  // --- Derived Data: Filtering and Searching ---
   const displayItems = useMemo(() => {
-    // ... (displayItems logic remains the same) ...
     let filtered = filterItems(allItems);
 
     if (searchTerm) {
@@ -3071,8 +3069,6 @@ function Inventory() {
     );
   }, [allItems, searchTerm, filterItems]);
 
-  // --- Modal Handlers (Edit Item ONLY) ---
-  // REMOVED handleOpenAddModal function
 
   const handleOpenEditModal = (item) => {
     if (!item || typeof item !== "object") {
@@ -3087,8 +3083,7 @@ function Inventory() {
 
   const handleItemModalClose = () => {
     setIsItemModalOpen(false);
-    setCurrentItem(null); // Clear the item being edited
-    // setError(null); // Decide if you want to clear error on cancel
+    setCurrentItem(null); 
   };
 
   // SIMPLIFIED handleFormSubmit for UPDATE ONLY
@@ -3122,7 +3117,6 @@ function Inventory() {
 
   // --- Delete Handler ---
   const handleDelete = async (id) => {
-    // ... (handleDelete logic remains the same) ...
     const itemToDelete = allItems.find((item) => item.productid === id);
     if (!itemToDelete) {
       setError("Item not found.");
@@ -3141,7 +3135,6 @@ function Inventory() {
           navigate("/login");
         }
       } finally {
-         // setLoading(false); // fetchInventory already handles this
       }
     }
   };
@@ -3164,7 +3157,7 @@ function Inventory() {
         activeFilterCount={activeFilterCount}
       />
 
-      {/* ... (Error display logic) ... */}
+      {/* Error display logic) */}
        {error && !isItemModalOpen && !isFilterModalOpen && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 relative text-sm">
           {error}
@@ -3178,15 +3171,14 @@ function Inventory() {
         </div>
       )}
 
-      {/* ... (Loading indicator logic) ... */}
+      {/* Loading indicator logic */}
        {loading && allItems.length > 0 && (
         <div className="text-center py-4 text-gray-500 text-sm italic">Updating list...</div>
       )}
 
-      {/* ... (Inventory Table rendering logic remains the same) ... */}
+      {/* Inventory Table rendering logic remains the same) */}
       <div className="overflow-x-auto bg-white p-4 rounded-lg shadow-md">
           <table className="min-w-full text-left text-sm">
-             {/* ... thead ... */}
              <thead className="bg-gray-50">
                  <tr className="text-gray-600 uppercase text-xs">
                      <th className="px-4 py-2 font-medium" style={{ backgroundColor: "#EAE0D5" }}>Product</th>
@@ -3199,7 +3191,6 @@ function Inventory() {
                      )}
                  </tr>
              </thead>
-             {/* ... tbody ... */}
              <tbody className="divide-y divide-gray-200">
                  {displayItems.length > 0 ? (
                      displayItems.map((item) => {
@@ -3241,7 +3232,6 @@ function Inventory() {
                          );
                      })
                  ) : (
-                    /* ... No items row ... */
                      <tr>
                          <td colSpan={user?.role === "admin" ? 6 : 5} className="text-center py-6 text-gray-500 italic">
                            {loading ? "Loading..." : (searchTerm || activeFilterCount > 0
@@ -3676,36 +3666,33 @@ export const OrderCartProvider = ({ children }) => {
 <file path="client/src/Main/Reports.jsx">
 // client/src/Main/Reports.jsx
 import React, { useState, useEffect } from 'react';
-// Import the new API function
+
 import { getReportSummary, getMonthlyTopProducts } from '../api';
 import { useAuth } from '../context/AuthContext';
 
-// --- Reusable Summary Card Widget --- (Keep as before)
 const SummaryCard = ({ title, value, format = 'number', icon, color = 'blue' }) => {
-    // ... same code ...
     const formattedValue = () => {
         if (value === undefined || value === null) return 'N/A';
         if (format === 'currency') {
             return `$${Number(value).toFixed(2)}`;
         }
         if (format === 'integer') {
-             return Number(value).toLocaleString(); // Basic number formatting
+             return Number(value).toLocaleString(); 
         }
         return value; // Default plain number
     };
 
     const colorClasses = {
-        blue: 'bg-blue-100 border-blue-300 text-blue-800',
-        green: 'bg-green-100 border-green-300 text-green-800',
-        yellow: 'bg-yellow-100 border-yellow-300 text-yellow-800',
-        red: 'bg-red-100 border-red-300 text-red-800',
+        blue: 'bg-[#B2CBF9] border-blue-300 text-blue-800',
+        green: 'bg-[#C0E0AC] border-green-300 text-green-800',
+        yellow: 'bg-[#F9E3BF] border-yellow-300 text-yellow-800',
+        red: 'bg-[#E9B1B1] border-red-300 text-red-800',
     };
 
     return (
         <div className={`border rounded-lg p-4 shadow-sm ${colorClasses[color]}`}>
             <div className="flex justify-between items-center">
                 <h3 className="text-sm font-medium uppercase text-gray-600">{title}</h3>
-                {/* Optional Icon can go here */}
             </div>
             <p className="text-2xl font-bold mt-2">{formattedValue()}</p>
         </div>
@@ -3713,9 +3700,8 @@ const SummaryCard = ({ title, value, format = 'number', icon, color = 'blue' }) 
 };
 
 
-// --- Reusable Top List Widget --- (Keep as before)
+// --- Reusable Top List Widget --- (
 const TopListWidget = ({ title, items = [], valueKey, valueLabel = 'Count' }) => {
-    // ... same code ...
         return (
         <div className="bg-white p-4 rounded-lg shadow border">
             <h3 className="text-lg font-semibold mb-3 text-gray-700">{title}</h3>
@@ -3744,7 +3730,7 @@ function Reports() {
     const [summaryLoading, setSummaryLoading] = useState(true);
     const [summaryError, setSummaryError] = useState(null);
 
-    // --- NEW: State for Monthly Report ---
+    // --- State for Monthly Report ---
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1; // JS months are 0-11
     const [selectedYear, setSelectedYear] = useState(currentYear);
@@ -3752,7 +3738,6 @@ function Reports() {
     const [monthlyTopProducts, setMonthlyTopProducts] = useState([]);
     const [monthlyLoading, setMonthlyLoading] = useState(false);
     const [monthlyError, setMonthlyError] = useState(null);
-    // const { user } = useAuth();
 
     // --- Fetch Summary Data ---
     useEffect(() => {
@@ -3827,7 +3812,7 @@ function Reports() {
             </div>
         );
     }
-    if (!summaryData) { // Should not happen if loading/error handled, but good fallback
+    if (!summaryData) { 
         return <div className="p-6 text-center text-gray-500">No summary report data found.</div>;
     }
 
@@ -3836,7 +3821,7 @@ function Reports() {
         <div className="p-4 md:p-6 space-y-8"> {/* Increased spacing */}
             <h1 className="text-2xl font-bold text-gray-800 mb-6">Reports Dashboard</h1>
 
-            {/* Section 1: Summary Cards */}
+            {/* Summary Cards */}
             <section>
                  <h2 className="text-xl font-semibold text-gray-700 mb-4">Overall Summary</h2>
                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -3847,7 +3832,7 @@ function Reports() {
                  </div>
             </section>
 
-            {/* Section 2: General Top Product Lists */}
+            {/*  General Top Product Lists */}
              <section>
                   <h2 className="text-xl font-semibold text-gray-700 mb-4">All-Time Top Products (Delivered Orders)</h2>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -3857,7 +3842,7 @@ function Reports() {
                  </div>
              </section>
 
-             {/* Section 3: Monthly Top Products */}
+             {/*  Monthly Top Products */}
              <section className="mt-8">
                 <h2 className="text-xl font-semibold text-gray-700 mb-4">Monthly Top Ordered Products</h2>
                 {/* Date Selection Controls */}
@@ -3899,8 +3884,6 @@ function Reports() {
                     />
                  )}
              </section>
-
-             {/* Add more sections/widgets here */}
 
         </div>
     );
@@ -5372,20 +5355,16 @@ module.exports = router;
 const express = require("express");
 const router = express.Router();
 const { supabase } = require("../utils/supabase");
-const { authenticateToken, isAdmin } = require("../middleware/auth"); // Assuming reports might be admin-only
+const { authenticateToken, isAdmin } = require("../middleware/auth"); 
 
-// --- GET /api/reports/summary ---
-// Fetches various summary statistics
-router.get("/summary", authenticateToken, /* Optional: isAdmin, */ async (req, res) => {
+router.get("/summary", authenticateToken, async (req, res) => {
   try {
-    // --- Total Delivered Orders Count ---
     const { count: totalDeliveredOrdersCount, error: countError } = await supabase
       .from("orders")
-      .select('*', { count: "exact", head: true }) // Use head: true to only fetch the count
+      .select('*', { count: "exact", head: true })
       .eq("order_status", "delivered");
 
     if (countError) throw countError;
-    // If count is null (no rows found), default to 0
     const totalDeliveredOrders = totalDeliveredOrdersCount ?? 0;
 
     // --- Total Delivered Value (Sum) ---
@@ -5397,7 +5376,6 @@ router.get("/summary", authenticateToken, /* Optional: isAdmin, */ async (req, r
     if (valueError) throw valueError;
     // Sum the amounts, defaulting to 0 if data is null/empty or amount is null
     const totalDeliveredValue = valueData?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
-
 
     // --- Most Frequently Ordered Products (Top 5 from Delivered Orders) ---
     // Fetch delivered order IDs first
@@ -5478,17 +5456,16 @@ router.get("/summary", authenticateToken, /* Optional: isAdmin, */ async (req, r
     // --- Inventory Summary Count ---
      const { count: totalActiveProductsCount, error: invCountError } = await supabase
       .from("products")
-      .select('*', { count: "exact", head: true }) // Get count only
+      .select('*', { count: "exact", head: true }) 
       .eq("is_active", true);
 
     if (invCountError) throw invCountError;
     const totalActiveProducts = totalActiveProductsCount ?? 0;
 
-
-    // --- Estimated Inventory Value (Corrected Logic) ---
+    // --- Estimated Inventory Value  ---
     let estimatedInventoryValue = 0; // Initialize
 
-    // 1. Get active products currently in stock
+    // Get active products currently in stock
     const { data: activeProducts, error: invProdError } = await supabase
         .from('products')
         .select('productid, current_stock') // Select ID and stock
@@ -5500,33 +5477,45 @@ router.get("/summary", authenticateToken, /* Optional: isAdmin, */ async (req, r
     if (activeProducts && activeProducts.length > 0) {
         const productIdsInStock = activeProducts.map(p => p.productid);
 
-        // 2. Get the latest delivered purchase price for these products
+        // Get the delivered purchase prices for these products 
         const { data: priceDetails, error: priceError } = await supabase
             .from('order_detail')
             .select(`
                 productid,
                 unit_price,
-                orders!inner (delivered_date)
+                orders!inner (delivered_date) // Keep the join
             `)
-            .in('productid', productIdsInStock)       // Only for products we have in stock
-            .eq('orders.order_status', 'delivered')   // Only from delivered orders
-            .not('orders.delivered_date', 'is', null) // Ensure delivered_date exists
-            .order('orders.delivered_date', { ascending: false }); // Order by date DESC
+            .in('productid', productIdsInStock)
+            .eq('orders.order_status', 'delivered')
+            .not('orders.delivered_date', 'is', null); // Keep filters
 
         if (priceError) throw priceError;
 
-        // 3. Create a map of product ID to its latest cost
+        // Added JavaScript Sorting ---
+        // Sort the price details in JavaScript AFTER fetching
+        const sortedPriceDetails = (priceDetails || []).sort((a, b) => {
+            // Handle potential null dates safely, treating nulls as older
+            const dateA = a.orders?.delivered_date ? new Date(a.orders.delivered_date).getTime() : 0;
+            const dateB = b.orders?.delivered_date ? new Date(b.orders.delivered_date).getTime() : 0;
+            // Sort descending (latest date first)
+            return dateB - dateA;
+        });
+        // --- Added JavaScript Sorting ---
+
+        //Create a map of product ID to its latest cost (using the sorted array)
         const latestCosts = {};
-        (priceDetails || []).forEach(detail => {
-            // Since we ordered by date descending, the first price we see for a product is the latest
-            if (!latestCosts[detail.productid]) {
+        // Iterate the SORTED array now
+        sortedPriceDetails.forEach(detail => {
+            //  sorted by date descending, the first price for a product is the latest
+            // Ensure productid exists before trying to add to the map
+            if (detail.productid && !latestCosts[detail.productid]) {
                 latestCosts[detail.productid] = detail.unit_price || 0; // Use the unit price, default 0
             }
         });
 
-        // 4. Calculate total value using the latest cost found
+        // Calculate total value using the latest cost found
         estimatedInventoryValue = activeProducts.reduce((sum, product) => {
-            const cost = latestCosts[product.productid] || 0; // Get latest cost for this product, default 0 if no purchase history
+            const cost = latestCosts[product.productid] || 0; // Get latest cost
             const stock = product.current_stock || 0;
             return sum + (stock * cost);
         }, 0);
@@ -5555,15 +5544,15 @@ router.get("/summary", authenticateToken, /* Optional: isAdmin, */ async (req, r
 });
 
 
-// --- NEW: GET /api/reports/monthly-top-products ---
+// --- GET /api/reports/monthly-top-products ---
 // Fetches top N products ordered within a specific month and year
-router.get("/monthly-top-products", authenticateToken, /* Optional: isAdmin, */ async (req, res) => {
-    const { year, month, limit = 5 } = req.query; // Default limit to 5
+router.get("/monthly-top-products", authenticateToken,  async (req, res) => {
+    const { year, month, limit = 5 } = req.query; 
 
     // --- Validation ---
     const currentYear = new Date().getFullYear();
     const reportYear = parseInt(year, 10);
-    const reportMonth = parseInt(month, 10); // Month is 1-12
+    const reportMonth = parseInt(month, 10); 
     const reportLimit = parseInt(limit, 10);
 
     if (isNaN(reportYear) || reportYear < 2000 || reportYear > currentYear + 1) {
@@ -5597,15 +5586,12 @@ router.get("/monthly-top-products", authenticateToken, /* Optional: isAdmin, */ 
             `)
             .gte('orders.order_date', startDate) // Greater than or equal to start date
             .lt('orders.order_date', endDate)    // Less than end date (exclusive)
-            // Optionally filter by order status if needed, e.g., only count 'delivered'
-            // .eq('orders.order_status', 'delivered')
 
         if (detailsError) throw detailsError;
 
-        // --- Process Results in Node.js to Count Frequencies ---
         const productFrequency = {};
         (monthlyOrderDetails || []).forEach(detail => {
-            if (!detail.products || !detail.productid) return; // Skip if product info is missing
+            if (!detail.products || !detail.productid) return; 
 
             const productId = detail.productid;
             const productName = detail.products.product_name || `Product ID ${productId}`;
@@ -5613,7 +5599,7 @@ router.get("/monthly-top-products", authenticateToken, /* Optional: isAdmin, */ 
             if (!productFrequency[productId]) {
                 productFrequency[productId] = { id: productId, name: productName, count: 0 };
             }
-            productFrequency[productId].count += 1; // Count each line item occurrence
+            productFrequency[productId].count += 1; 
         });
 
         // --- Sort and Limit ---
@@ -5630,7 +5616,7 @@ router.get("/monthly-top-products", authenticateToken, /* Optional: isAdmin, */ 
 });
 
 
-module.exports = router; // Make sure this is at the end
+module.exports = router;
 </file>
 
 <file path="server/routes/suppliers.js">
