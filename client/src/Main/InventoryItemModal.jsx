@@ -1,4 +1,4 @@
-// Updated InventoryItemModal.jsx to remove required case_quantity, case_price, and order_unit fields
+
 import React, { useState } from "react";
 
 function InventoryItemModal({ item, onClose, onSubmit, initialError }) {
