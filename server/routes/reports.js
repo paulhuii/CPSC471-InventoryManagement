@@ -130,33 +130,45 @@ router.get("/summary", authenticateToken, /* Optional: isAdmin, */ async (req, r
     if (activeProducts && activeProducts.length > 0) {
         const productIdsInStock = activeProducts.map(p => p.productid);
 
-        // 2. Get the latest delivered purchase price for these products
+        // 2. Get the delivered purchase prices for these products (WITHOUT DB sorting)
         const { data: priceDetails, error: priceError } = await supabase
             .from('order_detail')
             .select(`
                 productid,
                 unit_price,
-                orders!inner (delivered_date)
+                orders!inner (delivered_date) // Keep the join
             `)
-            .in('productid', productIdsInStock)       // Only for products we have in stock
-            .eq('orders.order_status', 'delivered')   // Only from delivered orders
-            .not('orders.delivered_date', 'is', null) // Ensure delivered_date exists
-            .order('orders.delivered_date', { ascending: false }); // Order by date DESC
+            .in('productid', productIdsInStock)
+            .eq('orders.order_status', 'delivered')
+            .not('orders.delivered_date', 'is', null); // Keep filters
 
         if (priceError) throw priceError;
 
-        // 3. Create a map of product ID to its latest cost
+        // --- START: Added JavaScript Sorting ---
+        // Sort the price details in JavaScript AFTER fetching
+        const sortedPriceDetails = (priceDetails || []).sort((a, b) => {
+            // Handle potential null dates safely, treating nulls as older
+            const dateA = a.orders?.delivered_date ? new Date(a.orders.delivered_date).getTime() : 0;
+            const dateB = b.orders?.delivered_date ? new Date(b.orders.delivered_date).getTime() : 0;
+            // Sort descending (latest date first)
+            return dateB - dateA;
+        });
+        // --- END: Added JavaScript Sorting ---
+
+        // 3. Create a map of product ID to its latest cost (using the sorted array)
         const latestCosts = {};
-        (priceDetails || []).forEach(detail => {
-            // Since we ordered by date descending, the first price we see for a product is the latest
-            if (!latestCosts[detail.productid]) {
+        // Iterate the SORTED array now
+        sortedPriceDetails.forEach(detail => {
+            // Since we sorted by date descending, the first price we see for a product is the latest
+            // Ensure productid exists before trying to add to the map
+            if (detail.productid && !latestCosts[detail.productid]) {
                 latestCosts[detail.productid] = detail.unit_price || 0; // Use the unit price, default 0
             }
         });
 
         // 4. Calculate total value using the latest cost found
         estimatedInventoryValue = activeProducts.reduce((sum, product) => {
-            const cost = latestCosts[product.productid] || 0; // Get latest cost for this product, default 0 if no purchase history
+            const cost = latestCosts[product.productid] || 0; // Get latest cost
             const stock = product.current_stock || 0;
             return sum + (stock * cost);
         }, 0);
