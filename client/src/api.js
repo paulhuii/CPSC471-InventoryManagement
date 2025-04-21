@@ -114,12 +114,16 @@ export const getSuppliers = async () => {
 };
 
 export const createSupplier = async (supplierData) => {
-  const response = await axios.post(
-    `${API_URL}/suppliers`,
-    supplierData,
-    getAuthHeader()
-  );
-  return response.data;
+  try {
+      const url = `${API_URL}/suppliers`;
+      console.log("Creating new supplier:", supplierData);
+      const response = await axios.post(url, supplierData, getAuthHeader());
+      console.log("Create supplier response:", response.data);
+      return response.data; // Should return the newly created supplier object
+  } catch (error) {
+      console.error("Error creating supplier:", error.response || error);
+      throw error; // Re-throw to be handled by the calling component
+  }
 };
 
 export const getSupplierByName = async (name) => {
