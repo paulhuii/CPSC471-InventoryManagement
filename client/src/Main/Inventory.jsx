@@ -1,7 +1,6 @@
 // client/src/Main/Inventory.jsx
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-// NOTE: Removed 'addItem' from import as it's no longer used here
 import { getInventory, updateItem, deleteItem } from "../api";
 import { useAuth } from "../context/AuthContext";
 import InventoryItemModal from "./InventoryItemModal";
@@ -65,9 +64,7 @@ function Inventory() {
     fetchInventory();
   }, [fetchInventory]);
 
-  // --- Derived Data: Filtering and Searching ---
   const displayItems = useMemo(() => {
-    // ... (displayItems logic remains the same) ...
     let filtered = filterItems(allItems);
 
     if (searchTerm) {
@@ -86,8 +83,6 @@ function Inventory() {
     );
   }, [allItems, searchTerm, filterItems]);
 
-  // --- Modal Handlers (Edit Item ONLY) ---
-  // REMOVED handleOpenAddModal function
 
   const handleOpenEditModal = (item) => {
     if (!item || typeof item !== "object") {
@@ -102,8 +97,7 @@ function Inventory() {
 
   const handleItemModalClose = () => {
     setIsItemModalOpen(false);
-    setCurrentItem(null); // Clear the item being edited
-    // setError(null); // Decide if you want to clear error on cancel
+    setCurrentItem(null); 
   };
 
   // SIMPLIFIED handleFormSubmit for UPDATE ONLY
@@ -137,7 +131,6 @@ function Inventory() {
 
   // --- Delete Handler ---
   const handleDelete = async (id) => {
-    // ... (handleDelete logic remains the same) ...
     const itemToDelete = allItems.find((item) => item.productid === id);
     if (!itemToDelete) {
       setError("Item not found.");
@@ -156,7 +149,6 @@ function Inventory() {
           navigate("/login");
         }
       } finally {
-         // setLoading(false); // fetchInventory already handles this
       }
     }
   };
@@ -179,7 +171,7 @@ function Inventory() {
         activeFilterCount={activeFilterCount}
       />
 
-      {/* ... (Error display logic) ... */}
+      {/* Error display logic) */}
        {error && !isItemModalOpen && !isFilterModalOpen && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 relative text-sm">
           {error}
@@ -193,15 +185,14 @@ function Inventory() {
         </div>
       )}
 
-      {/* ... (Loading indicator logic) ... */}
+      {/* Loading indicator logic */}
        {loading && allItems.length > 0 && (
         <div className="text-center py-4 text-gray-500 text-sm italic">Updating list...</div>
       )}
 
-      {/* ... (Inventory Table rendering logic remains the same) ... */}
+      {/* Inventory Table rendering logic remains the same) */}
       <div className="overflow-x-auto bg-white p-4 rounded-lg shadow-md">
           <table className="min-w-full text-left text-sm">
-             {/* ... thead ... */}
              <thead className="bg-gray-50">
                  <tr className="text-gray-600 uppercase text-xs">
                      <th className="px-4 py-2 font-medium" style={{ backgroundColor: "#EAE0D5" }}>Product</th>
@@ -214,7 +205,6 @@ function Inventory() {
                      )}
                  </tr>
              </thead>
-             {/* ... tbody ... */}
              <tbody className="divide-y divide-gray-200">
                  {displayItems.length > 0 ? (
                      displayItems.map((item) => {
@@ -256,7 +246,6 @@ function Inventory() {
                          );
                      })
                  ) : (
-                    /* ... No items row ... */
                      <tr>
                          <td colSpan={user?.role === "admin" ? 6 : 5} className="text-center py-6 text-gray-500 italic">
                            {loading ? "Loading..." : (searchTerm || activeFilterCount > 0
