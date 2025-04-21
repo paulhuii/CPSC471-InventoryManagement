@@ -29,7 +29,7 @@ function InventoryItemModal({
     setError(initialError);
   }, [initialError]);
 
-   // Reset form data if the item prop changes (e.g., opening modal for a different item)
+   // Reset form data if the item prop changes 
    useEffect(() => {
     if (item) {
         setFormData({
@@ -96,11 +96,6 @@ function InventoryItemModal({
       categoryid: formData.categoryid === "" || formData.categoryid === null ? null : parseInt(formData.categoryid, 10),
     };
 
-    // NOTE: When adding (isEditing is false), we previously set current_stock = 0.
-    // Since this modal is now ONLY for editing in the Inventory view context,
-    // we don't need that specific logic here anymore. The current_stock will always
-    // come from the form input during an edit.
-
     console.log("Data being submitted (edit):", dataToSubmit);
 
     try {
@@ -124,8 +119,6 @@ function InventoryItemModal({
     { label: "Expiration Date", name: "expiration", type: "date", required: false },
   ];
 
-  // If not editing (item is null), don't render the modal content
-  // This check might be redundant if Inventory.jsx ensures item is non-null before opening
   if (!isEditing) {
       console.warn("InventoryItemModal rendered without an item for editing.");
       return null; // Or display an error/message
@@ -165,7 +158,7 @@ function InventoryItemModal({
         >
           {/* Render fields dynamically */}
           {fields.map(({ label, name, type, required, placeholder, step, min }) => (
-            // Span product name across two columns on medium screens and up
+        
             <div key={name} className={name === 'product_name' ? 'md:col-span-2' : ''}>
               <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">
                 {label}
@@ -176,12 +169,12 @@ function InventoryItemModal({
                 placeholder={placeholder || label.replace(" *", "")}
                 name={name}
                 type={type}
-                value={formData[name]} // Bind to state
+                value={formData[name]} 
                 onChange={handleChange}
-                required={required} // HTML5 validation attribute
-                step={step} // For number inputs (e.g., price)
-                min={min}   // For number inputs
-                // No fields should be disabled during edit
+                required={required} 
+                step={step} 
+                min={min}   
+               
               />
             </div>
           ))}
