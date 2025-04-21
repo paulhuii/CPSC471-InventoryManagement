@@ -10,7 +10,8 @@ router.get("/profile", authenticateToken, (req, res) => {
 router.get("/", authenticateToken, isAdmin, async (req, res) => {
   const { data, error } = await supabase
     .from("users")
-    .select("userid, email, username, role");
+    .select("userid, email, username, role")
+    .eq("is_active", true);
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
@@ -26,6 +27,7 @@ router.put("/:id/role", authenticateToken, isAdmin, async (req, res) => {
     .update({ role })
     .eq("userid", userId)
     .select("userid, email, username, role")
+    .eq("is_active", true)
     .single();
 
   if (error) return res.status(500).json({ error: error.message });
@@ -101,15 +103,14 @@ router.delete("/:id", authenticateToken, isAdmin, async (req, res) => {
       );
     }
 
-    // 5. Delete user
-    const { error: userDelErr } = await supabase
+    // 5. Soft delete user
+    const { error: deactivateError } = await supabase
       .from("users")
-      .delete()
+      .update({ is_active: false })
       .eq("userid", userId);
 
-    if (userDelErr) {
-      console.error("Delete from users failed:", userDelErr.message);
-      return res.status(500).json({ error: userDelErr.message });
+    if (deactivateError) {
+      return res.status(500).json({ error: deactivateError.message });
     }
 
     console.log("Successfully deleted user:", userId);
