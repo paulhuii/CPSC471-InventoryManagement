@@ -11,11 +11,11 @@ const getStatusColor = (stock, min) => {
 const getColorClass = (color) => {
   switch (color) {
     case "red":
-      return "bg-red-300";
+      return "bg-[#D99292]";
     case "yellow":
-      return "bg-yellow-200";
+      return "bg-[#F4D98E]";
     case "green":
-      return "bg-green-300";
+      return "bg-[#A3C18F]";
     default:
       return "";
   }
@@ -72,7 +72,7 @@ const OrderRestock = () => {
                 Min: {item.min_quantity}
               </p>
               <button
-                className="mt-2 bg-white px-4 py-1 rounded border shadow text-sm hover:bg-gray-100"
+                className="mt-2 bg-[#ECDBC9] px-4 py-1 rounded border shadow text-sm hover:bg-gray-100"
                 onClick={() => {
                   console.log("🧪 Adding item:", item);
 
