@@ -1,13 +1,12 @@
 // src/App.js
-import React, { useState } from "react"; // Import useState for mobile menu state
+import React, { useState } from "react";
 import {
   BrowserRouter,
   Routes,
   Route,
   NavLink,
-  Navigate, // For redirects and default routes
+  Navigate,
   Outlet,
-  // useLocation // Not strictly needed for current logic but can be useful
 } from "react-router-dom";
 
 // Context Providers
@@ -32,13 +31,13 @@ import OrderHistory from "./Main/Order/History";
 const StyledLink = ({ to, end = false, children, onClick }) => (
   <NavLink
     to={to}
-    end={end} // Use end prop for exact matching (e.g., Home link)
-    onClick={onClick} // Handler to close mobile menu when a link is clicked
+    end={end}
+    onClick={onClick}
     className={({ isActive }) =>
       `px-3 py-2 rounded-md text-sm font-medium transition-colors ${
         isActive
-          ? "bg-gray-900 text-white" // Active link style
-          : "text-gray-300 hover:bg-gray-700 hover:text-white" // Inactive link style
+          ? "bg-gray-900 text-white"
+          : "text-gray-300 hover:bg-gray-700 hover:text-white"
       }`
     }
   >
@@ -51,9 +50,8 @@ const StyledMobileLink = ({ to, end = false, children, onClick }) => (
   <NavLink
     to={to}
     end={end}
-    onClick={onClick} // Ensure mobile links also close the menu
+    onClick={onClick}
     className={({ isActive }) =>
-      // Block display and slightly larger text for better mobile tap targets
       `block px-3 py-2 rounded-md text-base font-medium transition-colors ${
         isActive
           ? "bg-gray-900 text-white"
@@ -66,66 +64,55 @@ const StyledMobileLink = ({ to, end = false, children, onClick }) => (
 );
 
 // --- Protected Route Component ---
-// Handles authentication and authorization checks
 const ProtectedRoute = ({ allowedRoles }) => {
-  const { user, loading } = useAuth(); // Get user and loading state from context
-
-  // Display loading message while authentication check is in progress
+  const { user, loading } = useAuth();
   if (loading) {
     return <div className="p-6 text-center text-gray-500">Authenticating…</div>;
   }
-
-  // If user is not logged in, redirect to the login page
   if (!user) {
     return <Navigate to="/login" replace />;
   }
-
-  // If route requires specific roles, check if the user's role is allowed
   if (allowedRoles && !allowedRoles.includes(user.role?.toLowerCase())) {
     console.warn(`User with role '${user.role}' tried accessing restricted route. Redirecting.`);
-    // Redirect unauthorized users to the home page
     return <Navigate to="/" replace />;
   }
-
-  // If user is authenticated and authorized, render the child component/route
-  return <Outlet />; // Renders the nested route element
+  return <Outlet />;
 };
 
 // --- Main Navigation Bar Component ---
 const Navigation = () => {
-  const { user, logout } = useAuth(); // Get user data and logout function
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // State for mobile menu visibility
+  const { user, logout } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Toggles the visibility of the mobile menu
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  // Closes the mobile menu (used when navigating via links)
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
   };
 
-  // Handles logout action and closes the mobile menu
   const handleLogout = () => {
     logout();
     closeMobileMenu();
   };
 
   return (
-    <nav className="bg-gray-800 shadow-md sticky top-0 z-40"> {/* Make navbar sticky */}
+    <nav className="bg-gray-800 shadow-md sticky top-0 z-40">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Left Side: Logo (optional) & Desktop Links */}
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              {/* <img className="h-8 w-auto" src="/logo.png" alt="Your Company" /> */}
-              {/* Placeholder for logo */}
                <span className="text-white font-bold text-lg">471Cafe</span>
             </div>
             <div className="hidden md:block"> {/* Desktop links */}
               <div className="ml-10 flex items-baseline space-x-4">
-                <StyledLink to="/" end onClick={closeMobileMenu}>Home</StyledLink>
+                {/* === Conditionally Render Home Link === */}
+                {!user && (
+                    <StyledLink to="/" end onClick={closeMobileMenu}>Home</StyledLink>
+                )}
+                {/* ====================================== */}
                 {user && <StyledLink to="/inventory" onClick={closeMobileMenu}>Inventory</StyledLink>}
                 {user && <StyledLink to="/orders" onClick={closeMobileMenu}>Orders</StyledLink>}
                 {user?.role?.toLowerCase() === "admin" && (
@@ -170,7 +157,6 @@ const Navigation = () => {
               aria-expanded={isMobileMenuOpen}
             >
               <span className="sr-only">Open main menu</span>
-              {/* Icon changes based on menu state */}
               {!isMobileMenuOpen ? (
                 <svg className="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
@@ -186,11 +172,14 @@ const Navigation = () => {
       </div>
 
       {/* Mobile Menu Panel */}
-      {/* Uses transition for smooth appearance (optional, requires Tailwind CSS transitions setup) */}
       <div className={`md:hidden transition-max-height duration-300 ease-in-out overflow-hidden ${isMobileMenuOpen ? 'max-h-screen' : 'max-h-0'}`} id="mobile-menu">
         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
           {/* Mobile Navigation Links */}
-          <StyledMobileLink to="/" end onClick={closeMobileMenu}>Home</StyledMobileLink>
+          {/* === Conditionally Render Home Link === */}
+          {!user && (
+            <StyledMobileLink to="/" end onClick={closeMobileMenu}>Home</StyledMobileLink>
+          )}
+          {/* ====================================== */}
           {user && <StyledMobileLink to="/inventory" onClick={closeMobileMenu}>Inventory</StyledMobileLink>}
           {user && <StyledMobileLink to="/orders" onClick={closeMobileMenu}>Orders</StyledMobileLink>}
           {user?.role?.toLowerCase() === "admin" && (
@@ -208,8 +197,6 @@ const Navigation = () => {
             <div className="flex items-center px-5 justify-between">
                 {/* User Info */}
                 <div className="flex items-center">
-                 {/* Optional Avatar */}
-                 {/* <div className="flex-shrink-0"> <img className="h-10 w-10 rounded-full" src="..." alt="" /> </div> */}
                  <div className="ml-3">
                    <div className="text-base font-medium leading-none text-white">{user.username || user.email}</div>
                    <div className="text-sm font-medium leading-none text-gray-400 mt-1">{user.role}</div>
@@ -236,75 +223,61 @@ const Navigation = () => {
 
 // --- Main Application Component ---
 function App() {
-  // Component defining the application's routes
   const AppRoutes = () => {
-    const { user, loading } = useAuth(); // Check authentication status
-
-    // Display global loading indicator while auth context is initializing
+    const { user, loading } = useAuth();
     if (loading) {
       return <div className="flex justify-center items-center h-screen text-lg font-medium text-gray-600">Loading Application…</div>;
     }
 
     return (
-      // Provide Order Cart state to nested components
       <OrderCartProvider>
-        <div className="min-h-screen flex flex-col bg-gray-100"> {/* Main app container */}
-          <Navigation /> {/* Render the navigation bar */}
-          {/* Main content area where routes are rendered */}
+        <div className="min-h-screen flex flex-col bg-gray-100">
+          <Navigation />
           <main className="flex-grow container mx-auto px-4 py-6 sm:px-6 lg:px-8">
             <Routes>
-              {/* --- Public Routes --- */}
-              <Route path="/" element={<Home />} />
+              {/* Public Routes */}
+              {/* Home is now only accessible when logged out, or directly via URL */}
+              <Route path="/" element={!user ? <Home /> : <Navigate to="/inventory" replace />} />
               <Route
                 path="/login"
-                element={!user ? <Login /> : <Navigate to="/inventory" replace />} // Redirect logged-in users
+                element={!user ? <Login /> : <Navigate to="/inventory" replace />}
               />
               <Route
                 path="/register"
-                element={!user ? <Register /> : <Navigate to="/inventory" replace />} // Redirect logged-in users
+                element={!user ? <Register /> : <Navigate to="/inventory" replace />}
               />
 
-              {/* --- Protected Routes (Require Login) --- */}
-              <Route element={<ProtectedRoute />}> {/* Authentication wrapper */}
+              {/* Protected Routes */}
+              <Route element={<ProtectedRoute />}>
                 <Route path="/inventory" element={<Inventory />} />
-
-                {/* --- Orders Section Routes --- */}
-                <Route path="/orders" element={<Order />}> {/* Order section layout */}
-                  {/* Default route for /orders -> redirects to restock */}
+                <Route path="/orders" element={<Order />}>
                   <Route index element={<Navigate replace to="restock" />} />
-                  {/* Child routes for specific order views */}
                   <Route path="restock" element={<OrderRestock />} />
                   <Route path="list" element={<OrderList />} />
                   <Route path="pending" element={<OrderPending />} />
                   <Route path="history" element={<OrderHistory />} />
                 </Route>
-                {/* --- End of Orders Section --- */}
               </Route>
 
-              {/* --- Admin-Only Routes --- */}
-              <Route element={<ProtectedRoute allowedRoles={["admin"]} />}> {/* Admin authorization wrapper */}
+              {/* Admin-Only Routes */}
+              <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
                 <Route path="/admin/users" element={<AdminUserListPage />} />
-                {/* Add other admin routes here */}
               </Route>
 
-              {/* --- Fallback Route (Not Found) --- */}
-              <Route path="*" element={<Navigate to="/" replace />} /> {/* Redirect unmatched paths to home */}
+              {/* Fallback Route */}
+              {/* If logged in, unmatched goes to inventory, else to login */}
+              <Route path="*" element={<Navigate to={user ? "/inventory" : "/login"} replace />} />
             </Routes>
           </main>
-          {/* Optional Footer */}
-          {/* <footer className="bg-gray-200 text-center text-sm text-gray-600 p-4 mt-auto">
-              Inventory System © {new Date().getFullYear()}
-          </footer> */}
         </div>
       </OrderCartProvider>
     );
   };
 
-  // Setup global context providers and router
   return (
-    <AuthProvider> {/* Provides authentication state */}
-      <BrowserRouter> {/* Enables routing */}
-        <AppRoutes /> {/* Renders the application routes */}
+    <AuthProvider>
+      <BrowserRouter>
+        <AppRoutes />
       </BrowserRouter>
     </AuthProvider>
   );

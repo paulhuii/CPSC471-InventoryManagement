@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 
 function InventoryItemModal({
-  item,       
+  item,       // Item object if editing, null if adding (though adding isn't triggered from Inventory view anymore)
   onClose,
   onSubmit,   // Function to call with submitted data
   initialError,
@@ -10,8 +10,10 @@ function InventoryItemModal({
 
   const isEditing = item !== null;
 
+  // --- Initial form state - include current_stock ---
   const [formData, setFormData] = useState({
     product_name: item?.product_name || "",
+    current_stock: item?.current_stock ?? "", // <-- Add current_stock
     min_quantity: item?.min_quantity ?? "",
     max_quantity: item?.max_quantity ?? "",
     expiration: item?.expiration
@@ -27,9 +29,27 @@ function InventoryItemModal({
     setError(initialError);
   }, [initialError]);
 
+   // Reset form data if the item prop changes (e.g., opening modal for a different item)
+   useEffect(() => {
+    if (item) {
+        setFormData({
+            product_name: item.product_name || "",
+            current_stock: item.current_stock ?? "", // Reset with new item's stock
+            min_quantity: item.min_quantity ?? "",
+            max_quantity: item.max_quantity ?? "",
+            expiration: item.expiration ? new Date(item.expiration).toISOString().split("T")[0] : "",
+            categoryid: item.categoryid ?? "",
+        });
+        setError(null); // Clear errors when opening for a new item
+    }
+    // Only run when the item prop itself changes
+   }, [item]);
+
+
   // Handle input changes for controlled components
   const handleChange = (e) => {
     const { name, value, type } = e.target;
+    // Allow empty string for numbers during typing, otherwise parse
     const val = type === "number" ? (value === "" ? "" : parseFloat(value)) : value;
     setFormData((prev) => ({ ...prev, [name]: val }));
     setError(null); // Clear error on change
@@ -44,59 +64,87 @@ function InventoryItemModal({
     if (!formData.product_name) {
       setError("Product Name is required."); return;
     }
-    if (formData.min_quantity === "" || formData.min_quantity === null || isNaN(formData.min_quantity)) {
-        setError("Minimum Quantity is required."); return;
+    // Validate Current Stock (required, non-negative)
+    if (formData.current_stock === "" || formData.current_stock === null || isNaN(formData.current_stock) || parseFloat(formData.current_stock) < 0) {
+         setError("Current Stock is required and cannot be negative."); return;
     }
+    // Validate Min Quantity (required, non-negative)
+    if (formData.min_quantity === "" || formData.min_quantity === null || isNaN(formData.min_quantity) || parseFloat(formData.min_quantity) < 0) {
+        setError("Minimum Quantity is required and cannot be negative."); return;
+    }
+    // Validate Max Quantity (must be >= min quantity if provided)
+     if (formData.max_quantity !== null && formData.max_quantity !== "" && (isNaN(formData.max_quantity) || parseFloat(formData.max_quantity) < 0)) {
+         setError("Max Quantity must be a non-negative number if provided."); return;
+     }
      if (formData.max_quantity !== null && formData.max_quantity !== "" && parseFloat(formData.max_quantity) < parseFloat(formData.min_quantity)) {
         setError("Max Quantity cannot be less than Min Quantity."); return;
      }
+     // Validate Category ID (must be number if provided)
+     if (formData.categoryid !== null && formData.categoryid !== "" && isNaN(formData.categoryid)) {
+         setError("Category ID must be a number if provided."); return;
+     }
+
 
     // --- Prepare Data to Submit ---
+    // Ensure numbers are parsed correctly, handle nulls for optional fields
     const dataToSubmit = {
       product_name: formData.product_name,
-      min_quantity: formData.min_quantity === "" ? null : parseFloat(formData.min_quantity),
-      max_quantity: formData.max_quantity === "" ? null : parseFloat(formData.max_quantity),
+      current_stock: parseFloat(formData.current_stock), // <-- Ensure it's a number
+      min_quantity: parseFloat(formData.min_quantity),   // <-- Ensure it's a number
+      max_quantity: formData.max_quantity === "" || formData.max_quantity === null ? null : parseFloat(formData.max_quantity),
       expiration: formData.expiration === "" ? null : formData.expiration,
-      categoryid: formData.categoryid === "" ? null : parseInt(formData.categoryid, 10),
+      categoryid: formData.categoryid === "" || formData.categoryid === null ? null : parseInt(formData.categoryid, 10),
     };
 
-    // If ADDING a new product, explicitly set current_stock to 0
-    // Other fields like price, unit, supplier will rely on backend defaults/null handling
-    if (!isEditing) {
-      dataToSubmit.current_stock = 0;
-    }
+    // NOTE: When adding (isEditing is false), we previously set current_stock = 0.
+    // Since this modal is now ONLY for editing in the Inventory view context,
+    // we don't need that specific logic here anymore. The current_stock will always
+    // come from the form input during an edit.
 
-    console.log("Data being submitted:", dataToSubmit); 
+    console.log("Data being submitted (edit):", dataToSubmit);
 
     try {
-      await onSubmit(dataToSubmit); // Call the parent component's submit handler
+      // onSubmit is the handleFormSubmit function passed from Inventory.jsx
+      await onSubmit(dataToSubmit);
+      // Parent should close modal on success
     } catch (err) {
+      // If onSubmit throws, catch it here and display in the modal
       setError(err.response?.data?.error || err.message || "Submission failed.");
       console.error("Modal Submit Prop Error:", err);
     }
   };
 
+  // --- Define the fields to display in the modal ---
   const fields = [
     { label: "Product Name *", name: "product_name", type: "text", required: true },
-    { label: "Min Quantity *", name: "min_quantity", type: "number", required: true },
-    { label: "Max Quantity", name: "max_quantity", type: "number", required: false },
-    { label: "Category ID", name: "categoryid", type: "number", required: false },
+    { label: "Current Stock *", name: "current_stock", type: "number", required: true, min: "0" }, // <-- Add field definition
+    { label: "Min Quantity *", name: "min_quantity", type: "number", required: true, min: "0" },
+    { label: "Max Quantity", name: "max_quantity", type: "number", required: false, min: "0" },
+    { label: "Category ID", name: "categoryid", type: "number", required: false }, // Consider making this a select if you have categories
     { label: "Expiration Date", name: "expiration", type: "date", required: false },
   ];
+
+  // If not editing (item is null), don't render the modal content
+  // This check might be redundant if Inventory.jsx ensures item is non-null before opening
+  if (!isEditing) {
+      console.warn("InventoryItemModal rendered without an item for editing.");
+      return null; // Or display an error/message
+  }
+
 
   return (
     <div
       className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex justify-center items-center z-50 p-4"
-      onClick={onClose}
+      onClick={onClose} // Allow closing by clicking backdrop
     >
       <div
         className="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 m-4 space-y-4 overflow-y-auto max-h-[90vh]"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
       >
         {/* Header */}
         <div className="flex justify-between items-center border-b pb-2">
           <h3 className="text-xl font-semibold text-gray-800">
-            {isEditing ? "Edit Product Details" : "Add New Product"}
+             Edit Product Details {/* Modal title always edit in this context */}
           </h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl font-bold" aria-label="Close modal">×</button>
         </div>
@@ -113,26 +161,27 @@ function InventoryItemModal({
         <form
           onSubmit={handleSubmit}
           className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3"
-          noValidate
+          noValidate // Use manual validation display
         >
-          {/* Render only the defined fields */}
+          {/* Render fields dynamically */}
           {fields.map(({ label, name, type, required, placeholder, step, min }) => (
+            // Span product name across two columns on medium screens and up
             <div key={name} className={name === 'product_name' ? 'md:col-span-2' : ''}>
               <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">
                 {label}
               </label>
               <input
                 id={name}
-                className="border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                className="border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:text-gray-500"
                 placeholder={placeholder || label.replace(" *", "")}
                 name={name}
                 type={type}
-                value={formData[name]}
+                value={formData[name]} // Bind to state
                 onChange={handleChange}
-                required={required} // Basic HTML5 required
-                step={step}
-                min={min}
-                // No 'disabled' needed here as all displayed fields are editable
+                required={required} // HTML5 validation attribute
+                step={step} // For number inputs (e.g., price)
+                min={min}   // For number inputs
+                // No fields should be disabled during edit
               />
             </div>
           ))}
@@ -141,7 +190,7 @@ function InventoryItemModal({
           <div className="col-span-1 md:col-span-2 flex justify-end gap-3 pt-4 mt-2 border-t">
             <button type="button" onClick={onClose} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-gray-400">Cancel</button>
             <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-              {isEditing ? "Update Details" : "Add Product"}
+               Update Details {/* Button label always update */}
             </button>
           </div>
         </form>

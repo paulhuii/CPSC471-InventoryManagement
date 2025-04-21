@@ -1147,9 +1147,16 @@ export function useStateWithLocalStorage(key, initialValue) {
 
 <file path="client/src/Main/Order/AddItemForm.jsx">
 // src/Main/Order/AddItemForm.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-const AddItemForm = ({ products = [], suppliers = [], onAddItem, onOpenAddProductModal }) => {
+const AddItemForm = ({
+    products = [],
+    suppliers = [],
+    onAddItem,
+    onOpenAddProductModal,
+    onOpenAddSupplierModal
+}) => {
+
     const [formData, setFormData] = useState({
         productid: "",
         quantity: "",
@@ -1158,37 +1165,88 @@ const AddItemForm = ({ products = [], suppliers = [], onAddItem, onOpenAddProduc
         supplier_name: "",
     });
 
+    // Add state to hold the value typed/selected in the product input field
+    const [productInputName, setProductInputName] = useState("");
+
+    // Effect to clear product input name when productid is reset 
+    useEffect(() => {
+        if (formData.productid === "") {
+            setProductInputName("");
+        }
+        // Find product name if productid is set initially
+        else {
+            const product = products.find(p => p.productid === formData.productid);
+            if (product && productInputName !== product.product_name) {
+                setProductInputName(product.product_name);
+            }
+        }
+
+    }, [formData.productid]); // Only re-run when productid changes in formData
+
+    // --- Input Handler  ---
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    // --- Special Handler  ---
+    const handleProductInputChange = (e) => {
+        const typedName = e.target.value;
+        setProductInputName(typedName); // Update the visible input value
+
+        // Try to find the corresponding product ID based on the name
+        const matchedProduct = products.find(
+            p => p.product_name.toLowerCase() === typedName.toLowerCase()
+        );
+
+        // Update the actual productid in formData if a match is found, otherwise clear it
+        setFormData(prev => ({
+            ...prev,
+            productid: matchedProduct ? matchedProduct.productid : ""
+        }));
+    };
+
+    // --- Form Submission ---
     const handleSubmit = (e) => {
-        e.preventDefault(); // Prevent default form submission if wrapped in <form>
+        e.preventDefault();
+        // Pass the formData (which includes the derived productid)
         onAddItem(formData, () => {
-            // Reset form upon successful add (callback from parent)
+            // Reset form state, including the product input name
             setFormData({ productid: "", quantity: "", price: "", order_unit: "", supplier_name: "" });
+            setProductInputName(""); // Explicitly clear the product name input state
         });
     };
 
+    // --- Handler for the '+' supplier button ---
+    const handleAddSupplierClick = () => {
+        onOpenAddSupplierModal(formData.supplier_name);
+    }
+
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6 p-4 border rounded bg-white shadow-sm">
-            {/* Product Selection with Add Button */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6 p-4 border rounded bg-white shadow-sm items-end">
+            {/* Product Selection (Input + Datalist) */}
             <div className="flex flex-col col-span-1 lg:col-span-1">
-                <label htmlFor="product-select" className="text-xs font-medium text-gray-600 mb-1">Product</label>
+                <label htmlFor="product-input" className="text-xs font-medium text-gray-600 mb-1">Product</label>
                 <div className="flex items-center gap-2">
-                    <select
-                        id="product-select"
-                        name="productid"
-                        value={formData.productid}
-                        onChange={handleInputChange}
+                    <input
+                        id="product-input"
+                        type="text"
+                        name="productInputName" 
+                        list="product-options" 
+                        value={productInputName} 
+                        onChange={handleProductInputChange} 
+                        placeholder="Select or type product..."
                         className="border border-gray-300 rounded px-3 py-2 w-full text-sm flex-grow focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                        <option value="">-- Select Product --</option>
+                        autoComplete="off" 
+                    />
+                    {/* Datalist provides suggestions */}
+                    <datalist id="product-options">
                         {products.sort((a, b) => a.product_name.localeCompare(b.product_name)).map(p => (
-                            <option key={p.productid} value={p.productid}>{p.product_name}</option>
+                           
+                            <option key={p.productid} value={p.product_name} />
                         ))}
-                    </select>
+                    </datalist>
+                    {/* Add New Product Button */}
                     <button
                         type="button"
                         onClick={onOpenAddProductModal}
@@ -1206,14 +1264,14 @@ const AddItemForm = ({ products = [], suppliers = [], onAddItem, onOpenAddProduc
             <div className="col-span-1">
                 <label htmlFor="quantity-input" className="text-xs font-medium text-gray-600 mb-1">Quantity</label>
                 <input id="quantity-input" type="number" name="quantity" value={formData.quantity}
-                    onChange={handleInputChange}
+                    onChange={handleInputChange} 
                     placeholder="e.g., 10" className="border border-gray-300 rounded px-3 py-2 w-full text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500" min="1" />
             </div>
             {/* Price Input */}
             <div className="col-span-1">
                 <label htmlFor="price-input" className="text-xs font-medium text-gray-600 mb-1">Price per Unit ($)</label>
                 <input id="price-input" type="number" step="0.01" name="price" value={formData.price}
-                    onChange={handleInputChange}
+                    onChange={handleInputChange} 
                     placeholder="e.g., 15.50" className="border border-gray-300 rounded px-3 py-2 w-full text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500" min="0.01" />
             </div>
             {/* Order Unit Input */}
@@ -1223,29 +1281,51 @@ const AddItemForm = ({ products = [], suppliers = [], onAddItem, onOpenAddProduc
                     id="unit-input"
                     name="order_unit"
                     value={formData.order_unit}
-                    onChange={handleInputChange}
+                    onChange={handleInputChange} 
                     placeholder="e.g. case, box, lbs"
                     className="border border-gray-300 rounded px-3 py-2 w-full text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 />
             </div>
-            {/* Supplier Input */}
+
+            {/* Supplier Input with Add Button */}
             <div className="flex flex-col col-span-1">
                 <label htmlFor="supplier-input" className="text-xs font-medium text-gray-600 mb-1">Supplier Name</label>
-                <input id="supplier-input" name="supplier_name" list="supplier-options" value={formData.supplier_name}
-                    onChange={handleInputChange}
-                    placeholder="Start typing..." className="border border-gray-300 rounded px-3 py-2 w-full text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500" />
-                <datalist id="supplier-options">
-                    {suppliers.sort((a, b) => a.supplier_name.localeCompare(b.supplier_name)).map(s => <option key={s.supplierid} value={s.supplier_name} />)}
-                </datalist>
+                <div className="flex items-center gap-2">
+                    <input
+                        id="supplier-input"
+                        name="supplier_name"
+                        list="supplier-options"
+                        value={formData.supplier_name}
+                        onChange={handleInputChange} 
+                        placeholder="Select or type..."
+                        className="border border-gray-300 rounded px-3 py-2 w-full text-sm flex-grow focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        autoComplete="off"
+                    />
+                    <datalist id="supplier-options">
+                        {suppliers.sort((a, b) => a.supplier_name.localeCompare(b.supplier_name)).map(s => <option key={s.supplierid} value={s.supplier_name} />)}
+                    </datalist>
+                    {/* Add New Supplier Button */}
+                    <button
+                        type="button"
+                        onClick={handleAddSupplierClick}
+                        className="p-2 border border-gray-300 rounded bg-green-50 hover:bg-green-100 text-green-600 shrink-0 focus:outline-none focus:ring-1 focus:ring-green-500"
+                        title="Add New Supplier"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                    </button>
+                </div>
             </div>
 
+
             {/* Add Item Button */}
-            <div className="col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-5 flex justify-end mt-2">
+            <div className="col-span-1 sm:col-span-1 md:col-span-1 lg:col-span-1 flex justify-start items-end">
                 <button
-                    className="bg-[#EADBA0] text-black rounded px-6 py-2 shadow hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-                    onClick={handleSubmit} // Use onClick for button, or onSubmit if wrapped in <form>
+                    className="bg-[#EADBA0] text-black rounded px-6 py-2 shadow hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 w-full sm:w-auto"
+                    onClick={handleSubmit} // Use onClick for button
                 >
-                    Add Item to Order List
+                    Add Item
                 </button>
             </div>
         </div>
@@ -1263,9 +1343,10 @@ const AddSupplierModal = ({
     isOpen,
     onClose,
     onSubmit,
-    initialSupplierName = '',
+    initialSupplierName = '', // This will now act as a default value
     initialError = null
 }) => {
+    // Initialize formData with the name passed in, allowing it to be changed
     const [formData, setFormData] = useState({
         supplier_name: initialSupplierName,
         contact: '',
@@ -1274,16 +1355,20 @@ const AddSupplierModal = ({
     });
     const [error, setError] = useState(initialError);
 
-    // Update local state if initial props change (e.g., parent clears error)
+    // Reset form (including the name) if the modal is reopened with a different initial name
+    useEffect(() => {
+        setFormData({
+            supplier_name: initialSupplierName,
+            contact: '',
+            email: '',
+            address: ''
+        });
+    }, [initialSupplierName, isOpen]); // Reset when initial name or visibility changes
+
+    // Update local error state if the initialError prop changes
     useEffect(() => {
         setError(initialError);
     }, [initialError]);
-
-    // Reset name if initial name changes (e.g., user types another new name)
-     useEffect(() => {
-        setFormData(prev => ({ ...prev, supplier_name: initialSupplierName }));
-    }, [initialSupplierName]);
-
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -1293,23 +1378,19 @@ const AddSupplierModal = ({
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError(null); // Clear previous submission errors
+        setError(null);
 
-        // Basic Validation
+        // Basic Validation 
         if (!formData.supplier_name || !formData.contact || !formData.email || !formData.address) {
             setError("All fields are required.");
             return;
         }
 
         try {
-            // Call the onSubmit prop passed from OrderList
             await onSubmit(formData);
-            // OrderList's onSubmit should handle closing the modal on success
         } catch (err) {
-            // If onSubmit throws (e.g., API call fails), OrderList should catch it
-            // but we can also set local error state if needed (though parent handles API errors)
             console.error("AddSupplierModal handleSubmit caught error:", err);
-            setError(err.message || "Failed to submit supplier."); // Display error caught by parent or generic
+            setError(err.message || "Failed to submit supplier.");
         }
     };
 
@@ -1318,11 +1399,11 @@ const AddSupplierModal = ({
     return (
         <div
             className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex justify-center items-center z-50 p-4"
-            onClick={onClose} // Close if clicking backdrop
+            onClick={onClose}
         >
             <div
                 className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 m-4 space-y-4"
-                onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
+                onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
                 <div className="flex justify-between items-center border-b pb-2">
@@ -1343,12 +1424,16 @@ const AddSupplierModal = ({
                     <div>
                         <label htmlFor="supplier_name" className="block text-sm font-medium text-gray-700 mb-1">Supplier Name *</label>
                         <input
-                            id="supplier_name" name="supplier_name" type="text" required
-                            value={formData.supplier_name} onChange={handleChange}
+                            id="supplier_name"
+                            name="supplier_name"
+                            type="text"
+                            required
+                            value={formData.supplier_name}
+                            onChange={handleChange} // Allow changes
+                            placeholder="Enter the supplier's name"
                             className="border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                            readOnly // Make name read-only as it comes from user's initial input
                         />
-                         <p className="text-xs text-gray-500 mt-1">Supplier name cannot be changed here.</p>
+                        
                     </div>
                     <div>
                         <label htmlFor="contact" className="block text-sm font-medium text-gray-700 mb-1">Contact Person/Phone *</label>
@@ -1791,7 +1876,7 @@ import {
   getSuppliers,
   createOrder,
   addOrderDetails,
-  updateItem,
+  // updateItem, // Not used directly here anymore
   addItem as addProductApi,
   createSupplier // <-- Import new API function
 } from "../../api";
@@ -1818,11 +1903,11 @@ const OrderList = () => {
     const [isAddSupplierModalOpen, setIsAddSupplierModalOpen] = useState(false);
     const [supplierNameToAdd, setSupplierNameToAdd] = useState('');
     const [addSupplierError, setAddSupplierError] = useState(null);
-    // Store the item data that triggered the add supplier flow
+    // Store the item data that triggered the add supplier flow (less used now but kept for potential edge cases)
     const [pendingItemData, setPendingItemData] = useState(null);
 
     // --- Data Fetching ---
-    const fetchProducts = useCallback(async () => { /* ... unchanged ... */
+    const fetchProducts = useCallback(async () => {
         try {
             const data = await getInventory();
             setProducts(Array.isArray(data) ? data : []);
@@ -1844,53 +1929,69 @@ const OrderList = () => {
         fetchSuppliers(); // Fetch suppliers on mount
     }, [fetchProducts, fetchSuppliers]); // Updated dependencies
 
-    // --- Process Cart Items (unchanged) ---
-    useEffect(() => { /* ... unchanged ... */
+    // --- Process Cart Items (from Restock page) ---
+    useEffect(() => {
          if (cartItems.length > 0 && suppliers.length > 0) {
             const newGrouped = { ...groupedItems };
             let changed = false;
             cartItems.forEach(ci => {
+                // Find supplier using supplierid from the product item (cartItem)
                 const supplierInfo = suppliers.find(s => s.supplierid === ci.supplierid);
                 const supplierName = supplierInfo?.supplier_name;
+
                 if (!supplierName) {
                     console.warn(`Supplier not found for ID: ${ci.supplierid} for product ${ci.product_name}`);
-                    return;
+                    return; // Skip if supplier doesn't exist in the current supplier list
                 }
+
                 if (!newGrouped[supplierName]) newGrouped[supplierName] = [];
+
                 const existingIndex = newGrouped[supplierName].findIndex(item => item.productid === ci.productid);
+
                 if (existingIndex === -1) {
+                    // Item not in the list for this supplier, add it
                     newGrouped[supplierName].push({
                         productid: ci.productid,
                         product_name: ci.product_name,
-                        quantity: ci.requested_quantity,
-                        price: ci.unit_price,
-                        order_unit: ci.order_unit || "",
-                        supplier_name: supplierName,
+                        quantity: ci.requested_quantity, // Quantity calculated in context
+                        price: ci.unit_price, // Price might need fetching/setting later or using product default
+                        order_unit: ci.order_unit || "", // Default or from product
+                        supplier_name: supplierName, // Confirmed supplier name
                     });
                     changed = true;
+                } else {
+                    // Optional: Handle if item already exists (e.g., update quantity, alert user)
+                    console.log(`Item ${ci.product_name} from restock recommendations already exists for ${supplierName}. Skipping.`);
+                    // Example: Update quantity if needed
+                    // newGrouped[supplierName][existingIndex].quantity += ci.requested_quantity;
+                    // changed = true;
                 }
             });
-            if (changed) setGroupedItems(newGrouped);
+
+            if (changed) {
+                setGroupedItems(newGrouped);
+            }
+            // Clear the cart processed from the restock page immediately
             clearCart();
         }
     }, [cartItems, clearCart, groupedItems, setGroupedItems, suppliers]);
 
-    // --- Add Product Modal Handlers (unchanged) ---
-    const handleOpenAddProductModal = () => { /* ... unchanged ... */
+    // --- Add Product Modal Handlers ---
+    const handleOpenAddProductModal = () => {
         setAddProductError(null);
         setIsAddProductModalOpen(true);
     };
-    const handleCloseAddProductModal = () => { /* ... unchanged ... */
+    const handleCloseAddProductModal = () => {
         setIsAddProductModalOpen(false);
         setAddProductError(null);
     };
-    const handleAddProductSubmit = async (newProductData) => { /* ... unchanged ... */
+    const handleAddProductSubmit = async (newProductData) => {
         try {
             setAddProductError(null);
             const addedProductArray = await addProductApi(newProductData);
             if (addedProductArray && addedProductArray.length > 0) {
                 handleCloseAddProductModal();
-                await fetchProducts();
+                await fetchProducts(); // Refresh product list
                 alert(`Product "${addedProductArray[0]?.product_name || 'New Product'}" added successfully! You can now select it for your order.`);
             } else { throw new Error("Failed to add product, no data returned."); }
         } catch (err) {
@@ -1900,54 +2001,51 @@ const OrderList = () => {
     };
 
     // --- Add Supplier Modal Handlers ---
-    const handleOpenAddSupplierModal = (name, itemData) => {
-        setSupplierNameToAdd(name);
-        setPendingItemData(itemData); // Store the item data
+    // Called by the '+' button in AddItemForm
+    const handleOpenAddSupplierModal = (nameFromInput = '') => {
+        setSupplierNameToAdd(nameFromInput);
+        setPendingItemData(null); // Not adding an item directly, just the supplier
         setAddSupplierError(null);
         setIsAddSupplierModalOpen(true);
     };
+
     const handleCloseAddSupplierModal = () => {
         setIsAddSupplierModalOpen(false);
         setSupplierNameToAdd('');
         setAddSupplierError(null);
-        setPendingItemData(null); // Clear pending data
+        setPendingItemData(null);
     };
 
     const handleAddSupplierSubmit = async (newSupplierData) => {
         try {
             setAddSupplierError(null);
-            // Call the API function from api.js
             const addedSupplier = await createSupplier(newSupplierData);
 
-            if (addedSupplier && addedSupplier.supplierid) {
+            if (addedSupplier?.supplierid) {
                 await fetchSuppliers(); // Refresh the suppliers list
-                handleCloseAddSupplierModal(); // Close the modal
+                handleCloseAddSupplierModal();
                 alert(`Supplier "${addedSupplier.supplier_name}" added successfully!`);
 
-                // --- Now add the original item that was pending ---
+                // If an item add was pending when opening the modal (less likely path now)
                 if (pendingItemData) {
-                    // Use the confirmed supplier name from the newly added supplier
                     addConfirmedItemToGroup(pendingItemData, addedSupplier.supplier_name);
-                    setPendingItemData(null); // Clear pending data
+                    setPendingItemData(null);
                 }
-
             } else {
                 throw new Error("Failed to add supplier or no data returned.");
             }
         } catch (err) {
             console.error("Failed to add supplier:", err);
-            // Display error in the Add Supplier Modal
             setAddSupplierError(err.response?.data?.error || err.message || "An unexpected error occurred.");
-            // We throw error again so AddSupplierModal can catch it if needed, but setting state here is primary
-            throw err;
+            throw err; // Allow modal to display the error
         }
     };
 
-    // Helper function to actually add item to the list (used by handleAddItem and after adding supplier)
+    // --- Helper to add item to the grouped state ---
     const addConfirmedItemToGroup = (itemData, finalSupplierName) => {
         const product = products.find(p => p.productid.toString() === itemData.productid);
          if (!product) {
-             alert("Product details missing, cannot add item."); // Should ideally not happen if product was selected
+             alert("Product details missing, cannot add item.");
              return;
          }
          const newItem = {
@@ -1961,89 +2059,166 @@ const OrderList = () => {
 
          setGroupedItems(prev => {
              const currentSupplierItems = prev[finalSupplierName] || [];
-             // Double-check existence (might be redundant if check is done before calling this)
              const exists = currentSupplierItems.some(item => item.productid === newItem.productid);
              if (exists) {
                  alert(`${newItem.product_name} is already in the order list for ${finalSupplierName}. Edit the existing entry.`);
-                 return prev;
+                 return prev; // Return previous state if item exists
              }
+             // Add new item to the specific supplier's list
              return { ...prev, [finalSupplierName]: [...currentSupplierItems, newItem] };
          });
     }
 
-
-    // --- Modified Order Item Handler ---
+    // --- Main "Add Item" Button Handler (from AddItemForm) ---
     const handleAddItem = (formDataFromForm, resetFormCallback) => {
         const { productid, quantity, price, order_unit, supplier_name } = formDataFromForm;
 
-        if (productid && quantity && price && order_unit && supplier_name) {
-            // Check if supplier exists (case-insensitive for robustness)
-            const supplierExists = suppliers.some(s => s.supplier_name.toLowerCase() === supplier_name.toLowerCase());
-
-            if (supplierExists) {
-                 // Supplier found, proceed to add the item directly
-                 addConfirmedItemToGroup(formDataFromForm, supplier_name);
-                 resetFormCallback(); // Reset the form in the child component
-            } else {
-                // Supplier NOT found, open the Add Supplier modal
-                handleOpenAddSupplierModal(supplier_name, formDataFromForm); // Pass form data
-                 // Don't reset the form here, wait for supplier add success/cancel
-            }
-        } else {
+        // Basic validation for required fields
+        if (!productid || !quantity || !price || !order_unit || !supplier_name) {
             alert("Please fill in all fields (Product, Quantity, Price, Order Unit, Supplier) to add an item.");
+            return;
+        }
+
+        // Check if the selected/typed supplier exists in our current list (case-insensitive)
+        const supplierInfo = suppliers.find(s => s.supplier_name.toLowerCase() === supplier_name.toLowerCase());
+
+        if (supplierInfo) {
+            // Supplier EXISTS: Add the item using the exact name from the database
+            addConfirmedItemToGroup(formDataFromForm, supplierInfo.supplier_name);
+            resetFormCallback(); // Clear the form fields in AddItemForm
+        } else {
+            // Supplier DOES NOT EXIST: Guide the user
+            alert(`Supplier "${supplier_name}" not found. Please add the supplier using the '+' button next to the supplier field before adding this item.`);
+            // Do NOT add the item. Do NOT open the modal automatically.
+            // Do NOT reset the form.
         }
     };
 
-
-    // --- Edit/Delete/Save Handlers (unchanged) ---
-    const handleEditItem = (supplier, index) => { /* ... unchanged ... */
+    // --- Edit/Delete/Save Handlers for items in the list ---
+    const handleEditItem = (supplier, index) => {
          setEditingSupplier(supplier);
          setEditingIndex(index);
          const itemToEdit = groupedItems[supplier][index];
-         setEditedItem({ ...itemToEdit, quantity: parseInt(itemToEdit.quantity, 10) || 0, price: parseFloat(itemToEdit.price) || 0 });
+         // Ensure quantity and price are numbers for the input fields
+         setEditedItem({
+             ...itemToEdit,
+             quantity: parseInt(itemToEdit.quantity, 10) || 0,
+             price: parseFloat(itemToEdit.price) || 0
+         });
     };
-    const handleSaveEdit = () => { /* ... unchanged ... */
+
+    const handleSaveEdit = () => {
+         if (!editingSupplier || editingIndex === null || !editedItem) return;
+
          setGroupedItems(prev => {
             const updatedSupplierItems = [...prev[editingSupplier]];
-            updatedSupplierItems[editingIndex] = { ...editedItem, quantity: parseInt(editedItem.quantity, 10) || 0, price: parseFloat(editedItem.price) || 0 };
+            // Ensure saved values are correctly typed numbers
+            updatedSupplierItems[editingIndex] = {
+                ...editedItem,
+                quantity: parseInt(editedItem.quantity, 10) || 0, // Fallback to 0 if invalid
+                price: parseFloat(editedItem.price) || 0 // Fallback to 0 if invalid
+            };
             return { ...prev, [editingSupplier]: updatedSupplierItems };
         });
-        setEditingIndex(null); setEditedItem(null); setEditingSupplier(null);
+        // Reset editing state
+        setEditingIndex(null);
+        setEditedItem(null);
+        setEditingSupplier(null);
     };
-    const handleCancelEdit = () => { /* ... unchanged ... */
-         setEditingIndex(null); setEditedItem(null); setEditingSupplier(null);
+
+    const handleCancelEdit = () => {
+         setEditingIndex(null);
+         setEditedItem(null);
+         setEditingSupplier(null);
     }
-    const handleDeleteItem = (supplier, index) => { /* ... unchanged ... */
-        if (window.confirm(`Remove ${groupedItems[supplier][index].product_name} from this order list?`)) {
+
+    const handleDeleteItem = (supplier, index) => {
+        const itemToDelete = groupedItems[supplier]?.[index];
+        if (!itemToDelete) return;
+
+        if (window.confirm(`Remove ${itemToDelete.product_name} from the order list for ${supplier}?`)) {
             setGroupedItems(prev => {
                 const updatedSupplierItems = [...prev[supplier]];
-                updatedSupplierItems.splice(index, 1);
+                updatedSupplierItems.splice(index, 1); // Remove item at index
+
+                // If this was the last item for the supplier, remove the supplier group entirely
                 if (updatedSupplierItems.length === 0) {
-                    const { [supplier]: _, ...rest } = prev; return rest;
+                    const { [supplier]: _, ...rest } = prev; // Destructure to remove the supplier key
+                    return rest;
                 }
+                // Otherwise, update the supplier's item list
                 return { ...prev, [supplier]: updatedSupplierItems };
             });
-             if (editingSupplier === supplier && editingIndex === index) handleCancelEdit();
+             // If the deleted item was being edited, cancel the edit mode
+             if (editingSupplier === supplier && editingIndex === index) {
+                 handleCancelEdit();
+             }
         }
     };
 
-    // --- Place Order Handler (unchanged) ---
-    const handlePlaceOrderForSupplier = async (supplierName, items) => { /* ... unchanged ... */
+    // --- Place Order Handler (Admin Only) ---
+    const handlePlaceOrderForSupplier = async (supplierName, items) => {
         const supplier = suppliers.find(s => s.supplier_name === supplierName);
-        if (!supplier) { alert(`Could not find supplier details for ${supplierName}.`); return; }
+        if (!supplier) {
+            alert(`Could not find supplier details for ${supplierName}. Order cannot be placed.`);
+            return;
+        }
         const supplierid = supplier.supplierid;
-        const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
-        const tax = subtotal * 0.05; const total_amount = subtotal + tax;
-        if (!user || !user.userid) { alert("User not identified."); return; }
+
+        // Calculate totals
+        const subtotal = items.reduce((sum, item) => sum + (Number(item.quantity) * Number(item.price)), 0);
+        const tax = subtotal * 0.05; // Assuming 5% tax
+        const total_amount = subtotal + tax;
+
+        if (!user || !user.userid) {
+            alert("User not identified. Cannot place order.");
+            return;
+        }
+
+        if (items.length === 0) {
+            alert("Cannot place an empty order.");
+            return;
+        }
+
         try {
-            const order = await createOrder({ order_date: new Date().toISOString().split("T")[0], total_amount, supplierid, userid: user.userid });
-            if (!order || !order.orderid) throw new Error("Failed to create order header.");
-            const detailItems = items.map(item => ({ orderid: order.orderid, productid: item.productid, supplierid, unit_price: item.price, requested_quantity: item.quantity, order_unit: item.order_unit }));
+            // 1. Create the main order record
+            const orderHeader = {
+                order_date: new Date().toISOString().split("T")[0], // Today's date
+                total_amount: total_amount,
+                supplierid: supplierid,
+                userid: user.userid // User placing the order
+            };
+            const createdOrder = await createOrder(orderHeader);
+
+            if (!createdOrder || !createdOrder.orderid) {
+                throw new Error("Failed to create order header. No order ID received.");
+            }
+            const orderid = createdOrder.orderid;
+
+            // 2. Prepare and add the order details (line items)
+            const detailItems = items.map(item => ({
+                orderid: orderid,
+                productid: item.productid,
+                supplierid: supplierid, // Associate detail with the order's supplier
+                unit_price: Number(item.price),
+                requested_quantity: Number(item.quantity),
+                order_unit: item.order_unit
+                // received_quantity defaults to 0, received_date defaults to null in DB/API
+            }));
+
             await addOrderDetails(detailItems);
-            for (const item of detailItems) { /* Optional supplier update... */ }
-            alert(`Order placed successfully for ${supplierName}!`);
-            setGroupedItems(prev => { const { [supplierName]: _, ...rest } = prev; return rest; });
-        } catch (error) { console.error(`Failed to place order for ${supplierName}:`, error); alert(`Error placing order: ${error.message}`); }
+
+            // 3. Success: Notify user and remove items from the list state
+            alert(`Order placed successfully for ${supplierName}! Order ID: ${orderid}`);
+            setGroupedItems(prev => {
+                const { [supplierName]: _, ...rest } = prev; // Remove the placed order group
+                return rest;
+            });
+
+        } catch (error) {
+            console.error(`Failed to place order for ${supplierName}:`, error);
+            alert(`Error placing order: ${error.message || 'An unknown error occurred.'}`);
+        }
     };
 
     // --- Render ---
@@ -2053,16 +2228,18 @@ const OrderList = () => {
                 Create New Order - {new Date().toLocaleDateString()}
             </h2>
 
+            {/* Form to add items to the list */}
             <AddItemForm
                 products={products}
                 suppliers={suppliers}
-                onAddItem={handleAddItem}
-                onOpenAddProductModal={handleOpenAddProductModal}
+                onAddItem={handleAddItem}                 // For the main "Add Item" button
+                onOpenAddProductModal={handleOpenAddProductModal} // For the product '+' button
+                onOpenAddSupplierModal={handleOpenAddSupplierModal} // For the supplier '+' button
             />
 
-            {/* Display Grouped Order Items */}
+            {/* Display Grouped Order Items by Supplier */}
             {Object.keys(groupedItems).length === 0 ? (
-                 <p className="text-center text-gray-500 italic mt-8">Your order list is empty. Add items using the form above.</p>
+                 <p className="text-center text-gray-500 italic mt-8">Your order list is empty. Add items using the form above or from the Restock page.</p>
             ) : (
                 Object.entries(groupedItems).map(([supplier, items]) => (
                     <SupplierOrderSection
@@ -2078,7 +2255,7 @@ const OrderList = () => {
                         onSaveEdit={handleSaveEdit}
                         onCancelEdit={handleCancelEdit}
                         onPlaceOrder={handlePlaceOrderForSupplier}
-                        onEditedItemChange={setEditedItem}
+                        onEditedItemChange={setEditedItem} // Pass state setter for controlled input in row
                     />
                 ))
             )}
@@ -2086,15 +2263,15 @@ const OrderList = () => {
              {/* --- Modals --- */}
              {isAddProductModalOpen && (
                 <InventoryItemModal
-                    item={null}
+                    item={null} // For adding new product
                     onClose={handleCloseAddProductModal}
                     onSubmit={handleAddProductSubmit}
                     initialError={addProductError}
-                    isQuickAdd={false}
+                    isQuickAdd={false} // Not relevant here
                 />
              )}
 
-             {/* --- Add Supplier Modal --- */}
+             {/* Add Supplier Modal */}
              {isAddSupplierModalOpen && (
                  <AddSupplierModal
                     isOpen={isAddSupplierModalOpen}
@@ -2131,18 +2308,25 @@ const OrderItemRow = ({
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        let parsedValue = value;
+        let parsedValue = value; // Default to string value
+
+        // Handle numeric types specifically
         if (name === 'quantity') {
-            parsedValue = parseInt(value, 10) || 0;
+            // Allow empty string for temporary state, parse to int otherwise, default to 0
+            parsedValue = value === '' ? '' : (parseInt(value, 10) || 0);
         } else if (name === 'price') {
-            parsedValue = parseFloat(value) || 0;
+            // Allow empty string/decimal point, parse to float otherwise, default to 0
+             parsedValue = value === '' ? '' : (parseFloat(value) || 0);
         }
+        // For 'order_unit', parsedValue remains the string 'value'
+
+        // Update the parent's state (editedItem)
         onEditDataChange({ ...editedItemData, [name]: parsedValue });
     };
 
     return (
         <tr className="hover:bg-gray-50">
-            {/* Product Name */}
+            {/* Product Name (Not editable here) */}
             <td className="px-3 py-2 whitespace-nowrap font-medium text-gray-900">{item.product_name}</td>
 
             {/* Quantity (Editable) */}
@@ -2150,11 +2334,11 @@ const OrderItemRow = ({
                 {isEditing ? (
                     <input
                         type="number"
-                        name="quantity" // Added name attribute
-                        value={editedItemData.quantity}
+                        name="quantity" // Name matches state key
+                        value={editedItemData?.quantity ?? ''} // Use edited data, fallback
                         onChange={handleInputChange}
                         className="border border-gray-300 rounded px-2 py-1 w-20 text-sm text-center focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                        min="1"
+                        min="0" // Allow 0 quantity if needed
                     />
                 ) : item.quantity}
             </td>
@@ -2164,34 +2348,51 @@ const OrderItemRow = ({
                 {isEditing ? (
                     <input
                         type="number"
-                        name="price" // Added name attribute
+                        name="price" // Name matches state key
                         step="0.01"
-                        value={editedItemData.price}
+                        value={editedItemData?.price ?? ''} // Use edited data, fallback
                         onChange={handleInputChange}
                         className="border border-gray-300 rounded px-2 py-1 w-24 text-sm text-center focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                        min="0.01"
+                        min="0.00"
+                        placeholder="0.00"
                     />
                 ) : `$${parseFloat(item.price).toFixed(2)}`}
             </td>
 
-            {/* Order Unit */}
-            <td className="px-3 py-2 text-center">{item.order_unit || 'N/A'}</td>
+            {/* Order Unit (NOW Editable) */}
+            <td className="px-3 py-2 text-center">
+                {isEditing ? (
+                    <input
+                        type="text"
+                        name="order_unit" // Name matches state key
+                        value={editedItemData?.order_unit ?? ''} // Use edited data, fallback
+                        onChange={handleInputChange} // Generic handler works for text
+                        className="border border-gray-300 rounded px-2 py-1 w-24 text-sm text-center focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="e.g., case"
+                    />
+                ) : (item.order_unit || 'N/A')} {/* Display N/A if empty */}
+            </td>
 
-            {/* Line Total */}
+            {/* Line Total (Calculated, not editable) */}
             <td className="px-3 py-2 font-medium text-right">
-                ${(item.quantity * item.price).toFixed(2)}
+                {/* Use edited values if editing for live calculation */}
+                {isEditing
+                    ? `$${(Number(editedItemData?.quantity || 0) * Number(editedItemData?.price || 0)).toFixed(2)}`
+                    : `$${(Number(item.quantity) * Number(item.price)).toFixed(2)}`
+                }
             </td>
 
             {/* Action Buttons */}
             <td className="px-3 py-2 space-x-2 whitespace-nowrap text-center">
                 {isEditing ? (
                     <>
-                        <button onClick={onSaveClick} className="bg-green-500 text-white px-3 py-1 rounded text-xs hover:bg-green-600 focus:outline-none focus:ring-1 focus:ring-green-500">Save</button>
+                        <button onClick={onSaveClick} className="bg-[#52604A] text-white px-3 py-1 rounded text-xs hover:bg-green-800 focus:outline-none focus:ring-1 focus:ring-green-500">Save</button>
                         <button onClick={onCancelClick} className="bg-gray-400 text-white px-3 py-1 rounded text-xs hover:bg-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-400">Cancel</button>
                     </>
                 ) : (
                     <button onClick={() => onEditClick(supplierName, index)} className="bg-[#7E82A4] text-white px-3 py-1 rounded text-xs hover:bg-blue-900 focus:outline-none focus:ring-1 focus:ring-blue-500">Edit</button>
                 )}
+                {/* Delete button always visible */}
                 <button onClick={() => onDeleteClick(supplierName, index)} className="bg-[#D99292] text-black px-3 py-1 rounded text-xs hover:bg-red-400 focus:outline-none focus:ring-1 focus:ring-red-500">Delete</button>
             </td>
         </tr>
@@ -2449,11 +2650,11 @@ const getStatusColor = (stock, min) => {
 const getColorClass = (color) => {
   switch (color) {
     case "red":
-      return "bg-red-300";
+      return "bg-[#D99292]";
     case "yellow":
-      return "bg-yellow-200";
+      return "bg-[#F4D98E]";
     case "green":
-      return "bg-green-300";
+      return "bg-[#A3C18F]";
     default:
       return "";
   }
@@ -2510,7 +2711,7 @@ const OrderRestock = () => {
                 Min: {item.min_quantity}
               </p>
               <button
-                className="mt-2 bg-white px-4 py-1 rounded border shadow text-sm hover:bg-gray-100"
+                className="mt-2 bg-[#ECDBC9] px-4 py-1 rounded border shadow text-sm hover:bg-gray-100"
                 onClick={() => {
                   console.log("🧪 Adding item:", item);
 
@@ -3054,13 +3255,13 @@ function Inventory() {
 
 
       {/* Modals */}
-      {/* InventoryItemModal is now ONLY used for editing here */}
-      {isItemModalOpen && currentItem && ( // Ensure currentItem is set before rendering for edit
+      {/* InventoryItemModal */}
+      {isItemModalOpen && currentItem && ( 
         <InventoryItemModal
           item={currentItem} // Pass the item to be edited
           onClose={handleItemModalClose}
           onSubmit={handleFormSubmit} // Submits only updates now
-          initialError={ error && isItemModalOpen ? error : null } // Pass error relevant to the open modal
+          initialError={ error && isItemModalOpen ? error : null }
           isQuickAdd={false} // Explicitly false for editing
         />
       )}
@@ -3086,7 +3287,6 @@ export default Inventory;
 // client/src/Main/InventoryHeader.jsx
 import React from 'react';
 
-// Define or import icons here (SearchIcon, FilterIcon, XMarkIcon - keep these)
 const SearchIcon = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
@@ -3110,7 +3310,6 @@ function InventoryHeader({
   onSearchChange,
   onOpenFilterModal,
   onClearFilters,
-  // onOpenAddModal, // REMOVED PROP
   activeFilterCount,
 }) {
   const userRole = user?.role?.toLowerCase();
@@ -3119,11 +3318,6 @@ function InventoryHeader({
     <div className="mb-6 flex flex-col sm:flex-row justify-between items-start gap-4">
       {/* Left Side: Title */}
       <div>
-        {userRole === "admin" && (
-          <div className="text-3xl sm:text-4xl lg:text-5xl font-medium text-gray-700 mb-1 sm:mb-2">
-            Hello Admin
-          </div>
-        )}
         <h2 className="text-xl sm:text-2xl font-bold text-green-900">Product List</h2>
       </div>
 
@@ -3173,16 +3367,7 @@ function InventoryHeader({
                 )}
           </button>
 
-          {/* --- ADD PRODUCT BUTTON REMOVED --- */}
-          {/* {userRole === 'admin' && (
-            <button
-              onClick={onOpenAddModal} // This prop is removed
-              className="text-black px-3 sm:px-4 py-2 rounded shadow whitespace-nowrap text-xs sm:text-sm"
-              style={{ backgroundColor: "#8DACE5" }}
-            >
-              + Add Product
-            </button>
-          )} */}
+        
         </div>
       </div>
     </div>
@@ -3197,16 +3382,14 @@ export default InventoryHeader;
 import React, { useState, useEffect } from "react";
 
 function InventoryItemModal({
-  item,       // Item object if editing, null if adding
+  item,       
   onClose,
   onSubmit,   // Function to call with submitted data
   initialError,
-  // isQuickAdd prop is no longer used for conditional rendering
 }) {
-  // Determine if we are editing an existing item
+
   const isEditing = item !== null;
 
-  // --- Initial form state - ONLY include fields managed by this modal ---
   const [formData, setFormData] = useState({
     product_name: item?.product_name || "",
     min_quantity: item?.min_quantity ?? "",
@@ -3262,9 +3445,8 @@ function InventoryItemModal({
     if (!isEditing) {
       dataToSubmit.current_stock = 0;
     }
-    // If editing, we only send the fields managed by this modal.
 
-    console.log("Data being submitted:", dataToSubmit); // Debug log
+    console.log("Data being submitted:", dataToSubmit); 
 
     try {
       await onSubmit(dataToSubmit); // Call the parent component's submit handler
@@ -3274,7 +3456,6 @@ function InventoryItemModal({
     }
   };
 
-  // --- Define ONLY the fields to be displayed in the modal ---
   const fields = [
     { label: "Product Name *", name: "product_name", type: "text", required: true },
     { label: "Min Quantity *", name: "min_quantity", type: "number", required: true },
@@ -3728,35 +3909,61 @@ export const deleteUser = async (userId) => {
 
 <file path="client/src/App.js">
 // src/App.js
-import React from "react";
+import React, { useState } from "react"; 
 import {
   BrowserRouter,
   Routes,
   Route,
   NavLink,
-  Navigate,
+  Navigate, 
   Outlet,
 } from "react-router-dom";
+
+// Context Providers
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import Inventory from "./Main/Inventory";
 import { OrderCartProvider } from "./Main/OrderCartContext";
-import Order from "./Main/Order";
+
+// Page & Layout Components
+import Home from "./Home";
+import Login from "./Login/Login";
+import Register from "./Login/Register";
+import AdminUserListPage from "./Login/AdminUserList";
+import Inventory from "./Main/Inventory";
+import Order from "./Main/Order"; // Parent layout for /orders/*
+
+// Order Child Components
 import OrderRestock from "./Main/Order/Restock";
 import OrderList from "./Main/Order/List";
 import OrderPending from "./Main/Order/Pending";
 import OrderHistory from "./Main/Order/History";
 
-import Home from "./Home";
-import Login from "./Login/Login";
-import Register from "./Login/Register";
-import AdminUserListPage from "./Login/AdminUserList";
+// --- Reusable Styled Link Component (Desktop & Base for Mobile) ---
+const StyledLink = ({ to, end = false, children, onClick }) => (
+  <NavLink
+    to={to}
+    end={end} 
+    onClick={onClick} 
+    className={({ isActive }) =>
+      `px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+        isActive
+          ? "bg-gray-900 text-white" 
+          : "text-gray-300 hover:bg-gray-700 hover:text-white" 
+      }`
+    }
+  >
+    {children}
+  </NavLink>
+);
 
-const StyledLink = ({ to, end = false, children }) => (
+// --- Styled Link Component for Mobile Panel ---
+const StyledMobileLink = ({ to, end = false, children, onClick }) => (
   <NavLink
     to={to}
     end={end}
+    onClick={onClick} 
     className={({ isActive }) =>
-      `px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+      // Block display and slightly larger text for better mobile tap targets
+      `block px-3 py-2 rounded-md text-base font-medium transition-colors ${
         isActive
           ? "bg-gray-900 text-white"
           : "text-gray-300 hover:bg-gray-700 hover:text-white"
@@ -3767,91 +3974,205 @@ const StyledLink = ({ to, end = false, children }) => (
   </NavLink>
 );
 
+// Handles authentication and authorization checks
 const ProtectedRoute = ({ allowedRoles }) => {
-  const { user, loading } = useAuth();
-  if (loading) return <div className="p-6 text-center">Authenticating…</div>;
-  if (!user) return <Navigate to="/login" replace />;
-  if (allowedRoles && !allowedRoles.includes(user.role?.toLowerCase()))
+  const { user, loading } = useAuth(); // Get user and loading state from context
+
+  // Display loading message while authentication check is in progress
+  if (loading) {
+    return <div className="p-6 text-center text-gray-500">Authenticating…</div>;
+  }
+
+  // If user is not logged in, redirect to the login page
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // If route requires specific roles, check if the user's role is allowed
+  if (allowedRoles && !allowedRoles.includes(user.role?.toLowerCase())) {
+    console.warn(`User with role '${user.role}' tried accessing restricted route. Redirecting.`);
+    // Redirect unauthorized users to the home page
     return <Navigate to="/" replace />;
-  return <Outlet />;
+  }
+
+  // If user is authenticated and authorized, render the child component/route
+  return <Outlet />; // Renders the nested route element
 };
 
+// --- Main Navigation Bar Component ---
 const Navigation = () => {
-  const { user, logout } = useAuth();
+  const { user, logout } = useAuth(); // Get user data and logout function
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // State for mobile menu visibility
+
+  // Toggles the visibility of the mobile menu
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  // Closes the mobile menu (used when navigating via links)
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
+  // Handles logout action and closes the mobile menu
+  const handleLogout = () => {
+    logout();
+    closeMobileMenu();
+  };
+
   return (
-    <nav className="bg-gray-800">
+    <nav className="bg-gray-800 shadow-md sticky top-0 z-40"> 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          {/* Left links */}
-          <div className="flex space-x-4">
-            <StyledLink to="/" end>
-              Home
-            </StyledLink>
-
-            {user && <StyledLink to="/inventory">Inventory</StyledLink>}
-
-            {user && <StyledLink to="/orders">Orders</StyledLink>}
-
-            {user?.role?.toLowerCase() === "admin" && (
-              <StyledLink to="/admin/users">Manage Users</StyledLink>
-            )}
+          <div className="flex items-center">
+            <div className="flex-shrink-0">}
+              {/* Placeholder for logo */}
+               <span className="text-white font-bold text-lg">471Cafe</span>
+            </div>
+            <div className="hidden md:block"> {/* Desktop links */}
+              <div className="ml-10 flex items-baseline space-x-4">
+                <StyledLink to="/" end onClick={closeMobileMenu}>Home</StyledLink>
+                {user && <StyledLink to="/inventory" onClick={closeMobileMenu}>Inventory</StyledLink>}
+                {user && <StyledLink to="/orders" onClick={closeMobileMenu}>Orders</StyledLink>}
+                {user?.role?.toLowerCase() === "admin" && (
+                  <StyledLink to="/admin/users" onClick={closeMobileMenu}>Manage Users</StyledLink>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* Right links */}
-          <div className="flex items-center space-x-4">
-            {!user && (
-              <>
-                <StyledLink to="/login">Login</StyledLink>
-                <StyledLink to="/register">Register</StyledLink>
-              </>
-            )}
-
-            {user && (
-              <button
-                onClick={logout}
-                className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Logout ({user.username || user.email})
-              </button>
-            )}
+          {/* Right Side: Desktop User Actions */}
+          <div className="hidden md:block">
+            <div className="ml-4 flex items-center md:ml-6">
+              {!user ? ( // If not logged in
+                <div className="flex items-baseline space-x-4">
+                  <StyledLink to="/login" onClick={closeMobileMenu}>Login</StyledLink>
+                  <StyledLink to="/register" onClick={closeMobileMenu}>Register</StyledLink>
+                </div>
+              ) : ( // If logged in
+                <div className="flex items-center space-x-4">
+                   <span className="text-gray-300 text-sm font-medium px-3 py-2">
+                    Hi, {user.username || user.email} ({user.role})
+                  </span>
+                  <button
+                    onClick={handleLogout}
+                    className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+                    aria-label="Logout"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
+
+          {/* Mobile Menu Button */}
+          <div className="-mr-2 flex md:hidden">
+            <button
+              type="button"
+              onClick={toggleMobileMenu}
+              className="bg-gray-800 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
+              aria-controls="mobile-menu"
+              aria-expanded={isMobileMenuOpen}
+            >
+              <span className="sr-only">Open main menu</span>
+              {/* Icon changes based on menu state */}
+              {!isMobileMenuOpen ? (
+                <svg className="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                </svg>
+              ) : (
+                <svg className="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Menu Panel */}
+      <div className={`md:hidden transition-max-height duration-300 ease-in-out overflow-hidden ${isMobileMenuOpen ? 'max-h-screen' : 'max-h-0'}`} id="mobile-menu">
+        <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+          {/* Mobile Navigation Links */}
+          <StyledMobileLink to="/" end onClick={closeMobileMenu}>Home</StyledMobileLink>
+          {user && <StyledMobileLink to="/inventory" onClick={closeMobileMenu}>Inventory</StyledMobileLink>}
+          {user && <StyledMobileLink to="/orders" onClick={closeMobileMenu}>Orders</StyledMobileLink>}
+          {user?.role?.toLowerCase() === "admin" && (
+            <StyledMobileLink to="/admin/users" onClick={closeMobileMenu}>Manage Users</StyledMobileLink>
+          )}
+        </div>
+        {/* Mobile User Actions */}
+        <div className="pt-4 pb-3 border-t border-gray-700">
+          {!user ? ( // If not logged in
+            <div className="px-2 space-y-1">
+              <StyledMobileLink to="/login" onClick={closeMobileMenu}>Login</StyledMobileLink>
+              <StyledMobileLink to="/register" onClick={closeMobileMenu}>Register</StyledMobileLink>
+            </div>
+          ) : ( // If logged in
+            <div className="flex items-center px-5 justify-between">
+                {/* User Info */}
+                <div className="flex items-center">
+                 <div className="ml-3">
+                   <div className="text-base font-medium leading-none text-white">{user.username || user.email}</div>
+                   <div className="text-sm font-medium leading-none text-gray-400 mt-1">{user.role}</div>
+                 </div>
+                </div>
+               {/* Logout Button */}
+               <button
+                 onClick={handleLogout}
+                 className="ml-auto bg-gray-800 flex-shrink-0 p-1 rounded-full text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
+                 aria-label="Logout"
+               >
+                 <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                   <title>Logout</title>
+                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                 </svg>
+               </button>
+             </div>
+          )}
         </div>
       </div>
     </nav>
   );
 };
 
+// --- Main Application Component ---
 function App() {
   const AppRoutes = () => {
-    const { user, loading } = useAuth();
-    if (loading)
-      return <div className="p-6 text-center">Loading Application…</div>;
+    const { user, loading } = useAuth(); // Check authentication status
+
+    // Display global loading indicator while auth context is initializing
+    if (loading) {
+      return <div className="flex justify-center items-center h-screen text-lg font-medium text-gray-600">Loading Application…</div>;
+    }
 
     return (
+      // Provide Order Cart state to nested components
       <OrderCartProvider>
-        <div className="min-h-screen flex flex-col bg-gray-50">
-          <Navigation />
-          <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <div className="min-h-screen flex flex-col bg-gray-100"> {/* Main app container */}
+          <Navigation /> {/* Render the navigation bar */}
+          {/* Main content area where routes are rendered */}
+          <main className="flex-grow container mx-auto px-4 py-6 sm:px-6 lg:px-8">
             <Routes>
-              {/* Public */}
+              {/* --- Public Routes --- */}
               <Route path="/" element={<Home />} />
               <Route
                 path="/login"
-                element={
-                  !user ? <Login /> : <Navigate to="/inventory" replace />
-                }
+                element={!user ? <Login /> : <Navigate to="/inventory" replace />} // Redirect logged-in users
               />
               <Route
                 path="/register"
-                element={
-                  !user ? <Register /> : <Navigate to="/inventory" replace />
-                }
+                element={!user ? <Register /> : <Navigate to="/inventory" replace />} // Redirect logged-in users
               />
 
-              {/* Protected (any logged‑in user) */}
-              <Route element={<ProtectedRoute />}>
+              {/* --- Protected Routes --- */}
+              <Route element={<ProtectedRoute />}> 
                 <Route path="/inventory" element={<Inventory />} />
-                <Route path="/orders" element={<Order />}>
+
+                {/* --- Orders Section Routes --- */}
+                <Route path="/orders" element={<Order />}> 
+                  <Route index element={<Navigate replace to="restock" />} />
                   <Route path="restock" element={<OrderRestock />} />
                   <Route path="list" element={<OrderList />} />
                   <Route path="pending" element={<OrderPending />} />
@@ -3859,13 +4180,13 @@ function App() {
                 </Route>
               </Route>
 
-              {/* Admin‑only */}
-              <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+              {/* --- Admin-Only Routes --- */}
+              <Route element={<ProtectedRoute allowedRoles={["admin"]} />}> {/* Admin authorization wrapper */}
                 <Route path="/admin/users" element={<AdminUserListPage />} />
+                {/* Add other admin routes here */}
               </Route>
 
-              {/* Fallback */}
-              <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} /> {/* Redirect unmatched paths to home */}
             </Routes>
           </main>
         </div>
@@ -3874,9 +4195,9 @@ function App() {
   };
 
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
+    <AuthProvider> 
+      <BrowserRouter> 
+        <AppRoutes /> 
       </BrowserRouter>
     </AuthProvider>
   );
