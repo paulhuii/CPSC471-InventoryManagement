@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 
 function InventoryItemModal({
   item,       
+  onClose,
   onSubmit,   // Function to call with submitted data
   initialError,
 }) {
