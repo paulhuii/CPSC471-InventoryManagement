@@ -1,3 +1,4 @@
+// Updated InventoryItemModal.jsx to remove required case_quantity, case_price, and order_unit fields
 import React, { useState } from "react";
 
 function InventoryItemModal({ item, onClose, onSubmit, initialError }) {
@@ -5,9 +6,6 @@ function InventoryItemModal({ item, onClose, onSubmit, initialError }) {
 
   const [formData, setFormData] = useState({
     product_name: item?.product_name || "",
-    case_quantity: item?.case_quantity ?? "",
-    order_unit: item?.order_unit || "",
-    case_price: item?.case_price ?? "",
     current_stock: item?.current_stock ?? "",
     max_quantity: item?.max_quantity ?? "",
     min_quantity: item?.min_quantity ?? "",
@@ -25,15 +23,7 @@ function InventoryItemModal({ item, onClose, onSubmit, initialError }) {
     const val =
       type === "number" ? (value === "" ? "" : parseFloat(value)) : value;
     const finalValue =
-      [
-        "categoryid",
-        "supplierid",
-        "case_quantity",
-        "case_price",
-        "current_stock",
-        "max_quantity",
-        "min_quantity",
-      ].includes(name) && val === ""
+      ["categoryid", "supplierid", "current_stock", "max_quantity", "min_quantity"].includes(name) && val === ""
         ? ""
         : val;
     setFormData((prev) => ({ ...prev, [name]: finalValue }));
@@ -44,19 +34,13 @@ function InventoryItemModal({ item, onClose, onSubmit, initialError }) {
     e.preventDefault();
     setError(null);
 
-    if (
-      !formData.product_name ||
-      formData.case_price === "" ||
-      formData.current_stock === ""
-    ) {
-      setError("Product Name, Case Price, and Current Stock are required.");
+    if (!formData.product_name || formData.current_stock === "") {
+      setError("Product Name and Current Stock are required.");
       return;
     }
 
     const dataToSubmit = { ...formData };
     for (const key of [
-      "case_quantity",
-      "case_price",
       "current_stock",
       "max_quantity",
       "min_quantity",
@@ -110,28 +94,19 @@ function InventoryItemModal({ item, onClose, onSubmit, initialError }) {
         >
           {[
             { label: "Product Name *", name: "product_name", type: "text" },
-            { label: "Case Quantity", name: "case_quantity", type: "number" },
-            { label: "Order Unit", name: "order_unit", type: "text" },
-            {
-              label: "Case Price *",
-              name: "case_price",
-              type: "number",
-              step: "0.01",
-            },
             { label: "Current Stock *", name: "current_stock", type: "number" },
             { label: "Max Quantity", name: "max_quantity", type: "number" },
             { label: "Min Quantity", name: "min_quantity", type: "number" },
             { label: "Expiration Date", name: "expiration", type: "date" },
             { label: "Category ID", name: "categoryid", type: "number" },
             { label: "Supplier ID", name: "supplierid", type: "number" },
-          ].map(({ label, name, type, step }) => (
+          ].map(({ label, name, type }) => (
             <input
               key={name}
               className="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder={label}
               name={name}
               type={type}
-              step={step}
               value={formData[name]}
               onChange={handleChange}
               required={label.includes("*")}

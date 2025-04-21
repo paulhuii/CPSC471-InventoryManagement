@@ -42,6 +42,7 @@ router.post('/', authenticateToken, async (req, res) => {
     supplierid: item.supplierid,
     unit_price: item.unit_price,
     requested_quantity: item.requested_quantity,
+    order_unit: item.order_unit,
     received_quantity: 0,
     received_date: null
   }));
@@ -79,6 +80,7 @@ router.post('/bulk', authenticateToken, async (req, res) => {
     supplierid: item.supplierid,
     unit_price: item.unit_price,
     requested_quantity: item.requested_quantity,
+    order_unit: item.order_unit,
     received_quantity: 0,
     received_date: null
   }));
