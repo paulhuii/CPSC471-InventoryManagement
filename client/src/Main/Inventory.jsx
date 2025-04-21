@@ -1,20 +1,22 @@
-// src/Main/Inventory.jsx
+// client/src/Main/Inventory.jsx
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { getInventory, addItem, updateItem, deleteItem } from "../api";
+// NOTE: Removed 'addItem' from import as it's no longer used here
+import { getInventory, updateItem, deleteItem } from "../api";
 import { useAuth } from "../context/AuthContext";
 import InventoryItemModal from "./InventoryItemModal";
-import FilterModal from "./FilterModal"; 
-import InventoryHeader from "./InventoryHeader"; 
+import FilterModal from "./FilterModal";
+import InventoryHeader from "./InventoryHeader";
 import { useInventorySearch } from "./hooks/useInventorySearch";
-import { useInventoryFilter } from "./hooks/useInventoryFilter"; 
+import { useInventoryFilter } from "./hooks/useInventoryFilter";
+
 function Inventory() {
   // --- Core State ---
-  const [allItems, setAllItems] = useState([]); // Raw data from API
+  const [allItems, setAllItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
-  const [currentItem, setCurrentItem] = useState(null);
+  const [currentItem, setCurrentItem] = useState(null); // Used only for editing now
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -30,13 +32,14 @@ function Inventory() {
     availableSuppliers,
     availableStatuses,
     activeFilterCount,
-    filterItems, // Function to apply filters
-    getStockStatusInfo // Get helper function from hook
-  } = useInventoryFilter(allItems); // Pass raw data to the filter hook
+    filterItems,
+    getStockStatusInfo
+  } = useInventoryFilter(allItems);
 
   // --- Data Fetching ---
   const fetchInventory = useCallback(async () => {
-    if (!user) {
+    // ... (fetchInventory logic remains the same) ...
+     if (!user) {
       navigate("/login");
       return;
     }
@@ -64,10 +67,9 @@ function Inventory() {
 
   // --- Derived Data: Filtering and Searching ---
   const displayItems = useMemo(() => {
-    // 1. Apply Filters first
+    // ... (displayItems logic remains the same) ...
     let filtered = filterItems(allItems);
 
-    // 2. Apply Search Term
     if (searchTerm) {
       const lowerCaseSearchTerm = searchTerm.toLowerCase();
       filtered = filtered.filter(
@@ -79,18 +81,13 @@ function Inventory() {
       );
     }
 
-    // 3. Sort Results
     return filtered.sort((a, b) =>
       (a.product_name || "").localeCompare(b.product_name || "")
     );
-  }, [allItems, searchTerm, filterItems]); // Depend on filterItems function from hook
+  }, [allItems, searchTerm, filterItems]);
 
-  // --- Modal Handlers (Add/Edit Item) ---
-  const handleOpenAddModal = () => {
-    setCurrentItem(null);
-    setError(null); // Clear previous errors when opening modal
-    setIsItemModalOpen(true);
-  };
+  // --- Modal Handlers (Edit Item ONLY) ---
+  // REMOVED handleOpenAddModal function
 
   const handleOpenEditModal = (item) => {
     if (!item || typeof item !== "object") {
@@ -98,46 +95,49 @@ function Inventory() {
       setError("Could not load item data for editing.");
       return;
     }
-    setCurrentItem(item);
-    setError(null); // Clear previous errors when opening modal
-    setIsItemModalOpen(true);
+    setCurrentItem(item); // Set the item to be edited
+    setError(null);
+    setIsItemModalOpen(true); // Open the modal
   };
 
   const handleItemModalClose = () => {
     setIsItemModalOpen(false);
-    setCurrentItem(null);
-    // Keep error state if it was set during form submission, otherwise clear it
-    // setError(null); // Maybe don't clear error on cancel? Handled in submit/open.
+    setCurrentItem(null); // Clear the item being edited
+    // setError(null); // Decide if you want to clear error on cancel
   };
 
+  // SIMPLIFIED handleFormSubmit for UPDATE ONLY
   const handleFormSubmit = async (formData) => {
     const primaryKey = "productid";
-    const isEditing = currentItem && currentItem[primaryKey];
+    // Check if we are actually editing (currentItem should be set)
+    if (!currentItem || !currentItem[primaryKey]) {
+        console.error("handleFormSubmit called without a currentItem for editing.");
+        setError("Cannot update item: No item selected for editing.");
+        return; // Exit if not in edit mode
+    }
 
     try {
-      setLoading(true); // Indicate loading during submit
-      setError(null); // Clear previous errors
-      if (isEditing) {
-        const updatedData = { ...formData, [primaryKey]: currentItem[primaryKey] };
-        await updateItem(currentItem[primaryKey], updatedData);
-      } else {
-        await addItem(formData);
-      }
+      setLoading(true);
+      setError(null);
+      // Prepare data for update
+      const updatedData = { ...formData, [primaryKey]: currentItem[primaryKey] };
+      // Call the update API
+      await updateItem(currentItem[primaryKey], updatedData);
+
       handleItemModalClose(); // Close modal on success
       await fetchInventory(); // Refresh data
     } catch (err) {
-      console.error(`Error ${isEditing ? "updating" : "adding"} item:`, err);
-      // Set error state to be displayed in the modal or main page
-      setError(`Failed to ${isEditing ? "update" : "add"} item. ${ err.response?.data?.error || err.message || "" }`);
-      // Keep the modal open on error by *not* calling handleItemModalClose here
+      console.error(`Error updating item:`, err);
+      setError(`Failed to update item. ${ err.response?.data?.error || err.message || "" }`);
+      // Keep modal open on error
     } finally {
-      // Ensure loading is turned off even if fetchInventory fails after submit
-      // setLoading(false); // fetchInventory already handles this
+      // setLoading(false); // fetchInventory handles this
     }
   };
 
   // --- Delete Handler ---
   const handleDelete = async (id) => {
+    // ... (handleDelete logic remains the same) ...
     const itemToDelete = allItems.find((item) => item.productid === id);
     if (!itemToDelete) {
       setError("Item not found.");
@@ -161,7 +161,6 @@ function Inventory() {
     }
   };
 
-
   // --- Render Logic ---
   if (loading && allItems.length === 0) {
     return <div className="p-6 text-center">Loading inventory...</div>;
@@ -169,19 +168,19 @@ function Inventory() {
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-      {/* Use the new Header Component */}
+      {/* Use the Header Component (without Add button functionality) */}
       <InventoryHeader
         user={user}
         searchTerm={searchTerm}
         onSearchChange={handleSearchChange}
-        onOpenFilterModal={openFilterModal} // from filter hook
-        onClearFilters={clearFilters}       // from filter hook
-        onOpenAddModal={handleOpenAddModal}
-        activeFilterCount={activeFilterCount} // from filter hook
+        onOpenFilterModal={openFilterModal}
+        onClearFilters={clearFilters}
+        // onOpenAddModal prop removed
+        activeFilterCount={activeFilterCount}
       />
 
-      {/* Main Error Display (for non-modal errors) */}
-      {error && !isItemModalOpen && !isFilterModalOpen && (
+      {/* ... (Error display logic) ... */}
+       {error && !isItemModalOpen && !isFilterModalOpen && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 relative text-sm">
           {error}
           <button
@@ -194,98 +193,103 @@ function Inventory() {
         </div>
       )}
 
-      {/* Inline Loading Indicator (when list is refreshing) */}
-      {loading && allItems.length > 0 && (
+      {/* ... (Loading indicator logic) ... */}
+       {loading && allItems.length > 0 && (
         <div className="text-center py-4 text-gray-500 text-sm italic">Updating list...</div>
       )}
 
-      {/* Inventory Table */}
-      <div className="overflow-x-auto bg-white p-4 rounded-lg shadow-md"> {/* Changed background */}
-        <table className="min-w-full text-left"> {/* Adjusted text size */}
-          <thead> 
-            <tr className="text-gray-700"> 
-              <th className="px-4 py-2 " style={{ backgroundColor: "#D9BE92" }}>Product</th> 
-              <th className="px-4 py-2 " style={{ backgroundColor: "#D9BE92" }}>Quantity</th>
-              <th className="px-4 py-2 " style={{ backgroundColor: "#D9BE92" }}>Price/Unit</th>
-              <th className="px-4 py-2 " style={{ backgroundColor: "#D9BE92" }}>Stock Status</th>
-              <th className="px-4 py-2" style={{ backgroundColor: "#D9BE92" }}>Supplier</th>
-              {user?.role === "admin" && (
-                <th className="px-4 py-2 " style={{ backgroundColor: "#D9BE92" }}>Action</th>
-              )}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200"> {/* Added divider */}
-            {displayItems.length > 0 ? (
-              displayItems.map((item) => {
-                // Use getStockStatusInfo from the filter hook
-                const { text: statusText, color: statusColor } =
-                  getStockStatusInfo(item.current_stock, item.min_quantity);
-                return (
-                  <tr key={item.productid} className="hover:bg-gray-50"> {/* Hover effect */}
-                    <td className="px-4 py-2 whitespace-nowrap font-medium text-gray-900">{item.product_name}</td>
-                    <td className="px-4 py-2 text-gray-700">{item.current_stock}</td>
-                    {/* Display price more clearly */}
-                    <td className="px-4 py-2 text-gray-700">
-                        {item.case_price != null ? `$${item.case_price.toFixed(2)}` : 'N/A'}
-                        {item.order_unit ? ` / ${item.order_unit}` : ''}
-                    </td>
-                    <td className="px-4 py-2">
-                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${statusColor}`}>
-                        {statusText}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2 text-gray-700 whitespace-nowrap">{item.supplier?.supplier_name || "N/A"}</td>
-                    {user?.role === "admin" && (
-                      <td className="px-4 py-2 flex space-x-2">
-                        <button
-                          onClick={() => handleOpenEditModal(item)}
-                          className="text-white text-xs font-semibold px-3 py-1 rounded hover:opacity-80 transition-opacity"
-                          style={{ backgroundColor: "#7E82A4" }}
-                          aria-label={`Edit ${item.product_name}`}
-                        > Edit </button>
-                        <button
-                          onClick={() => handleDelete(item.productid)}
-                          className="text-white text-xs font-semibold px-3 py-1 rounded hover:opacity-80 transition-opacity"
-                          style={{ backgroundColor: "#D99292" }}
-                          aria-label={`Delete ${item.product_name}`}
-                        > Delete </button>
-                      </td>
-                    )}
-                  </tr>
-                );
-              })
-            ) : (
-              <tr>
-                <td colSpan={user?.role === "admin" ? 6 : 5} className="text-center py-6 text-gray-500 italic">
-                  {loading ? "Loading..." : (searchTerm || activeFilterCount > 0
-                    ? "No products found matching your search/filters."
-                    : "No products in inventory.")}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      {/* ... (Inventory Table rendering logic remains the same) ... */}
+      <div className="overflow-x-auto bg-white p-4 rounded-lg shadow-md">
+          <table className="min-w-full text-left text-sm">
+             {/* ... thead ... */}
+             <thead className="bg-gray-50">
+                 <tr className="text-gray-600 uppercase text-xs">
+                     <th className="px-4 py-2 font-medium" style={{ backgroundColor: "#EAE0D5" }}>Product</th>
+                     <th className="px-4 py-2 font-medium" style={{ backgroundColor: "#EAE0D5" }}>Quantity</th>
+                     <th className="px-4 py-2 font-medium" style={{ backgroundColor: "#EAE0D5" }}>Price/Unit</th>
+                     <th className="px-4 py-2 font-medium" style={{ backgroundColor: "#EAE0D5" }}>Stock Status</th>
+                     <th className="px-4 py-2 font-medium" style={{ backgroundColor: "#EAE0D5" }}>Supplier</th>
+                     {user?.role === "admin" && (
+                       <th className="px-4 py-2 font-medium" style={{ backgroundColor: "#EAE0D5" }}>Action</th>
+                     )}
+                 </tr>
+             </thead>
+             {/* ... tbody ... */}
+             <tbody className="divide-y divide-gray-200">
+                 {displayItems.length > 0 ? (
+                     displayItems.map((item) => {
+                         const { text: statusText, color: statusColor } =
+                           getStockStatusInfo(item.current_stock, item.min_quantity);
+                         return (
+                             <tr key={item.productid} className="hover:bg-gray-50">
+                                 <td className="px-4 py-2 whitespace-nowrap font-medium text-gray-900">{item.product_name}</td>
+                                 <td className="px-4 py-2 text-gray-700">{item.current_stock}</td>
+                                 <td className="px-4 py-2 text-gray-700">
+                                     {item.case_price != null ? `$${item.case_price.toFixed(2)}` : 'N/A'}
+                                     {item.order_unit ? ` / ${item.order_unit}` : ''}
+                                 </td>
+                                 <td className="px-4 py-2">
+                                     <span className={`px-2 py-1 rounded-full text-xs font-semibold ${statusColor}`}>
+                                       {statusText}
+                                     </span>
+                                 </td>
+                                 <td className="px-4 py-2 text-gray-700 whitespace-nowrap">{item.supplier?.supplier_name || "N/A"}</td>
+                                 {user?.role === "admin" && (
+                                     <td className="px-4 py-2 flex space-x-2">
+                                         {/* Edit button triggers handleOpenEditModal */}
+                                         <button
+                                           onClick={() => handleOpenEditModal(item)}
+                                           className="text-white text-xs font-semibold px-3 py-1 rounded hover:opacity-80 transition-opacity"
+                                           style={{ backgroundColor: "#7E82A4" }}
+                                           aria-label={`Edit ${item.product_name}`}
+                                         > Edit </button>
+                                         {/* Delete button triggers handleDelete */}
+                                         <button
+                                           onClick={() => handleDelete(item.productid)}
+                                           className="text-white text-xs font-semibold px-3 py-1 rounded hover:opacity-80 transition-opacity"
+                                           style={{ backgroundColor: "#D99292" }}
+                                           aria-label={`Delete ${item.product_name}`}
+                                         > Delete </button>
+                                     </td>
+                                 )}
+                             </tr>
+                         );
+                     })
+                 ) : (
+                    /* ... No items row ... */
+                     <tr>
+                         <td colSpan={user?.role === "admin" ? 6 : 5} className="text-center py-6 text-gray-500 italic">
+                           {loading ? "Loading..." : (searchTerm || activeFilterCount > 0
+                             ? "No products found matching your search/filters."
+                             : "No products in inventory.")}
+                         </td>
+                     </tr>
+                 )}
+             </tbody>
+          </table>
       </div>
 
+
       {/* Modals */}
-      {isItemModalOpen && (
+      {/* InventoryItemModal is now ONLY used for editing here */}
+      {isItemModalOpen && currentItem && ( // Ensure currentItem is set before rendering for edit
         <InventoryItemModal
-          item={currentItem}
+          item={currentItem} // Pass the item to be edited
           onClose={handleItemModalClose}
-          onSubmit={handleFormSubmit}
-          // Pass error state specifically for the modal if it was set during submit
-          initialError={ error && (isItemModalOpen || isFilterModalOpen) ? error : null }
+          onSubmit={handleFormSubmit} // Submits only updates now
+          initialError={ error && isItemModalOpen ? error : null } // Pass error relevant to the open modal
+          isQuickAdd={false} // Explicitly false for editing
         />
       )}
 
-      {/* Filter Modal - Rendered based on hook state */}
+      {/* Filter Modal */}
       <FilterModal
-        isOpen={isFilterModalOpen} // from filter hook
-        onClose={closeFilterModal}   // from filter hook
-        onApplyFilters={applyFilters} // from filter hook
-        initialFilters={appliedFilters} // current filters from hook
-        availableSuppliers={availableSuppliers} // from filter hook
-        availableStatuses={availableStatuses}   // from filter hook
+        isOpen={isFilterModalOpen}
+        onClose={closeFilterModal}
+        onApplyFilters={applyFilters}
+        initialFilters={appliedFilters}
+        availableSuppliers={availableSuppliers}
+        availableStatuses={availableStatuses}
       />
 
     </div>

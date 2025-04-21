@@ -25,7 +25,7 @@ export function useInventoryFilter(allItems = []) {
 
   const clearFilters = useCallback(() => {
     setAppliedFilters(initialFilterState);
-    // Optionally close modal if open: closeFilterModal();
+
   }, [initialFilterState]);
 
   // Calculate available suppliers based on the full dataset
@@ -74,6 +74,6 @@ export function useInventoryFilter(allItems = []) {
     availableStatuses: definedStatuses, // Provide static statuses
     activeFilterCount,
     filterItems, // Provide the filtering function
-    getStockStatusInfo // Expose helper if needed elsewhere (or import from utils)
+    getStockStatusInfo 
   };
 }
