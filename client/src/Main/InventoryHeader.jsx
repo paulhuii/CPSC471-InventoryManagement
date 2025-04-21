@@ -32,11 +32,6 @@ function InventoryHeader({
     <div className="mb-6 flex flex-col sm:flex-row justify-between items-start gap-4">
       {/* Left Side: Title */}
       <div>
-        {userRole === "admin" && (
-          <div className="text-3xl sm:text-4xl lg:text-5xl font-medium text-gray-700 mb-1 sm:mb-2">
-            Hello Admin
-          </div>
-        )}
         <h2 className="text-xl sm:text-2xl font-bold text-green-900">Product List</h2>
       </div>
 
