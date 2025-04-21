@@ -3382,7 +3382,7 @@ export default InventoryHeader;
 import React, { useState, useEffect } from "react";
 
 function InventoryItemModal({
-  item,       
+  item,       // Item object if editing, null if adding (though adding isn't triggered from Inventory view anymore)
   onClose,
   onSubmit,   // Function to call with submitted data
   initialError,
@@ -3390,8 +3390,10 @@ function InventoryItemModal({
 
   const isEditing = item !== null;
 
+  // --- Initial form state - include current_stock ---
   const [formData, setFormData] = useState({
     product_name: item?.product_name || "",
+    current_stock: item?.current_stock ?? "", // <-- Add current_stock
     min_quantity: item?.min_quantity ?? "",
     max_quantity: item?.max_quantity ?? "",
     expiration: item?.expiration
@@ -3407,9 +3409,27 @@ function InventoryItemModal({
     setError(initialError);
   }, [initialError]);
 
+   // Reset form data if the item prop changes 
+   useEffect(() => {
+    if (item) {
+        setFormData({
+            product_name: item.product_name || "",
+            current_stock: item.current_stock ?? "", // Reset with new item's stock
+            min_quantity: item.min_quantity ?? "",
+            max_quantity: item.max_quantity ?? "",
+            expiration: item.expiration ? new Date(item.expiration).toISOString().split("T")[0] : "",
+            categoryid: item.categoryid ?? "",
+        });
+        setError(null); // Clear errors when opening for a new item
+    }
+    // Only run when the item prop itself changes
+   }, [item]);
+
+
   // Handle input changes for controlled components
   const handleChange = (e) => {
     const { name, value, type } = e.target;
+    // Allow empty string for numbers during typing, otherwise parse
     const val = type === "number" ? (value === "" ? "" : parseFloat(value)) : value;
     setFormData((prev) => ({ ...prev, [name]: val }));
     setError(null); // Clear error on change
@@ -3424,59 +3444,80 @@ function InventoryItemModal({
     if (!formData.product_name) {
       setError("Product Name is required."); return;
     }
-    if (formData.min_quantity === "" || formData.min_quantity === null || isNaN(formData.min_quantity)) {
-        setError("Minimum Quantity is required."); return;
+    // Validate Current Stock (required, non-negative)
+    if (formData.current_stock === "" || formData.current_stock === null || isNaN(formData.current_stock) || parseFloat(formData.current_stock) < 0) {
+         setError("Current Stock is required and cannot be negative."); return;
     }
+    // Validate Min Quantity (required, non-negative)
+    if (formData.min_quantity === "" || formData.min_quantity === null || isNaN(formData.min_quantity) || parseFloat(formData.min_quantity) < 0) {
+        setError("Minimum Quantity is required and cannot be negative."); return;
+    }
+    // Validate Max Quantity (must be >= min quantity if provided)
+     if (formData.max_quantity !== null && formData.max_quantity !== "" && (isNaN(formData.max_quantity) || parseFloat(formData.max_quantity) < 0)) {
+         setError("Max Quantity must be a non-negative number if provided."); return;
+     }
      if (formData.max_quantity !== null && formData.max_quantity !== "" && parseFloat(formData.max_quantity) < parseFloat(formData.min_quantity)) {
         setError("Max Quantity cannot be less than Min Quantity."); return;
      }
+     // Validate Category ID (must be number if provided)
+     if (formData.categoryid !== null && formData.categoryid !== "" && isNaN(formData.categoryid)) {
+         setError("Category ID must be a number if provided."); return;
+     }
+
 
     // --- Prepare Data to Submit ---
+    // Ensure numbers are parsed correctly, handle nulls for optional fields
     const dataToSubmit = {
       product_name: formData.product_name,
-      min_quantity: formData.min_quantity === "" ? null : parseFloat(formData.min_quantity),
-      max_quantity: formData.max_quantity === "" ? null : parseFloat(formData.max_quantity),
+      current_stock: parseFloat(formData.current_stock), // <-- Ensure it's a number
+      min_quantity: parseFloat(formData.min_quantity),   // <-- Ensure it's a number
+      max_quantity: formData.max_quantity === "" || formData.max_quantity === null ? null : parseFloat(formData.max_quantity),
       expiration: formData.expiration === "" ? null : formData.expiration,
-      categoryid: formData.categoryid === "" ? null : parseInt(formData.categoryid, 10),
+      categoryid: formData.categoryid === "" || formData.categoryid === null ? null : parseInt(formData.categoryid, 10),
     };
 
-    // If ADDING a new product, explicitly set current_stock to 0
-    // Other fields like price, unit, supplier will rely on backend defaults/null handling
-    if (!isEditing) {
-      dataToSubmit.current_stock = 0;
-    }
-
-    console.log("Data being submitted:", dataToSubmit); 
+    console.log("Data being submitted (edit):", dataToSubmit);
 
     try {
-      await onSubmit(dataToSubmit); // Call the parent component's submit handler
+      // onSubmit is the handleFormSubmit function passed from Inventory.jsx
+      await onSubmit(dataToSubmit);
+      // Parent should close modal on success
     } catch (err) {
+      // If onSubmit throws, catch it here and display in the modal
       setError(err.response?.data?.error || err.message || "Submission failed.");
       console.error("Modal Submit Prop Error:", err);
     }
   };
 
+  // --- Define the fields to display in the modal ---
   const fields = [
     { label: "Product Name *", name: "product_name", type: "text", required: true },
-    { label: "Min Quantity *", name: "min_quantity", type: "number", required: true },
-    { label: "Max Quantity", name: "max_quantity", type: "number", required: false },
-    { label: "Category ID", name: "categoryid", type: "number", required: false },
+    { label: "Current Stock *", name: "current_stock", type: "number", required: true, min: "0" }, // <-- Add field definition
+    { label: "Min Quantity *", name: "min_quantity", type: "number", required: true, min: "0" },
+    { label: "Max Quantity", name: "max_quantity", type: "number", required: false, min: "0" },
+    { label: "Category ID", name: "categoryid", type: "number", required: false }, // Consider making this a select if you have categories
     { label: "Expiration Date", name: "expiration", type: "date", required: false },
   ];
+
+  if (!isEditing) {
+      console.warn("InventoryItemModal rendered without an item for editing.");
+      return null; // Or display an error/message
+  }
+
 
   return (
     <div
       className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex justify-center items-center z-50 p-4"
-      onClick={onClose}
+      onClick={onClose} // Allow closing by clicking backdrop
     >
       <div
         className="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 m-4 space-y-4 overflow-y-auto max-h-[90vh]"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
       >
         {/* Header */}
         <div className="flex justify-between items-center border-b pb-2">
           <h3 className="text-xl font-semibold text-gray-800">
-            {isEditing ? "Edit Product Details" : "Add New Product"}
+             Edit Product Details {/* Modal title always edit in this context */}
           </h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl font-bold" aria-label="Close modal">×</button>
         </div>
@@ -3493,26 +3534,27 @@ function InventoryItemModal({
         <form
           onSubmit={handleSubmit}
           className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3"
-          noValidate
+          noValidate // Use manual validation display
         >
-          {/* Render only the defined fields */}
+          {/* Render fields dynamically */}
           {fields.map(({ label, name, type, required, placeholder, step, min }) => (
+        
             <div key={name} className={name === 'product_name' ? 'md:col-span-2' : ''}>
               <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">
                 {label}
               </label>
               <input
                 id={name}
-                className="border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                className="border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:text-gray-500"
                 placeholder={placeholder || label.replace(" *", "")}
                 name={name}
                 type={type}
-                value={formData[name]}
+                value={formData[name]} 
                 onChange={handleChange}
-                required={required} // Basic HTML5 required
-                step={step}
-                min={min}
-                // No 'disabled' needed here as all displayed fields are editable
+                required={required} 
+                step={step} 
+                min={min}   
+               
               />
             </div>
           ))}
@@ -3521,7 +3563,7 @@ function InventoryItemModal({
           <div className="col-span-1 md:col-span-2 flex justify-end gap-3 pt-4 mt-2 border-t">
             <button type="button" onClick={onClose} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-gray-400">Cancel</button>
             <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-              {isEditing ? "Update Details" : "Add Product"}
+               Update Details {/* Button label always update */}
             </button>
           </div>
         </form>
@@ -3909,13 +3951,13 @@ export const deleteUser = async (userId) => {
 
 <file path="client/src/App.js">
 // src/App.js
-import React, { useState } from "react"; 
+import React, { useState } from "react";
 import {
   BrowserRouter,
   Routes,
   Route,
   NavLink,
-  Navigate, 
+  Navigate,
   Outlet,
 } from "react-router-dom";
 
@@ -3941,13 +3983,13 @@ import OrderHistory from "./Main/Order/History";
 const StyledLink = ({ to, end = false, children, onClick }) => (
   <NavLink
     to={to}
-    end={end} 
-    onClick={onClick} 
+    end={end}
+    onClick={onClick}
     className={({ isActive }) =>
       `px-3 py-2 rounded-md text-sm font-medium transition-colors ${
         isActive
-          ? "bg-gray-900 text-white" 
-          : "text-gray-300 hover:bg-gray-700 hover:text-white" 
+          ? "bg-gray-900 text-white"
+          : "text-gray-300 hover:bg-gray-700 hover:text-white"
       }`
     }
   >
@@ -3955,14 +3997,13 @@ const StyledLink = ({ to, end = false, children, onClick }) => (
   </NavLink>
 );
 
-// --- Styled Link Component for Mobile Panel ---
+// --- Styled Link Component Specifically for Mobile Panel ---
 const StyledMobileLink = ({ to, end = false, children, onClick }) => (
   <NavLink
     to={to}
     end={end}
-    onClick={onClick} 
+    onClick={onClick}
     className={({ isActive }) =>
-      // Block display and slightly larger text for better mobile tap targets
       `block px-3 py-2 rounded-md text-base font-medium transition-colors ${
         isActive
           ? "bg-gray-900 text-white"
@@ -3974,64 +4015,56 @@ const StyledMobileLink = ({ to, end = false, children, onClick }) => (
   </NavLink>
 );
 
-// Handles authentication and authorization checks
+// --- Protected Route Component ---
 const ProtectedRoute = ({ allowedRoles }) => {
-  const { user, loading } = useAuth(); // Get user and loading state from context
-
-  // Display loading message while authentication check is in progress
+  const { user, loading } = useAuth();
   if (loading) {
     return <div className="p-6 text-center text-gray-500">Authenticating…</div>;
   }
-
-  // If user is not logged in, redirect to the login page
   if (!user) {
     return <Navigate to="/login" replace />;
   }
-
-  // If route requires specific roles, check if the user's role is allowed
   if (allowedRoles && !allowedRoles.includes(user.role?.toLowerCase())) {
     console.warn(`User with role '${user.role}' tried accessing restricted route. Redirecting.`);
-    // Redirect unauthorized users to the home page
     return <Navigate to="/" replace />;
   }
-
-  // If user is authenticated and authorized, render the child component/route
-  return <Outlet />; // Renders the nested route element
+  return <Outlet />;
 };
 
 // --- Main Navigation Bar Component ---
 const Navigation = () => {
-  const { user, logout } = useAuth(); // Get user data and logout function
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // State for mobile menu visibility
+  const { user, logout } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Toggles the visibility of the mobile menu
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  // Closes the mobile menu (used when navigating via links)
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
   };
 
-  // Handles logout action and closes the mobile menu
   const handleLogout = () => {
     logout();
     closeMobileMenu();
   };
 
   return (
-    <nav className="bg-gray-800 shadow-md sticky top-0 z-40"> 
+    <nav className="bg-gray-800 shadow-md sticky top-0 z-40">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
+          {/* Left Side: Logo (optional) & Desktop Links */}
           <div className="flex items-center">
-            <div className="flex-shrink-0">}
-              {/* Placeholder for logo */}
+            <div className="flex-shrink-0">
                <span className="text-white font-bold text-lg">471Cafe</span>
             </div>
             <div className="hidden md:block"> {/* Desktop links */}
               <div className="ml-10 flex items-baseline space-x-4">
-                <StyledLink to="/" end onClick={closeMobileMenu}>Home</StyledLink>
+                {/* === Conditionally Render Home Link === */}
+                {!user && (
+                    <StyledLink to="/" end onClick={closeMobileMenu}>Home</StyledLink>
+                )}
+                {/* ====================================== */}
                 {user && <StyledLink to="/inventory" onClick={closeMobileMenu}>Inventory</StyledLink>}
                 {user && <StyledLink to="/orders" onClick={closeMobileMenu}>Orders</StyledLink>}
                 {user?.role?.toLowerCase() === "admin" && (
@@ -4076,7 +4109,6 @@ const Navigation = () => {
               aria-expanded={isMobileMenuOpen}
             >
               <span className="sr-only">Open main menu</span>
-              {/* Icon changes based on menu state */}
               {!isMobileMenuOpen ? (
                 <svg className="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
@@ -4095,7 +4127,11 @@ const Navigation = () => {
       <div className={`md:hidden transition-max-height duration-300 ease-in-out overflow-hidden ${isMobileMenuOpen ? 'max-h-screen' : 'max-h-0'}`} id="mobile-menu">
         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
           {/* Mobile Navigation Links */}
-          <StyledMobileLink to="/" end onClick={closeMobileMenu}>Home</StyledMobileLink>
+          {/* === Conditionally Render Home Link === */}
+          {!user && (
+            <StyledMobileLink to="/" end onClick={closeMobileMenu}>Home</StyledMobileLink>
+          )}
+          {/* ====================================== */}
           {user && <StyledMobileLink to="/inventory" onClick={closeMobileMenu}>Inventory</StyledMobileLink>}
           {user && <StyledMobileLink to="/orders" onClick={closeMobileMenu}>Orders</StyledMobileLink>}
           {user?.role?.toLowerCase() === "admin" && (
@@ -4140,38 +4176,33 @@ const Navigation = () => {
 // --- Main Application Component ---
 function App() {
   const AppRoutes = () => {
-    const { user, loading } = useAuth(); // Check authentication status
-
-    // Display global loading indicator while auth context is initializing
+    const { user, loading } = useAuth();
     if (loading) {
       return <div className="flex justify-center items-center h-screen text-lg font-medium text-gray-600">Loading Application…</div>;
     }
 
     return (
-      // Provide Order Cart state to nested components
       <OrderCartProvider>
-        <div className="min-h-screen flex flex-col bg-gray-100"> {/* Main app container */}
-          <Navigation /> {/* Render the navigation bar */}
-          {/* Main content area where routes are rendered */}
+        <div className="min-h-screen flex flex-col bg-gray-100">
+          <Navigation />
           <main className="flex-grow container mx-auto px-4 py-6 sm:px-6 lg:px-8">
             <Routes>
-              {/* --- Public Routes --- */}
-              <Route path="/" element={<Home />} />
+              {/* Public Routes */}
+              {/* Home is now only accessible when logged out, or directly via URL */}
+              <Route path="/" element={!user ? <Home /> : <Navigate to="/inventory" replace />} />
               <Route
                 path="/login"
-                element={!user ? <Login /> : <Navigate to="/inventory" replace />} // Redirect logged-in users
+                element={!user ? <Login /> : <Navigate to="/inventory" replace />}
               />
               <Route
                 path="/register"
-                element={!user ? <Register /> : <Navigate to="/inventory" replace />} // Redirect logged-in users
+                element={!user ? <Register /> : <Navigate to="/inventory" replace />}
               />
 
-              {/* --- Protected Routes --- */}
-              <Route element={<ProtectedRoute />}> 
+              {/* Protected Routes */}
+              <Route element={<ProtectedRoute />}>
                 <Route path="/inventory" element={<Inventory />} />
-
-                {/* --- Orders Section Routes --- */}
-                <Route path="/orders" element={<Order />}> 
+                <Route path="/orders" element={<Order />}>
                   <Route index element={<Navigate replace to="restock" />} />
                   <Route path="restock" element={<OrderRestock />} />
                   <Route path="list" element={<OrderList />} />
@@ -4180,13 +4211,14 @@ function App() {
                 </Route>
               </Route>
 
-              {/* --- Admin-Only Routes --- */}
-              <Route element={<ProtectedRoute allowedRoles={["admin"]} />}> {/* Admin authorization wrapper */}
+              {/* Admin-Only Routes */}
+              <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
                 <Route path="/admin/users" element={<AdminUserListPage />} />
-                {/* Add other admin routes here */}
               </Route>
 
-              <Route path="*" element={<Navigate to="/" replace />} /> {/* Redirect unmatched paths to home */}
+              {/* Fallback Route */}
+              {/* If logged in, unmatched goes to inventory, else to login */}
+              <Route path="*" element={<Navigate to={user ? "/inventory" : "/login"} replace />} />
             </Routes>
           </main>
         </div>
@@ -4195,9 +4227,9 @@ function App() {
   };
 
   return (
-    <AuthProvider> 
-      <BrowserRouter> 
-        <AppRoutes /> 
+    <AuthProvider>
+      <BrowserRouter>
+        <AppRoutes />
       </BrowserRouter>
     </AuthProvider>
   );

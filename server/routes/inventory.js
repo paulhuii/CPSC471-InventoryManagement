@@ -50,14 +50,77 @@ router.post("/", authenticateToken, isAdmin, async (req, res) => {
 });
 
 router.put("/:id", authenticateToken, isAdmin, async (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const { data, error } = await supabase
-    .from("products")
-    .update(req.body)
-    .eq("productid", id)
-    .select();
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data[0]);
+  const productid = parseInt(req.params.id, 10);
+  const updatedFields = req.body; 
+  const userid = req.user.userid; // Get userid from authenticated user
+
+  if (isNaN(productid)) {
+    return res.status(400).json({ error: "Invalid product ID" });
+  }
+
+  try {
+    // --- Fetch the Old Quantity ---
+    const { data: currentProduct, error: fetchError } = await supabase
+      .from("products")
+      .select("current_stock")
+      .eq("productid", productid)
+      .single();
+
+    if (fetchError) {
+      console.error("Error fetching current stock:", fetchError);
+      return res.status(500).json({ error: "Failed to fetch product before update." });
+    }
+    if (!currentProduct) {
+      return res.status(404).json({ error: "Product not found." });
+    }
+    const old_quantity = currentProduct.current_stock;
+
+    // ---  Perform the Stock Update ---
+    const { data: updatedData, error: updateError } = await supabase
+      .from("products")
+      .update(updatedFields) 
+      .eq("productid", productid)
+      .select() 
+      .single();
+
+    if (updateError) {
+      console.error("Error updating product:", updateError);
+      return res.status(500).json({ error: updateError.message });
+    }
+    if (!updatedData) {
+        return res.status(404).json({ error: "Product not found after update attempt." });
+    }
+
+    // 
+    const new_quantity = updatedData.current_stock; 
+
+    //
+    if (updatedFields.hasOwnProperty('current_stock') && new_quantity !== old_quantity) {
+      const quantity_changed = new_quantity - old_quantity;
+
+      const { error: transactionError } = await supabase
+        .from("inventory_transaction")
+        .insert({
+          userid: userid,
+          productid: productid,
+          transaction_date: new Date(), // Use current server time
+          quantity_changed: quantity_changed,
+          old_quantity: old_quantity,
+          new_quantity: new_quantity,
+          transaction_type: 'manual_update' 
+        });
+
+      if (transactionError) {
+        console.error("Failed to log inventory transaction:", transactionError);
+      }
+    }
+
+    res.json(updatedData); // Return the updated product data
+
+  } catch (err) {
+      console.error("Unexpected error in PUT /inventory/:id:", err);
+      res.status(500).json({ error: "An unexpected server error occurred." });
+  }
 });
 
 router.delete("/:id", authenticateToken, isAdmin, async (req, res) => {
@@ -124,37 +187,74 @@ router.get("/restock", authenticateToken, async (req, res) => {
 
 router.post("/:productid/add-stock", authenticateToken, isAdmin, async (req, res) => {
   const productid = parseInt(req.params.productid, 10);
-  const { quantity } = req.body;
+  const { quantity: quantityToAdd } = req.body; // Rename for clarity
+  const userid = req.user.userid; // Get userid
 
   if (isNaN(productid)) {
     return res.status(400).json({ error: "Invalid product ID" });
   }
-
-  if (!Number.isFinite(quantity)) {
-    return res.status(400).json({ error: "Invalid or missing quantity" });
+  if (typeof quantityToAdd !== 'number' || quantityToAdd <= 0) { // Ensure quantity is positive
+    return res.status(400).json({ error: "Invalid or missing quantity (must be a positive number)" });
   }
 
-  const { data: currentData, error: fetchError } = await supabase
-    .from("products")
-    .select("current_stock")
-    .eq("productid", productid)
-    .single();
+  try {
+    // Fetch the Old Quantity ---
+    const { data: currentProduct, error: fetchError } = await supabase
+      .from("products")
+      .select("current_stock")
+      .eq("productid", productid)
+      .single();
 
-  if (fetchError) return res.status(500).json({ error: fetchError.message });
-  if (!currentData)
-    return res.status(404).json({ error: "Product not found" });
+    if (fetchError) {
+        console.error("Error fetching current stock:", fetchError);
+        return res.status(500).json({ error: "Failed to fetch product before adding stock." });
+    }
+    if (!currentProduct) {
+        return res.status(404).json({ error: "Product not found." });
+    }
+    const old_quantity = currentProduct.current_stock;
 
-  const newStock = currentData.current_stock + quantity;
+    // Perform the Stock Update ---
+    const new_quantity = old_quantity + quantityToAdd; // Calculate new stock
 
-  const { data, error } = await supabase
-    .from("products")
-    .update({ current_stock: newStock })
-    .eq("productid", productid)
-    .select();
+    const { data: updatedData, error: updateError } = await supabase
+      .from("products")
+      .update({ current_stock: new_quantity }) // Update with calculated value
+      .eq("productid", productid)
+      .select()
+      .single();
 
-  if (error) return res.status(500).json({ error: error.message });
+    if (updateError) {
+        console.error("Error adding stock:", updateError);
+        return res.status(500).json({ error: updateError.message });
+    }
+     if (!updatedData) {
+        return res.status(404).json({ error: "Product not found after stock update attempt." });
+    }
 
-  res.json(data[0]);
+    // Log Transaction ---
+    const { error: transactionError } = await supabase
+      .from("inventory_transaction")
+      .insert({
+        userid: userid,
+        productid: productid,
+        transaction_date: new Date(),
+        quantity_changed: quantityToAdd,
+        old_quantity: old_quantity,
+        new_quantity: new_quantity,
+        transaction_type: 'order_received' 
+      });
+
+    if (transactionError) {
+      console.error("Failed to log inventory transaction for stock add:", transactionError);
+    }
+
+    res.json(updatedData); 
+
+  } catch (err) {
+      console.error("Unexpected error in POST /inventory/:productid/add-stock:", err);
+      res.status(500).json({ error: "An unexpected server error occurred." });
+  }
 });
 
 module.exports = router;
