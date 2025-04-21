@@ -7,7 +7,7 @@ export function useInventorySearch(initialTerm = '') {
     setSearchTerm(event.target.value);
   }, []);
 
-  // Optional: Function to clear search externally if needed
+
   const clearSearch = useCallback(() => {
     setSearchTerm('');
   }, []);

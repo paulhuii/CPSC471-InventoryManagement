@@ -8,12 +8,12 @@ import {
   createOrder,
   addOrderDetails,
   updateItem,
-  addItem as addProductApi // Renamed API import
+  addItem as addProductApi 
 } from "../../api";
 import InventoryItemModal from '../InventoryItemModal';
-import AddItemForm from './AddItemForm'; // Import new component
-import SupplierOrderSection from './SupplierOrderSection'; // Import new component
-import { useStateWithLocalStorage } from '../hooks/useStateWithLocalStorage'; // Import hook
+import AddItemForm from './AddItemForm';
+import SupplierOrderSection from './SupplierOrderSection'; 
+import { useStateWithLocalStorage } from '../hooks/useStateWithLocalStorage'; 
 
 // Main component for the Order List creation/management page
 const OrderList = () => {
@@ -24,7 +24,7 @@ const OrderList = () => {
     const [groupedItems, setGroupedItems] = useStateWithLocalStorage("groupedOrderItems", {});
     const [editingIndex, setEditingIndex] = useState(null);
     const [editingSupplier, setEditingSupplier] = useState(null);
-    const [editedItem, setEditedItem] = useState(null); // Holds data for the item being edited
+    const [editedItem, setEditedItem] = useState(null); 
 
     const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
     const [addProductError, setAddProductError] = useState(null);
@@ -289,7 +289,7 @@ const OrderList = () => {
                     onClose={handleCloseAddProductModal}
                     onSubmit={handleAddProductSubmit}
                     initialError={addProductError}
-                    isQuickAdd={false} // Or adjust as needed if this prop is still used internally by the modal
+                    isQuickAdd={false} 
                 />
             )}
         </div>

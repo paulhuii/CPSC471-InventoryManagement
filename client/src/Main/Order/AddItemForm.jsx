@@ -94,7 +94,7 @@ const AddItemForm = ({ products = [], suppliers = [], onAddItem, onOpenAddProduc
             {/* Add Item Button */}
             <div className="col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-5 flex justify-end mt-2">
                 <button
-                    className="bg-blue-600 text-white rounded px-6 py-2 shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                    className="bg-[#EADBA0] text-black rounded px-6 py-2 shadow hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
                     onClick={handleSubmit} // Use onClick for button, or onSubmit if wrapped in <form>
                 >
                     Add Item to Order List

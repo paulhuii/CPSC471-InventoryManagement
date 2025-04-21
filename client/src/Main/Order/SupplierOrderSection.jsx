@@ -14,7 +14,7 @@ const SupplierOrderSection = ({
     onSaveEdit,
     onCancelEdit,
     onPlaceOrder,
-    onEditedItemChange // Pass this down to OrderItemRow
+    onEditedItemChange 
 }) => {
     const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
     const tax = subtotal * 0.05;
@@ -34,9 +34,9 @@ const SupplierOrderSection = ({
                         <tr className="text-left text-gray-600 uppercase text-xs tracking-wider">
                             <th className="px-3 py-2 font-semibold">Product</th>
                             <th className="px-3 py-2 font-semibold text-center">Quantity</th>
-                            <th className="px-3 py-2 font-semibold text-center">Price/Unit</th>
+                            <th className="px-3 py-2 font-semibold text-center">Price</th>
                             <th className="px-3 py-2 font-semibold text-center">Order Unit</th>
-                            <th className="px-3 py-2 font-semibold text-right">Line Total</th>
+                            <th className="px-3 py-2 font-semibold text-right">Total Cost</th>
                             <th className="px-3 py-2 font-semibold text-center">Actions</th>
                         </tr>
                     </thead>
@@ -71,7 +71,7 @@ const SupplierOrderSection = ({
             {userRole === "admin" ? (
                 <div className="px-4 pb-4 text-right border-t border-gray-200 pt-3">
                     <button
-                        className="bg-green-600 text-white px-5 py-2 rounded shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 disabled:opacity-50"
+                        className="bg-[#61759B] text-white px-5 py-2 rounded shadow-sm hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 disabled:opacity-50"
                         onClick={() => onPlaceOrder(supplierName, items)}
                         disabled={items.length === 0}
                     >

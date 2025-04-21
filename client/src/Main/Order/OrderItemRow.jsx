@@ -75,9 +75,9 @@ const OrderItemRow = ({
                         <button onClick={onCancelClick} className="bg-gray-400 text-white px-3 py-1 rounded text-xs hover:bg-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-400">Cancel</button>
                     </>
                 ) : (
-                    <button onClick={() => onEditClick(supplierName, index)} className="bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-500">Edit</button>
+                    <button onClick={() => onEditClick(supplierName, index)} className="bg-[#7E82A4] text-white px-3 py-1 rounded text-xs hover:bg-blue-900 focus:outline-none focus:ring-1 focus:ring-blue-500">Edit</button>
                 )}
-                <button onClick={() => onDeleteClick(supplierName, index)} className="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600 focus:outline-none focus:ring-1 focus:ring-red-500">Delete</button>
+                <button onClick={() => onDeleteClick(supplierName, index)} className="bg-[#D99292] text-black px-3 py-1 rounded text-xs hover:bg-red-400 focus:outline-none focus:ring-1 focus:ring-red-500">Delete</button>
             </td>
         </tr>
     );
