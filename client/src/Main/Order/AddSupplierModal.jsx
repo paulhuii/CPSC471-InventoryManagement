@@ -42,18 +42,14 @@ const AddSupplierModal = ({
         e.preventDefault();
         setError(null);
 
-        // Basic Validation (name is now user-editable, so validate it)
+        // Basic Validation 
         if (!formData.supplier_name || !formData.contact || !formData.email || !formData.address) {
             setError("All fields are required.");
             return;
         }
 
-        // Optional: Add more specific validation (e.g., email format) here if desired
-
         try {
-            // Call the onSubmit prop passed from OrderList with the current formData
             await onSubmit(formData);
-            // OrderList's onSubmit should handle closing the modal on success
         } catch (err) {
             console.error("AddSupplierModal handleSubmit caught error:", err);
             setError(err.message || "Failed to submit supplier.");
@@ -98,9 +94,8 @@ const AddSupplierModal = ({
                             onChange={handleChange} // Allow changes
                             placeholder="Enter the supplier's name"
                             className="border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                            // REMOVED readOnly attribute
                         />
-                        {/* REMOVED the paragraph saying the name cannot be changed */}
+                        
                     </div>
                     <div>
                         <label htmlFor="contact" className="block text-sm font-medium text-gray-700 mb-1">Contact Person/Phone *</label>

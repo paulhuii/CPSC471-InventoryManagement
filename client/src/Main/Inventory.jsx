@@ -271,13 +271,13 @@ function Inventory() {
 
 
       {/* Modals */}
-      {/* InventoryItemModal is now ONLY used for editing here */}
-      {isItemModalOpen && currentItem && ( // Ensure currentItem is set before rendering for edit
+      {/* InventoryItemModal */}
+      {isItemModalOpen && currentItem && ( 
         <InventoryItemModal
           item={currentItem} // Pass the item to be edited
           onClose={handleItemModalClose}
           onSubmit={handleFormSubmit} // Submits only updates now
-          initialError={ error && isItemModalOpen ? error : null } // Pass error relevant to the open modal
+          initialError={ error && isItemModalOpen ? error : null }
           isQuickAdd={false} // Explicitly false for editing
         />
       )}

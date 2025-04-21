@@ -8,7 +8,7 @@ const AddItemForm = ({
     onOpenAddProductModal,
     onOpenAddSupplierModal
 }) => {
-    // Keep formData structure, productid will be derived
+
     const [formData, setFormData] = useState({
         productid: "",
         quantity: "",
@@ -20,28 +20,28 @@ const AddItemForm = ({
     // Add state to hold the value typed/selected in the product input field
     const [productInputName, setProductInputName] = useState("");
 
-    // Effect to clear product input name when productid is reset (e.g., after submission)
+    // Effect to clear product input name when productid is reset 
     useEffect(() => {
         if (formData.productid === "") {
             setProductInputName("");
         }
-        // Find product name if productid is set initially (e.g., if editing was implemented)
+        // Find product name if productid is set initially
         else {
             const product = products.find(p => p.productid === formData.productid);
             if (product && productInputName !== product.product_name) {
                 setProductInputName(product.product_name);
             }
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     }, [formData.productid]); // Only re-run when productid changes in formData
 
-    // --- Generic Input Handler for most fields ---
+    // --- Input Handler  ---
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    // --- Special Handler for the Product Input ---
+    // --- Special Handler  ---
     const handleProductInputChange = (e) => {
         const typedName = e.target.value;
         setProductInputName(typedName); // Update the visible input value
@@ -83,18 +83,18 @@ const AddItemForm = ({
                     <input
                         id="product-input"
                         type="text"
-                        name="productInputName" // Descriptive name for the input element itself
-                        list="product-options" // Link to the datalist
-                        value={productInputName} // Bind to the dedicated state variable
-                        onChange={handleProductInputChange} // Use the specific handler
+                        name="productInputName" 
+                        list="product-options" 
+                        value={productInputName} 
+                        onChange={handleProductInputChange} 
                         placeholder="Select or type product..."
                         className="border border-gray-300 rounded px-3 py-2 w-full text-sm flex-grow focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                        autoComplete="off" // Good practice for datalist inputs
+                        autoComplete="off" 
                     />
                     {/* Datalist provides suggestions */}
                     <datalist id="product-options">
                         {products.sort((a, b) => a.product_name.localeCompare(b.product_name)).map(p => (
-                            // The value here MUST be the product name for matching/display
+                           
                             <option key={p.productid} value={p.product_name} />
                         ))}
                     </datalist>
@@ -116,14 +116,14 @@ const AddItemForm = ({
             <div className="col-span-1">
                 <label htmlFor="quantity-input" className="text-xs font-medium text-gray-600 mb-1">Quantity</label>
                 <input id="quantity-input" type="number" name="quantity" value={formData.quantity}
-                    onChange={handleInputChange} // Use generic handler
+                    onChange={handleInputChange} 
                     placeholder="e.g., 10" className="border border-gray-300 rounded px-3 py-2 w-full text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500" min="1" />
             </div>
             {/* Price Input */}
             <div className="col-span-1">
                 <label htmlFor="price-input" className="text-xs font-medium text-gray-600 mb-1">Price per Unit ($)</label>
                 <input id="price-input" type="number" step="0.01" name="price" value={formData.price}
-                    onChange={handleInputChange} // Use generic handler
+                    onChange={handleInputChange} 
                     placeholder="e.g., 15.50" className="border border-gray-300 rounded px-3 py-2 w-full text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500" min="0.01" />
             </div>
             {/* Order Unit Input */}
@@ -133,7 +133,7 @@ const AddItemForm = ({
                     id="unit-input"
                     name="order_unit"
                     value={formData.order_unit}
-                    onChange={handleInputChange} // Use generic handler
+                    onChange={handleInputChange} 
                     placeholder="e.g. case, box, lbs"
                     className="border border-gray-300 rounded px-3 py-2 w-full text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 />
@@ -148,7 +148,7 @@ const AddItemForm = ({
                         name="supplier_name"
                         list="supplier-options"
                         value={formData.supplier_name}
-                        onChange={handleInputChange} // Use generic handler
+                        onChange={handleInputChange} 
                         placeholder="Select or type..."
                         className="border border-gray-300 rounded px-3 py-2 w-full text-sm flex-grow focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                         autoComplete="off"
