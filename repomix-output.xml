@@ -79,6 +79,7 @@ client/
         Pending.jsx
         Restock.jsx
         SupplierOrderSection.jsx
+      Dashboard.jsx
       FilterModal.js
       Inventory.jsx
       InventoryHeader.jsx
@@ -1149,189 +1150,267 @@ export function useStateWithLocalStorage(key, initialValue) {
 
 <file path="client/src/Main/Order/AddItemForm.jsx">
 // src/Main/Order/AddItemForm.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 
 const AddItemForm = ({
-    products = [],
-    suppliers = [],
-    onAddItem,
-    onOpenAddProductModal,
-    onOpenAddSupplierModal
+  products = [],
+  suppliers = [],
+  onAddItem,
+  onOpenAddProductModal,
+  onOpenAddSupplierModal,
 }) => {
+  const [formData, setFormData] = useState({
+    productid: "",
+    quantity: "",
+    price: "",
+    order_unit: "",
+    supplier_name: "",
+  });
 
-    const [formData, setFormData] = useState({
+  // Add state to hold the value typed/selected in the product input field
+  const [productInputName, setProductInputName] = useState("");
+
+  // Effect to clear product input name when productid is reset
+  useEffect(() => {
+    if (formData.productid === "") {
+      setProductInputName("");
+    }
+    // Find product name if productid is set initially
+    else {
+      const product = products.find((p) => p.productid === formData.productid);
+      if (product && productInputName !== product.product_name) {
+        setProductInputName(product.product_name);
+      }
+    }
+  }, [formData.productid]); // Only re-run when productid changes in formData
+
+  // --- Input Handler  ---
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // --- Special Handler  ---
+  const handleProductInputChange = (e) => {
+    const typedName = e.target.value;
+    setProductInputName(typedName); // Update the visible input value
+
+    // Try to find the corresponding product ID based on the name
+    const matchedProduct = products.find(
+      (p) => p.product_name.toLowerCase() === typedName.toLowerCase()
+    );
+
+    // Update the actual productid in formData if a match is found, otherwise clear it
+    setFormData((prev) => ({
+      ...prev,
+      productid: matchedProduct ? matchedProduct.productid : "",
+    }));
+  };
+
+  // --- Form Submission ---
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (!formData.productid) {
+      alert(
+        "Product not recognized. Please select an existing product from the list."
+      );
+      return;
+    }
+
+    // Pass the formData (which includes the derived productid)
+    onAddItem(formData, () => {
+      // Reset form state, including the product input name
+      setFormData({
         productid: "",
         quantity: "",
         price: "",
         order_unit: "",
         supplier_name: "",
+      });
+      setProductInputName(""); // Explicitly clear the product name input state
     });
+  };
 
-    // Add state to hold the value typed/selected in the product input field
-    const [productInputName, setProductInputName] = useState("");
+  // --- Handler for the '+' supplier button ---
+  const handleAddSupplierClick = () => {
+    onOpenAddSupplierModal(formData.supplier_name);
+  };
 
-    // Effect to clear product input name when productid is reset 
-    useEffect(() => {
-        if (formData.productid === "") {
-            setProductInputName("");
-        }
-        // Find product name if productid is set initially
-        else {
-            const product = products.find(p => p.productid === formData.productid);
-            if (product && productInputName !== product.product_name) {
-                setProductInputName(product.product_name);
-            }
-        }
-
-    }, [formData.productid]); // Only re-run when productid changes in formData
-
-    // --- Input Handler  ---
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    // --- Special Handler  ---
-    const handleProductInputChange = (e) => {
-        const typedName = e.target.value;
-        setProductInputName(typedName); // Update the visible input value
-
-        // Try to find the corresponding product ID based on the name
-        const matchedProduct = products.find(
-            p => p.product_name.toLowerCase() === typedName.toLowerCase()
-        );
-
-        // Update the actual productid in formData if a match is found, otherwise clear it
-        setFormData(prev => ({
-            ...prev,
-            productid: matchedProduct ? matchedProduct.productid : ""
-        }));
-    };
-
-    // --- Form Submission ---
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        // Pass the formData (which includes the derived productid)
-        onAddItem(formData, () => {
-            // Reset form state, including the product input name
-            setFormData({ productid: "", quantity: "", price: "", order_unit: "", supplier_name: "" });
-            setProductInputName(""); // Explicitly clear the product name input state
-        });
-    };
-
-    // --- Handler for the '+' supplier button ---
-    const handleAddSupplierClick = () => {
-        onOpenAddSupplierModal(formData.supplier_name);
-    }
-
-    return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6 p-4 border rounded bg-white shadow-sm items-end">
-            {/* Product Selection (Input + Datalist) */}
-            <div className="flex flex-col col-span-1 lg:col-span-1">
-                <label htmlFor="product-input" className="text-xs font-medium text-gray-600 mb-1">Product</label>
-                <div className="flex items-center gap-2">
-                    <input
-                        id="product-input"
-                        type="text"
-                        name="productInputName" 
-                        list="product-options" 
-                        value={productInputName} 
-                        onChange={handleProductInputChange} 
-                        placeholder="Select or type product..."
-                        className="border border-gray-300 rounded px-3 py-2 w-full text-sm flex-grow focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                        autoComplete="off" 
-                    />
-                    {/* Datalist provides suggestions */}
-                    <datalist id="product-options">
-                        {products.sort((a, b) => a.product_name.localeCompare(b.product_name)).map(p => (
-                           
-                            <option key={p.productid} value={p.product_name} />
-                        ))}
-                    </datalist>
-                    {/* Add New Product Button */}
-                    <button
-                        type="button"
-                        onClick={onOpenAddProductModal}
-                        className="p-2 border border-gray-300 rounded bg-blue-50 hover:bg-blue-100 text-blue-600 shrink-0 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        title="Add New Product to Inventory"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
-            {/* Quantity Input */}
-            <div className="col-span-1">
-                <label htmlFor="quantity-input" className="text-xs font-medium text-gray-600 mb-1">Quantity</label>
-                <input id="quantity-input" type="number" name="quantity" value={formData.quantity}
-                    onChange={handleInputChange} 
-                    placeholder="e.g., 10" className="border border-gray-300 rounded px-3 py-2 w-full text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500" min="1" />
-            </div>
-            {/* Price Input */}
-            <div className="col-span-1">
-                <label htmlFor="price-input" className="text-xs font-medium text-gray-600 mb-1">Price per Unit ($)</label>
-                <input id="price-input" type="number" step="0.01" name="price" value={formData.price}
-                    onChange={handleInputChange} 
-                    placeholder="e.g., 15.50" className="border border-gray-300 rounded px-3 py-2 w-full text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500" min="0.01" />
-            </div>
-            {/* Order Unit Input */}
-            <div className="col-span-1">
-                <label htmlFor="unit-input" className="text-xs font-medium text-gray-600 mb-1">Order Unit</label>
-                <input
-                    id="unit-input"
-                    name="order_unit"
-                    value={formData.order_unit}
-                    onChange={handleInputChange} 
-                    placeholder="e.g. case, box, lbs"
-                    className="border border-gray-300 rounded px-3 py-2 w-full text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                />
-            </div>
-
-            {/* Supplier Input with Add Button */}
-            <div className="flex flex-col col-span-1">
-                <label htmlFor="supplier-input" className="text-xs font-medium text-gray-600 mb-1">Supplier Name</label>
-                <div className="flex items-center gap-2">
-                    <input
-                        id="supplier-input"
-                        name="supplier_name"
-                        list="supplier-options"
-                        value={formData.supplier_name}
-                        onChange={handleInputChange} 
-                        placeholder="Select or type..."
-                        className="border border-gray-300 rounded px-3 py-2 w-full text-sm flex-grow focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                        autoComplete="off"
-                    />
-                    <datalist id="supplier-options">
-                        {suppliers.sort((a, b) => a.supplier_name.localeCompare(b.supplier_name)).map(s => <option key={s.supplierid} value={s.supplier_name} />)}
-                    </datalist>
-                    {/* Add New Supplier Button */}
-                    <button
-                        type="button"
-                        onClick={handleAddSupplierClick}
-                        className="p-2 border border-gray-300 rounded bg-green-50 hover:bg-green-100 text-green-600 shrink-0 focus:outline-none focus:ring-1 focus:ring-green-500"
-                        title="Add New Supplier"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
-
-            {/* Add Item Button */}
-            <div className="col-span-1 sm:col-span-1 md:col-span-1 lg:col-span-1 flex justify-start items-end">
-                <button
-                    className="bg-[#EADBA0] text-black rounded px-6 py-2 shadow hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 w-full sm:w-auto"
-                    onClick={handleSubmit} // Use onClick for button
-                >
-                    Add Item
-                </button>
-            </div>
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6 p-4 border rounded bg-white shadow-sm items-end">
+      {/* Product Selection (Input + Datalist) */}
+      <div className="flex flex-col col-span-1 lg:col-span-1">
+        <label
+          htmlFor="product-input"
+          className="text-xs font-medium text-gray-600 mb-1"
+        >
+          Product
+        </label>
+        <div className="flex items-center gap-2">
+          <input
+            id="product-input"
+            type="text"
+            name="productInputName"
+            list="product-options"
+            value={productInputName}
+            onChange={handleProductInputChange}
+            placeholder="Select or type product..."
+            className="border border-gray-300 rounded px-3 py-2 w-full text-sm flex-grow focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            autoComplete="off"
+          />
+          {/* Datalist provides suggestions */}
+          <datalist id="product-options">
+            {products
+              .sort((a, b) => a.product_name.localeCompare(b.product_name))
+              .map((p) => (
+                <option key={p.productid} value={p.product_name} />
+              ))}
+          </datalist>
+          {/* Add New Product Button */}
+          <button
+            type="button"
+            onClick={onOpenAddProductModal}
+            className="p-2 border border-gray-300 rounded bg-blue-50 hover:bg-blue-100 text-blue-600 shrink-0 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            title="Add New Product to Inventory"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-5 h-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 4.5v15m7.5-7.5h-15"
+              />
+            </svg>
+          </button>
         </div>
-    );
+      </div>
+
+      {/* Quantity Input */}
+      <div className="col-span-1">
+        <label
+          htmlFor="quantity-input"
+          className="text-xs font-medium text-gray-600 mb-1"
+        >
+          Quantity
+        </label>
+        <input
+          id="quantity-input"
+          type="number"
+          name="quantity"
+          value={formData.quantity}
+          onChange={handleInputChange}
+          placeholder="e.g., 10"
+          className="border border-gray-300 rounded px-3 py-2 w-full text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+          min="1"
+        />
+      </div>
+      {/* Price Input */}
+      <div className="col-span-1">
+        <label
+          htmlFor="price-input"
+          className="text-xs font-medium text-gray-600 mb-1"
+        >
+          Price per Unit ($)
+        </label>
+        <input
+          id="price-input"
+          type="number"
+          step="0.01"
+          name="price"
+          value={formData.price}
+          onChange={handleInputChange}
+          placeholder="e.g., 15.50"
+          className="border border-gray-300 rounded px-3 py-2 w-full text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+          min="0.01"
+        />
+      </div>
+      {/* Order Unit Input */}
+      <div className="col-span-1">
+        <label
+          htmlFor="unit-input"
+          className="text-xs font-medium text-gray-600 mb-1"
+        >
+          Order Unit
+        </label>
+        <input
+          id="unit-input"
+          name="order_unit"
+          value={formData.order_unit}
+          onChange={handleInputChange}
+          placeholder="e.g. case, box, lbs"
+          className="border border-gray-300 rounded px-3 py-2 w-full text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      {/* Supplier Input with Add Button */}
+      <div className="flex flex-col col-span-1">
+        <label
+          htmlFor="supplier-input"
+          className="text-xs font-medium text-gray-600 mb-1"
+        >
+          Supplier Name
+        </label>
+        <div className="flex items-center gap-2">
+          <input
+            id="supplier-input"
+            name="supplier_name"
+            list="supplier-options"
+            value={formData.supplier_name}
+            onChange={handleInputChange}
+            placeholder="Select or type..."
+            className="border border-gray-300 rounded px-3 py-2 w-full text-sm flex-grow focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            autoComplete="off"
+          />
+          <datalist id="supplier-options">
+            {suppliers
+              .sort((a, b) => a.supplier_name.localeCompare(b.supplier_name))
+              .map((s) => (
+                <option key={s.supplierid} value={s.supplier_name} />
+              ))}
+          </datalist>
+          {/* Add New Supplier Button */}
+          <button
+            type="button"
+            onClick={handleAddSupplierClick}
+            className="p-2 border border-gray-300 rounded bg-green-50 hover:bg-green-100 text-green-600 shrink-0 focus:outline-none focus:ring-1 focus:ring-green-500"
+            title="Add New Supplier"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-5 h-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 4.5v15m7.5-7.5h-15"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Add Item Button */}
+      <div className="col-span-1 sm:col-span-1 md:col-span-1 lg:col-span-1 flex justify-start items-end">
+        <button
+          className="bg-[#EADBA0] text-black rounded px-6 py-2 shadow hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 w-full sm:w-auto"
+          onClick={handleSubmit} // Use onClick for button
+        >
+          Add Item
+        </button>
+      </div>
+    </div>
+  );
 };
 
 export default AddItemForm;
@@ -1880,412 +1959,487 @@ import {
   addOrderDetails,
   // updateItem, // Not used directly here anymore
   addItem as addProductApi,
-  createSupplier // <-- Import new API function
+  createSupplier, // <-- Import new API function
 } from "../../api";
-import InventoryItemModal from '../InventoryItemModal';
-import AddItemForm from './AddItemForm';
-import SupplierOrderSection from './SupplierOrderSection';
-import AddSupplierModal from './AddSupplierModal'; // <-- Import the new modal
-import { useStateWithLocalStorage } from '../hooks/useStateWithLocalStorage';
+import InventoryItemModal from "../InventoryItemModal";
+import AddItemForm from "./AddItemForm";
+import SupplierOrderSection from "./SupplierOrderSection";
+import AddSupplierModal from "./AddSupplierModal"; // <-- Import the new modal
+import { useStateWithLocalStorage } from "../hooks/useStateWithLocalStorage";
 
 const OrderList = () => {
-    const { user } = useAuth();
-    const { cartItems, clearCart } = useOrderCart();
-    const [products, setProducts] = useState([]);
-    const [suppliers, setSuppliers] = useState([]);
-    const [groupedItems, setGroupedItems] = useStateWithLocalStorage("groupedOrderItems", {});
-    const [editingIndex, setEditingIndex] = useState(null);
-    const [editingSupplier, setEditingSupplier] = useState(null);
-    const [editedItem, setEditedItem] = useState(null);
+  const { user } = useAuth();
+  const { cartItems, clearCart } = useOrderCart();
+  const [products, setProducts] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
+  const [groupedItems, setGroupedItems] = useStateWithLocalStorage(
+    "groupedOrderItems",
+    {}
+  );
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [editingSupplier, setEditingSupplier] = useState(null);
+  const [editedItem, setEditedItem] = useState(null);
 
-    const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
-    const [addProductError, setAddProductError] = useState(null);
+  const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
+  const [addProductError, setAddProductError] = useState(null);
 
-    // --- State for Add Supplier Modal ---
-    const [isAddSupplierModalOpen, setIsAddSupplierModalOpen] = useState(false);
-    const [supplierNameToAdd, setSupplierNameToAdd] = useState('');
-    const [addSupplierError, setAddSupplierError] = useState(null);
-    // Store the item data that triggered the add supplier flow (less used now but kept for potential edge cases)
-    const [pendingItemData, setPendingItemData] = useState(null);
+  // --- State for Add Supplier Modal ---
+  const [isAddSupplierModalOpen, setIsAddSupplierModalOpen] = useState(false);
+  const [supplierNameToAdd, setSupplierNameToAdd] = useState("");
+  const [addSupplierError, setAddSupplierError] = useState(null);
+  // Store the item data that triggered the add supplier flow (less used now but kept for potential edge cases)
+  const [pendingItemData, setPendingItemData] = useState(null);
 
-    // --- Data Fetching ---
-    const fetchProducts = useCallback(async () => {
-        try {
-            const data = await getInventory();
-            setProducts(Array.isArray(data) ? data : []);
-        } catch (error) { console.error("Failed to fetch products:", error); }
-    }, []);
-
-    const fetchSuppliers = useCallback(async () => {
-        try {
-            const data = await getSuppliers();
-            setSuppliers(Array.isArray(data) ? data : []);
-        } catch (error) {
-            console.error("Failed to fetch suppliers:", error);
-        }
-    }, []);
-
-
-    useEffect(() => {
-        fetchProducts();
-        fetchSuppliers(); // Fetch suppliers on mount
-    }, [fetchProducts, fetchSuppliers]); // Updated dependencies
-
-    // --- Process Cart Items (from Restock page) ---
-    useEffect(() => {
-         if (cartItems.length > 0 && suppliers.length > 0) {
-            const newGrouped = { ...groupedItems };
-            let changed = false;
-            cartItems.forEach(ci => {
-                // Find supplier using supplierid from the product item (cartItem)
-                const supplierInfo = suppliers.find(s => s.supplierid === ci.supplierid);
-                const supplierName = supplierInfo?.supplier_name;
-
-                if (!supplierName) {
-                    console.warn(`Supplier not found for ID: ${ci.supplierid} for product ${ci.product_name}`);
-                    return; // Skip if supplier doesn't exist in the current supplier list
-                }
-
-                if (!newGrouped[supplierName]) newGrouped[supplierName] = [];
-
-                const existingIndex = newGrouped[supplierName].findIndex(item => item.productid === ci.productid);
-
-                if (existingIndex === -1) {
-                    // Item not in the list for this supplier, add it
-                    newGrouped[supplierName].push({
-                        productid: ci.productid,
-                        product_name: ci.product_name,
-                        quantity: ci.requested_quantity, // Quantity calculated in context
-                        price: ci.unit_price, // Price might need fetching/setting later or using product default
-                        order_unit: ci.order_unit || "", // Default or from product
-                        supplier_name: supplierName, // Confirmed supplier name
-                    });
-                    changed = true;
-                } else {
-                    // Optional: Handle if item already exists (e.g., update quantity, alert user)
-                    console.log(`Item ${ci.product_name} from restock recommendations already exists for ${supplierName}. Skipping.`);
-                    // Example: Update quantity if needed
-                    // newGrouped[supplierName][existingIndex].quantity += ci.requested_quantity;
-                    // changed = true;
-                }
-            });
-
-            if (changed) {
-                setGroupedItems(newGrouped);
-            }
-            // Clear the cart processed from the restock page immediately
-            clearCart();
-        }
-    }, [cartItems, clearCart, groupedItems, setGroupedItems, suppliers]);
-
-    // --- Add Product Modal Handlers ---
-    const handleOpenAddProductModal = () => {
-        setAddProductError(null);
-        setIsAddProductModalOpen(true);
-    };
-    const handleCloseAddProductModal = () => {
-        setIsAddProductModalOpen(false);
-        setAddProductError(null);
-    };
-    const handleAddProductSubmit = async (newProductData) => {
-        try {
-            setAddProductError(null);
-            const addedProductArray = await addProductApi(newProductData);
-            if (addedProductArray && addedProductArray.length > 0) {
-                handleCloseAddProductModal();
-                await fetchProducts(); // Refresh product list
-                alert(`Product "${addedProductArray[0]?.product_name || 'New Product'}" added successfully! You can now select it for your order.`);
-            } else { throw new Error("Failed to add product, no data returned."); }
-        } catch (err) {
-            console.error("Failed to add product from order list:", err);
-            setAddProductError(err.response?.data?.error || err.message || "Error adding product.");
-        }
-    };
-
-    // --- Add Supplier Modal Handlers ---
-    // Called by the '+' button in AddItemForm
-    const handleOpenAddSupplierModal = (nameFromInput = '') => {
-        setSupplierNameToAdd(nameFromInput);
-        setPendingItemData(null); // Not adding an item directly, just the supplier
-        setAddSupplierError(null);
-        setIsAddSupplierModalOpen(true);
-    };
-
-    const handleCloseAddSupplierModal = () => {
-        setIsAddSupplierModalOpen(false);
-        setSupplierNameToAdd('');
-        setAddSupplierError(null);
-        setPendingItemData(null);
-    };
-
-    const handleAddSupplierSubmit = async (newSupplierData) => {
-        try {
-            setAddSupplierError(null);
-            const addedSupplier = await createSupplier(newSupplierData);
-
-            if (addedSupplier?.supplierid) {
-                await fetchSuppliers(); // Refresh the suppliers list
-                handleCloseAddSupplierModal();
-                alert(`Supplier "${addedSupplier.supplier_name}" added successfully!`);
-
-                // If an item add was pending when opening the modal (less likely path now)
-                if (pendingItemData) {
-                    addConfirmedItemToGroup(pendingItemData, addedSupplier.supplier_name);
-                    setPendingItemData(null);
-                }
-            } else {
-                throw new Error("Failed to add supplier or no data returned.");
-            }
-        } catch (err) {
-            console.error("Failed to add supplier:", err);
-            setAddSupplierError(err.response?.data?.error || err.message || "An unexpected error occurred.");
-            throw err; // Allow modal to display the error
-        }
-    };
-
-    // --- Helper to add item to the grouped state ---
-    const addConfirmedItemToGroup = (itemData, finalSupplierName) => {
-        const product = products.find(p => p.productid.toString() === itemData.productid);
-         if (!product) {
-             alert("Product details missing, cannot add item.");
-             return;
-         }
-         const newItem = {
-             productid: parseInt(itemData.productid, 10),
-             quantity: parseInt(itemData.quantity, 10),
-             price: parseFloat(itemData.price),
-             order_unit: itemData.order_unit,
-             product_name: product.product_name,
-             supplier_name: finalSupplierName, // Use the confirmed name
-         };
-
-         setGroupedItems(prev => {
-             const currentSupplierItems = prev[finalSupplierName] || [];
-             const exists = currentSupplierItems.some(item => item.productid === newItem.productid);
-             if (exists) {
-                 alert(`${newItem.product_name} is already in the order list for ${finalSupplierName}. Edit the existing entry.`);
-                 return prev; // Return previous state if item exists
-             }
-             // Add new item to the specific supplier's list
-             return { ...prev, [finalSupplierName]: [...currentSupplierItems, newItem] };
-         });
+  // --- Data Fetching ---
+  const fetchProducts = useCallback(async () => {
+    try {
+      const data = await getInventory();
+      setProducts(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Failed to fetch products:", error);
     }
+  }, []);
 
-    // --- Main "Add Item" Button Handler (from AddItemForm) ---
-    const handleAddItem = (formDataFromForm, resetFormCallback) => {
-        const { productid, quantity, price, order_unit, supplier_name } = formDataFromForm;
+  const fetchSuppliers = useCallback(async () => {
+    try {
+      const data = await getSuppliers();
+      setSuppliers(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Failed to fetch suppliers:", error);
+    }
+  }, []);
 
-        // Basic validation for required fields
-        if (!productid || !quantity || !price || !order_unit || !supplier_name) {
-            alert("Please fill in all fields (Product, Quantity, Price, Order Unit, Supplier) to add an item.");
-            return;
+  useEffect(() => {
+    fetchProducts();
+    fetchSuppliers(); // Fetch suppliers on mount
+  }, [fetchProducts, fetchSuppliers]); // Updated dependencies
+
+  // --- Process Cart Items (from Restock page) ---
+  useEffect(() => {
+    if (cartItems.length > 0 && suppliers.length > 0) {
+      const newGrouped = { ...groupedItems };
+      let changed = false;
+      cartItems.forEach((ci) => {
+        // Find supplier using supplierid from the product item (cartItem)
+        const supplierInfo = suppliers.find(
+          (s) => s.supplierid === ci.supplierid
+        );
+        const supplierName = supplierInfo?.supplier_name;
+
+        if (!supplierName) {
+          console.warn(
+            `Supplier not found for ID: ${ci.supplierid} for product ${ci.product_name}`
+          );
+          return; // Skip if supplier doesn't exist in the current supplier list
         }
 
-        // Check if the selected/typed supplier exists in our current list (case-insensitive)
-        const supplierInfo = suppliers.find(s => s.supplier_name.toLowerCase() === supplier_name.toLowerCase());
+        if (!newGrouped[supplierName]) newGrouped[supplierName] = [];
 
-        if (supplierInfo) {
-            // Supplier EXISTS: Add the item using the exact name from the database
-            addConfirmedItemToGroup(formDataFromForm, supplierInfo.supplier_name);
-            resetFormCallback(); // Clear the form fields in AddItemForm
+        const existingIndex = newGrouped[supplierName].findIndex(
+          (item) => item.productid === ci.productid
+        );
+
+        if (existingIndex === -1) {
+          // Item not in the list for this supplier, add it
+          newGrouped[supplierName].push({
+            productid: ci.productid,
+            product_name: ci.product_name,
+            quantity: ci.requested_quantity, // Quantity calculated in context
+            price: ci.unit_price, // Price might need fetching/setting later or using product default
+            order_unit: ci.order_unit || "", // Default or from product
+            supplier_name: supplierName, // Confirmed supplier name
+          });
+          changed = true;
         } else {
-            // Supplier DOES NOT EXIST: Guide the user
-            alert(`Supplier "${supplier_name}" not found. Please add the supplier using the '+' button next to the supplier field before adding this item.`);
-            // Do NOT add the item. Do NOT open the modal automatically.
-            // Do NOT reset the form.
+          // Optional: Handle if item already exists (e.g., update quantity, alert user)
+          console.log(
+            `Item ${ci.product_name} from restock recommendations already exists for ${supplierName}. Skipping.`
+          );
+          // Example: Update quantity if needed
+          // newGrouped[supplierName][existingIndex].quantity += ci.requested_quantity;
+          // changed = true;
         }
+      });
+
+      if (changed) {
+        setGroupedItems(newGrouped);
+      }
+      // Clear the cart processed from the restock page immediately
+      clearCart();
+    }
+  }, [cartItems, clearCart, groupedItems, setGroupedItems, suppliers]);
+
+  // --- Add Product Modal Handlers ---
+  const handleOpenAddProductModal = () => {
+    setAddProductError(null);
+    setIsAddProductModalOpen(true);
+  };
+  const handleCloseAddProductModal = () => {
+    setIsAddProductModalOpen(false);
+    setAddProductError(null);
+  };
+  const handleAddProductSubmit = async (newProductData) => {
+    try {
+      setAddProductError(null);
+      const addedProductArray = await addProductApi(newProductData);
+      if (addedProductArray && addedProductArray.length > 0) {
+        handleCloseAddProductModal();
+        await fetchProducts(); // Refresh product list
+        alert(
+          `Product "${
+            addedProductArray[0]?.product_name || "New Product"
+          }" added successfully! You can now select it for your order.`
+        );
+      } else {
+        throw new Error("Failed to add product, no data returned.");
+      }
+    } catch (err) {
+      console.error("Failed to add product from order list:", err);
+      setAddProductError(
+        err.response?.data?.error || err.message || "Error adding product."
+      );
+    }
+  };
+
+  // --- Add Supplier Modal Handlers ---
+  // Called by the '+' button in AddItemForm
+  const handleOpenAddSupplierModal = (nameFromInput = "") => {
+    setSupplierNameToAdd(nameFromInput);
+    setPendingItemData(null); // Not adding an item directly, just the supplier
+    setAddSupplierError(null);
+    setIsAddSupplierModalOpen(true);
+  };
+
+  const handleCloseAddSupplierModal = () => {
+    setIsAddSupplierModalOpen(false);
+    setSupplierNameToAdd("");
+    setAddSupplierError(null);
+    setPendingItemData(null);
+  };
+
+  const handleAddSupplierSubmit = async (newSupplierData) => {
+    try {
+      setAddSupplierError(null);
+      const addedSupplier = await createSupplier(newSupplierData);
+
+      if (addedSupplier?.supplierid) {
+        await fetchSuppliers(); // Refresh the suppliers list
+        await fetchProducts();
+        handleCloseAddSupplierModal();
+        alert(`Supplier "${addedSupplier.supplier_name}" added successfully!`);
+
+        // If an item add was pending when opening the modal (less likely path now)
+        if (pendingItemData) {
+          addConfirmedItemToGroup(pendingItemData, addedSupplier.supplier_name);
+          setPendingItemData(null);
+        }
+      } else {
+        throw new Error("Failed to add supplier or no data returned.");
+      }
+    } catch (err) {
+      console.error("Failed to add supplier:", err);
+      setAddSupplierError(
+        err.response?.data?.error ||
+          err.message ||
+          "An unexpected error occurred."
+      );
+      throw err; // Allow modal to display the error
+    }
+  };
+
+  // --- Helper to add item to the grouped state ---
+  const addConfirmedItemToGroup = (itemData, finalSupplierName) => {
+    const product = products.find(
+      (p) => Number(p.productid) === Number(itemData.productid)
+    );
+    if (!product) {
+      alert("Product details missing, cannot add item.");
+      return;
+    }
+    const newItem = {
+      productid: parseInt(itemData.productid, 10),
+      quantity: parseInt(itemData.quantity, 10),
+      price: parseFloat(itemData.price),
+      order_unit: itemData.order_unit,
+      product_name: product.product_name,
+      supplier_name: finalSupplierName, // Use the confirmed name
     };
 
-    // --- Edit/Delete/Save Handlers for items in the list ---
-    const handleEditItem = (supplier, index) => {
-         setEditingSupplier(supplier);
-         setEditingIndex(index);
-         const itemToEdit = groupedItems[supplier][index];
-         // Ensure quantity and price are numbers for the input fields
-         setEditedItem({
-             ...itemToEdit,
-             quantity: parseInt(itemToEdit.quantity, 10) || 0,
-             price: parseFloat(itemToEdit.price) || 0
-         });
-    };
+    setGroupedItems((prev) => {
+      const currentSupplierItems = prev[finalSupplierName] || [];
+      const exists = currentSupplierItems.some(
+        (item) => item.productid === newItem.productid
+      );
+      if (exists) {
+        alert(
+          `${newItem.product_name} is already in the order list for ${finalSupplierName}. Edit the existing entry.`
+        );
+        return prev; // Return previous state if item exists
+      }
+      // Add new item to the specific supplier's list
+      return {
+        ...prev,
+        [finalSupplierName]: [...currentSupplierItems, newItem],
+      };
+    });
+  };
 
-    const handleSaveEdit = () => {
-         if (!editingSupplier || editingIndex === null || !editedItem) return;
+  // --- Main "Add Item" Button Handler (from AddItemForm) ---
+  const handleAddItem = (formData, resetCallback) => {
+    const { productid, quantity, price, order_unit, supplier_name } = formData;
 
-         setGroupedItems(prev => {
-            const updatedSupplierItems = [...prev[editingSupplier]];
-            // Ensure saved values are correctly typed numbers
-            updatedSupplierItems[editingIndex] = {
-                ...editedItem,
-                quantity: parseInt(editedItem.quantity, 10) || 0, // Fallback to 0 if invalid
-                price: parseFloat(editedItem.price) || 0 // Fallback to 0 if invalid
-            };
-            return { ...prev, [editingSupplier]: updatedSupplierItems };
-        });
-        // Reset editing state
-        setEditingIndex(null);
-        setEditedItem(null);
-        setEditingSupplier(null);
-    };
-
-    const handleCancelEdit = () => {
-         setEditingIndex(null);
-         setEditedItem(null);
-         setEditingSupplier(null);
+    // Basic validation
+    if (!productid || !quantity || !price || !order_unit || !supplier_name) {
+      alert(
+        "Please fill in all fields (Product, Quantity, Price, Order Unit, Supplier) to add an item."
+      );
+      return;
     }
 
-    const handleDeleteItem = (supplier, index) => {
-        const itemToDelete = groupedItems[supplier]?.[index];
-        if (!itemToDelete) return;
-
-        if (window.confirm(`Remove ${itemToDelete.product_name} from the order list for ${supplier}?`)) {
-            setGroupedItems(prev => {
-                const updatedSupplierItems = [...prev[supplier]];
-                updatedSupplierItems.splice(index, 1); // Remove item at index
-
-                // If this was the last item for the supplier, remove the supplier group entirely
-                if (updatedSupplierItems.length === 0) {
-                    const { [supplier]: _, ...rest } = prev; // Destructure to remove the supplier key
-                    return rest;
-                }
-                // Otherwise, update the supplier's item list
-                return { ...prev, [supplier]: updatedSupplierItems };
-            });
-             // If the deleted item was being edited, cancel the edit mode
-             if (editingSupplier === supplier && editingIndex === index) {
-                 handleCancelEdit();
-             }
-        }
-    };
-
-    // --- Place Order Handler (Admin Only) ---
-    const handlePlaceOrderForSupplier = async (supplierName, items) => {
-        const supplier = suppliers.find(s => s.supplier_name === supplierName);
-        if (!supplier) {
-            alert(`Could not find supplier details for ${supplierName}. Order cannot be placed.`);
-            return;
-        }
-        const supplierid = supplier.supplierid;
-
-        // Calculate totals
-        const subtotal = items.reduce((sum, item) => sum + (Number(item.quantity) * Number(item.price)), 0);
-        const tax = subtotal * 0.05; // Assuming 5% tax
-        const total_amount = subtotal + tax;
-
-        if (!user || !user.userid) {
-            alert("User not identified. Cannot place order.");
-            return;
-        }
-
-        if (items.length === 0) {
-            alert("Cannot place an empty order.");
-            return;
-        }
-
-        try {
-            // 1. Create the main order record
-            const orderHeader = {
-                order_date: new Date().toISOString().split("T")[0], // Today's date
-                total_amount: total_amount,
-                supplierid: supplierid,
-                userid: user.userid // User placing the order
-            };
-            const createdOrder = await createOrder(orderHeader);
-
-            if (!createdOrder || !createdOrder.orderid) {
-                throw new Error("Failed to create order header. No order ID received.");
-            }
-            const orderid = createdOrder.orderid;
-
-            // 2. Prepare and add the order details (line items)
-            const detailItems = items.map(item => ({
-                orderid: orderid,
-                productid: item.productid,
-                supplierid: supplierid, // Associate detail with the order's supplier
-                unit_price: Number(item.price),
-                requested_quantity: Number(item.quantity),
-                order_unit: item.order_unit
-                // received_quantity defaults to 0, received_date defaults to null in DB/API
-            }));
-
-            await addOrderDetails(detailItems);
-
-            // 3. Success: Notify user and remove items from the list state
-            alert(`Order placed successfully for ${supplierName}! Order ID: ${orderid}`);
-            setGroupedItems(prev => {
-                const { [supplierName]: _, ...rest } = prev; // Remove the placed order group
-                return rest;
-            });
-
-        } catch (error) {
-            console.error(`Failed to place order for ${supplierName}:`, error);
-            alert(`Error placing order: ${error.message || 'An unknown error occurred.'}`);
-        }
-    };
-
-    // --- Render ---
-    return (
-        <div className="p-6 bg-gray-50 min-h-screen">
-            <h2 className="text-2xl font-semibold text-center mb-6 text-gray-700">
-                Create New Order - {new Date().toLocaleDateString()}
-            </h2>
-
-            {/* Form to add items to the list */}
-            <AddItemForm
-                products={products}
-                suppliers={suppliers}
-                onAddItem={handleAddItem}                 // For the main "Add Item" button
-                onOpenAddProductModal={handleOpenAddProductModal} // For the product '+' button
-                onOpenAddSupplierModal={handleOpenAddSupplierModal} // For the supplier '+' button
-            />
-
-            {/* Display Grouped Order Items by Supplier */}
-            {Object.keys(groupedItems).length === 0 ? (
-                 <p className="text-center text-gray-500 italic mt-8">Your order list is empty. Add items using the form above or from the Restock page.</p>
-            ) : (
-                Object.entries(groupedItems).map(([supplier, items]) => (
-                    <SupplierOrderSection
-                        key={supplier}
-                        supplierName={supplier}
-                        items={items}
-                        userRole={user?.role?.toLowerCase()}
-                        editingIndex={editingIndex}
-                        editingSupplier={editingSupplier}
-                        editedItem={editedItem}
-                        onEditItem={handleEditItem}
-                        onDeleteItem={handleDeleteItem}
-                        onSaveEdit={handleSaveEdit}
-                        onCancelEdit={handleCancelEdit}
-                        onPlaceOrder={handlePlaceOrderForSupplier}
-                        onEditedItemChange={setEditedItem} // Pass state setter for controlled input in row
-                    />
-                ))
-            )}
-
-             {/* --- Modals --- */}
-             {isAddProductModalOpen && (
-                <InventoryItemModal
-                    item={null} // For adding new product
-                    onClose={handleCloseAddProductModal}
-                    onSubmit={handleAddProductSubmit}
-                    initialError={addProductError}
-                    isQuickAdd={false} // Not relevant here
-                />
-             )}
-
-             {/* Add Supplier Modal */}
-             {isAddSupplierModalOpen && (
-                 <AddSupplierModal
-                    isOpen={isAddSupplierModalOpen}
-                    onClose={handleCloseAddSupplierModal}
-                    onSubmit={handleAddSupplierSubmit}
-                    initialSupplierName={supplierNameToAdd}
-                    initialError={addSupplierError}
-                 />
-             )}
-
-        </div>
+    // --- NEW: Validate product-supplier match ---
+    const selectedSupplier = suppliers.find(
+      (s) => s.supplier_name.toLowerCase() === supplier_name.toLowerCase()
     );
+    const selectedSupplierId = selectedSupplier?.supplierid;
+
+    const matchedProduct = products.find(
+      (p) => Number(p.productid) === Number(productid)
+    );
+    const productSupplierId = matchedProduct?.supplierid;
+
+    if (
+      selectedSupplierId &&
+      productSupplierId &&
+      selectedSupplierId !== productSupplierId
+    ) {
+      const currentSupplierName =
+        suppliers.find((s) => s.supplierid === productSupplierId)
+          ?.supplier_name || "another supplier";
+
+      alert(
+        `The product "${matchedProduct.product_name}" is registered under "${currentSupplierName}". Please add it under "${supplier_name}" first before placing an order.`
+      );
+      return;
+    }
+
+    // --- Supplier exists check ---
+    if (selectedSupplier) {
+      // Supplier EXISTS: add with confirmed name
+      addConfirmedItemToGroup(formData, selectedSupplier.supplier_name);
+      resetCallback();
+    } else {
+      // Supplier DOES NOT EXIST: block action
+      alert(
+        `Supplier "${supplier_name}" not found. Please add it using the '+' button next to the supplier field.`
+      );
+    }
+  };
+
+  // --- Edit/Delete/Save Handlers for items in the list ---
+  const handleEditItem = (supplier, index) => {
+    setEditingSupplier(supplier);
+    setEditingIndex(index);
+    const itemToEdit = groupedItems[supplier][index];
+    // Ensure quantity and price are numbers for the input fields
+    setEditedItem({
+      ...itemToEdit,
+      quantity: parseInt(itemToEdit.quantity, 10) || 0,
+      price: parseFloat(itemToEdit.price) || 0,
+    });
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingSupplier || editingIndex === null || !editedItem) return;
+
+    setGroupedItems((prev) => {
+      const updatedSupplierItems = [...prev[editingSupplier]];
+      // Ensure saved values are correctly typed numbers
+      updatedSupplierItems[editingIndex] = {
+        ...editedItem,
+        quantity: parseInt(editedItem.quantity, 10) || 0, // Fallback to 0 if invalid
+        price: parseFloat(editedItem.price) || 0, // Fallback to 0 if invalid
+      };
+      return { ...prev, [editingSupplier]: updatedSupplierItems };
+    });
+    // Reset editing state
+    setEditingIndex(null);
+    setEditedItem(null);
+    setEditingSupplier(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingIndex(null);
+    setEditedItem(null);
+    setEditingSupplier(null);
+  };
+
+  const handleDeleteItem = (supplier, index) => {
+    const itemToDelete = groupedItems[supplier]?.[index];
+    if (!itemToDelete) return;
+
+    if (
+      window.confirm(
+        `Remove ${itemToDelete.product_name} from the order list for ${supplier}?`
+      )
+    ) {
+      setGroupedItems((prev) => {
+        const updatedSupplierItems = [...prev[supplier]];
+        updatedSupplierItems.splice(index, 1); // Remove item at index
+
+        // If this was the last item for the supplier, remove the supplier group entirely
+        if (updatedSupplierItems.length === 0) {
+          const { [supplier]: _, ...rest } = prev; // Destructure to remove the supplier key
+          return rest;
+        }
+        // Otherwise, update the supplier's item list
+        return { ...prev, [supplier]: updatedSupplierItems };
+      });
+      // If the deleted item was being edited, cancel the edit mode
+      if (editingSupplier === supplier && editingIndex === index) {
+        handleCancelEdit();
+      }
+    }
+  };
+
+  // --- Place Order Handler (Admin Only) ---
+  const handlePlaceOrderForSupplier = async (supplierName, items) => {
+    const supplier = suppliers.find((s) => s.supplier_name === supplierName);
+    if (!supplier) {
+      alert(
+        `Could not find supplier details for ${supplierName}. Order cannot be placed.`
+      );
+      return;
+    }
+    const supplierid = supplier.supplierid;
+
+    // Calculate totals
+    const subtotal = items.reduce(
+      (sum, item) => sum + Number(item.quantity) * Number(item.price),
+      0
+    );
+    const tax = subtotal * 0.05; // Assuming 5% tax
+    const total_amount = subtotal + tax;
+
+    if (!user || !user.userid) {
+      alert("User not identified. Cannot place order.");
+      return;
+    }
+
+    if (items.length === 0) {
+      alert("Cannot place an empty order.");
+      return;
+    }
+
+    try {
+      // 1. Create the main order record
+      const orderHeader = {
+        order_date: new Date().toISOString().split("T")[0], // Today's date
+        total_amount: total_amount,
+        supplierid: supplierid,
+        userid: user.userid, // User placing the order
+      };
+      const createdOrder = await createOrder(orderHeader);
+
+      if (!createdOrder || !createdOrder.orderid) {
+        throw new Error("Failed to create order header. No order ID received.");
+      }
+      const orderid = createdOrder.orderid;
+
+      // 2. Prepare and add the order details (line items)
+      const detailItems = items.map((item) => ({
+        orderid: orderid,
+        productid: item.productid,
+        supplierid: supplierid, // Associate detail with the order's supplier
+        unit_price: Number(item.price),
+        requested_quantity: Number(item.quantity),
+        order_unit: item.order_unit,
+        // received_quantity defaults to 0, received_date defaults to null in DB/API
+      }));
+
+      await addOrderDetails(detailItems);
+
+      // 3. Success: Notify user and remove items from the list state
+      alert(
+        `Order placed successfully for ${supplierName}! Order ID: ${orderid}`
+      );
+      setGroupedItems((prev) => {
+        const { [supplierName]: _, ...rest } = prev; // Remove the placed order group
+        return rest;
+      });
+    } catch (error) {
+      console.error(`Failed to place order for ${supplierName}:`, error);
+      alert(
+        `Error placing order: ${error.message || "An unknown error occurred."}`
+      );
+    }
+  };
+
+  // --- Render ---
+  return (
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <h2 className="text-2xl font-semibold text-center mb-6 text-gray-700">
+        Create New Order - {new Date().toLocaleDateString()}
+      </h2>
+
+      {/* Form to add items to the list */}
+      <AddItemForm
+        products={products}
+        suppliers={suppliers}
+        onAddItem={handleAddItem} // For the main "Add Item" button
+        onOpenAddProductModal={handleOpenAddProductModal} // For the product '+' button
+        onOpenAddSupplierModal={handleOpenAddSupplierModal} // For the supplier '+' button
+      />
+
+      {/* Display Grouped Order Items by Supplier */}
+      {Object.keys(groupedItems).length === 0 ? (
+        <p className="text-center text-gray-500 italic mt-8">
+          Your order list is empty. Add items using the form above or from the
+          Restock page.
+        </p>
+      ) : (
+        Object.entries(groupedItems).map(([supplier, items]) => (
+          <SupplierOrderSection
+            key={supplier}
+            supplierName={supplier}
+            items={items}
+            userRole={user?.role?.toLowerCase()}
+            editingIndex={editingIndex}
+            editingSupplier={editingSupplier}
+            editedItem={editedItem}
+            onEditItem={handleEditItem}
+            onDeleteItem={handleDeleteItem}
+            onSaveEdit={handleSaveEdit}
+            onCancelEdit={handleCancelEdit}
+            onPlaceOrder={handlePlaceOrderForSupplier}
+            onEditedItemChange={setEditedItem} // Pass state setter for controlled input in row
+          />
+        ))
+      )}
+
+      {/* --- Modals --- */}
+      {isAddProductModalOpen && (
+        <InventoryItemModal
+          item={null} // For adding new product
+          onClose={handleCloseAddProductModal}
+          onSubmit={handleAddProductSubmit}
+          initialError={addProductError}
+          suppliers={suppliers}
+          isQuickAdd={false} // Not relevant here
+        />
+      )}
+
+      {/* Add Supplier Modal */}
+      {isAddSupplierModalOpen && (
+        <AddSupplierModal
+          isOpen={isAddSupplierModalOpen}
+          onClose={handleCloseAddSupplierModal}
+          onSubmit={handleAddSupplierSubmit}
+          initialSupplierName={supplierNameToAdd}
+          initialError={addSupplierError}
+        />
+      )}
+    </div>
+  );
 };
 
 export default OrderList;
@@ -2423,7 +2577,9 @@ const OrderPending = () => {
       try {
         const pending = await getPendingOrders();
         const processing = await getProcessingOrders();
-        const all = [...pending, ...processing];
+        const all = [...pending, ...processing].sort(
+          (a, b) => new Date(b.order_date) - new Date(a.order_date)
+        );
 
         setOrders(all);
 
@@ -2452,32 +2608,35 @@ const OrderPending = () => {
   const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString();
 
   const handleStatusChange = async (orderid, newStatus) => {
+    const originalOrders = [...orders];
     const updated = orders.map((order) =>
       order.orderid === orderid ? { ...order, order_status: newStatus } : order
     );
     setOrders(updated);
-    await updateOrderStatus(orderid, newStatus);
 
-    if (newStatus === "processing") {
-      const processing = await getProcessingOrders();
-      const newlyUpdated = processing.find((o) => o.orderid === orderid);
-      if (newlyUpdated) {
-        setOrders((prev) => [
-          ...prev.filter((o) => o.orderid !== orderid),
-          newlyUpdated,
-        ]);
-        setDeliveryDates((prev) => ({
-          ...prev,
-          [orderid]: new Date(
-            new Date(newlyUpdated.order_date).getTime() +
-              7 * 24 * 60 * 60 * 1000
-          )
-            .toISOString()
-            .split("T")[0],
-        }));
+    try {
+      await updateOrderStatus(orderid, newStatus);
+
+      if (newStatus === "processing") {
+        const newlyUpdatedOrder = updated.find(o => o.orderid === orderid);
+        if (newlyUpdatedOrder && !deliveryDates[orderid]) {
+           const defaultDate = new Date(
+             new Date(newlyUpdatedOrder.order_date).getTime() +
+               7 * 24 * 60 * 60 * 1000
+           )
+             .toISOString()
+             .split("T")[0];
+           setDeliveryDates((prev) => ({ ...prev, [orderid]: defaultDate }));
+        }
       }
+
+    } catch (error) {
+      console.error("Failed to update status:", error);
+      alert("Failed to update order status.");
+      setOrders(originalOrders);
     }
   };
+
 
   const handleDateChange = (orderid, newDate) => {
     setDeliveryDates((prev) => ({ ...prev, [orderid]: newDate }));
@@ -2489,21 +2648,17 @@ const OrderPending = () => {
       if (!order) return;
 
       if (!order.order_detail || order.order_detail.length === 0) {
-        alert("This order has no details.");
-        return;
-      }
-
-      for (const item of order.order_detail) {
-        const productid = item.products?.productid || item.productid;
-
-        if (!productid) {
-          //console.error(" Missing productid in item:", item);
-          alert("Cannot update inventory: product ID is missing.");
-          return;
+        console.warn(`Order ${orderid} has no details to process for stock.`);
+      } else {
+        for (const item of order.order_detail) {
+          const productid = item.products?.productid || item.productid;
+          if (!productid) {
+            console.error("Missing productid in item:", item);
+            alert(`Cannot update inventory for item ${item.products?.product_name || 'Unknown'}: product ID is missing.`);
+            return;
+          }
+          await addInventoryStock(productid, item.requested_quantity);
         }
-
-        //console.log(" Adding stock for productid:", productid);
-        await addInventoryStock(productid, item.requested_quantity);
       }
 
       await updateOrderStatus(orderid, "delivered");
@@ -2515,11 +2670,15 @@ const OrderPending = () => {
   };
 
   const cancelOrder = async (orderid) => {
+    const originalOrders = [...orders];
+    setOrders((prev) => prev.filter((order) => order.orderid !== orderid));
+
     try {
       await updateOrderStatus(orderid, "cancelled");
-      setOrders((prev) => prev.filter((order) => order.orderid !== orderid));
     } catch (error) {
       console.error("Failed to cancel order:", error);
+      alert("Failed to cancel the order.");
+      setOrders(originalOrders);
     }
   };
 
@@ -2527,23 +2686,28 @@ const OrderPending = () => {
     const filtered = orders.filter((o) => o.order_status === filterStatus);
     return (
       <div className="mb-8">
-        <h2 className="text-lg font-semibold mb-4">{title}</h2>
+        <h2 className="text-xl md:text-2xl font-semibold mb-4 text-[#2F4271]">{title}</h2>
         {filtered.length === 0 ? (
-          <p>No {filterStatus} orders at the moment.</p>
+          <p className="text-gray-500">No {filterStatus} orders at the moment.</p>
         ) : (
           filtered.map((order) => (
-            <div key={order.orderid} className="mb-4 border rounded-lg">
+            <div key={order.orderid} className="mb-4 border border-gray-200 rounded-lg shadow-sm">
               <div
-                className="flex justify-between items-center bg-gray-100 px-4 py-3 rounded-t-lg cursor-pointer"
+                className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 md:gap-4 bg-gray-50 px-4 py-3 rounded-t-lg cursor-pointer"
                 onClick={() => toggleExpand(order.orderid)}
               >
-                <div>
-                  <h3 className="text-lg font-semibold text-[#2F4271]">
-                    Order #{order.orderid} — {formatDate(order.order_date)}
+                <div className="flex-grow">
+                  <h3 className="text-base sm:text-lg font-semibold text-[#2F4271]">
+                    Order #{order.orderid}
                   </h3>
-                  <p>Total Cost: ${order.total_amount?.toFixed(2)}</p>
-                  <div className="flex gap-2 items-center text-sm">
-                    <label htmlFor={`delivery-${order.orderid}`}>
+                  <p className="text-sm text-gray-600">
+                    Placed: {formatDate(order.order_date)}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Total: ${order.total_amount?.toFixed(2)}
+                  </p>
+                  <div className="flex flex-wrap gap-x-2 gap-y-1 items-center text-sm mt-1">
+                    <label htmlFor={`delivery-${order.orderid}`} className="text-gray-700 font-medium whitespace-nowrap">
                       Expected Delivery:
                     </label>
                     <input
@@ -2553,71 +2717,84 @@ const OrderPending = () => {
                       onChange={(e) =>
                         handleDateChange(order.orderid, e.target.value)
                       }
-                      className="border px-2 py-1 rounded"
+                      onClick={(e) => e.stopPropagation()}
+                      className="border border-gray-300 px-2 py-1 rounded text-sm focus:ring-1 focus:ring-[#8DACE5] focus:border-[#8DACE5] outline-none"
+                      min={new Date(order.order_date).toISOString().split("T")[0]}
                     />
                   </div>
                 </div>
-                <div className="flex gap-2 items-center">
-                  <select
-                    className="border rounded px-2 py-1 text-sm"
-                    value={order.order_status}
-                    onChange={(e) =>
-                      handleStatusChange(order.orderid, e.target.value)
-                    }
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="processing">Processing</option>
-                  </select>
-                  <button
-                    className="text-xs bg-[#7E82A4] text-white px-3 py-1 rounded"
-                    onClick={() => markAsDelivered(order.orderid)}
-                  >
-                    Mark Delivered
-                  </button>
-                  {order.order_status === "pending" && (
-                    <button
-                      className="text-xs bg-red-500 text-white px-3 py-1 rounded"
-                      onClick={() => cancelOrder(order.orderid)}
+
+                <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-start md:justify-end">
+                    <select
+                        className="border border-gray-300 rounded px-2 py-1 text-sm focus:ring-1 focus:ring-[#8DACE5] focus:border-[#8DACE5] outline-none"
+                        value={order.order_status}
+                        onChange={(e) => handleStatusChange(order.orderid, e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
                     >
-                      Cancel
+                        <option value="pending">Pending</option>
+                        <option value="processing">Processing</option>
+                    </select>
+                    <button
+                        className="text-xs bg-[#7E82A4] hover:bg-[#6c7094] text-white px-3 py-1.5 rounded transition-colors flex-shrink-0"
+                        onClick={(e) => { e.stopPropagation(); markAsDelivered(order.orderid); }}
+                    >
+                        Mark Delivered
                     </button>
-                  )}
+                    {order.order_status === "pending" && (
+                        <button
+                        className="text-xs bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded transition-colors flex-shrink-0"
+                        onClick={(e) => { e.stopPropagation(); cancelOrder(order.orderid); }}
+                        >
+                        Cancel
+                        </button>
+                    )}
+                     <span className="text-xl text-gray-500 pl-2 md:pl-0">
+                        {expanded === order.orderid ? "▲" : "▼"}
+                    </span>
                 </div>
-                <span className="text-xl">
-                  {expanded === order.orderid ? "▲" : "▼"}
-                </span>
               </div>
+
               {expanded === order.orderid && (
-                <div className="bg-white p-4 border-t">
-                  <table className="min-w-full text-sm">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-2">Product</th>
-                        <th>Quantity</th>
-                        <th>Price</th>
-                        <th>Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {order.order_detail.map((item, index) => (
-                        <tr key={index} className="border-t">
-                          <td className="py-2">{item.products.product_name}</td>
-                          <td className="text-center">
-                            {item.requested_quantity}
-                          </td>
-                          <td className="text-center">
-                            ${item.unit_price.toFixed(2)}
-                          </td>
-                          <td className="text-center">
-                            $
-                            {(
-                              item.unit_price * item.requested_quantity
-                            ).toFixed(2)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="bg-white p-4 border-t border-gray-200">
+                  <div className="overflow-x-auto">
+                     <table className="min-w-full text-sm align-middle">
+                        <thead className="bg-gray-50">
+                          <tr className="border-b border-gray-200">
+                            <th className="text-left py-2 px-3 font-semibold text-gray-600">Product</th>
+                            <th className="text-center py-2 px-3 font-semibold text-gray-600">Quantity</th>
+                            <th className="text-center py-2 px-3 font-semibold text-gray-600">Unit Price</th>
+                            <th className="text-center py-2 px-3 font-semibold text-gray-600">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {order.order_detail && order.order_detail.length > 0 ? (
+                             order.order_detail.map((item, index) => (
+                              <tr key={index} className="hover:bg-gray-50">
+                                <td className="py-2 px-3 text-left">
+                                  {item.products?.product_name || 'N/A'}
+                                </td>
+                                <td className="py-2 px-3 text-center">
+                                  {item.requested_quantity}
+                                </td>
+                                <td className="py-2 px-3 text-center">
+                                  ${item.unit_price?.toFixed(2) || '0.00'}
+                                </td>
+                                <td className="py-2 px-3 text-center">
+                                  $
+                                  {(
+                                    (item.unit_price || 0) * (item.requested_quantity || 0)
+                                  ).toFixed(2)}
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                               <td colSpan="4" className="text-center py-4 text-gray-500">No order details available.</td>
+                            </tr>
+                          )}
+                        </tbody>
+                     </table>
+                  </div>
                 </div>
               )}
             </div>
@@ -2628,7 +2805,7 @@ const OrderPending = () => {
   };
 
   return (
-    <div className="p-6">
+    <div>
       {renderOrderSection("Pending Orders", "pending")}
       {renderOrderSection("Processing Orders", "processing")}
     </div>
@@ -2854,6 +3031,335 @@ const SupplierOrderSection = ({
 export default SupplierOrderSection;
 </file>
 
+<file path="client/src/Main/Dashboard.jsx">
+// client/src/Main/Dashboard.jsx
+import React, { useState, useEffect, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import {
+    getPendingOrders,
+    getRestockRecommendations,
+    getReportSummary,
+    getInventory, 
+    getDeliveredOrders 
+} from '../api';
+import { useAuth } from '../context/AuthContext';
+import { useOrderCart } from './OrderCartContext';
+
+const DashboardWidgetCard = ({ title, children, className = '', titleClassName = '' }) => (
+    <div className={`bg-white p-4 rounded-lg shadow border border-gray-200 ${className}`}>
+        <h3 className={`text-base font-semibold text-gray-600 mb-3 ${titleClassName}`}>{title}</h3>
+        {children}
+    </div>
+);
+
+// --- Helper to determine stock status ---
+const getStockStatus = (stock, minQty) => {
+    if (stock <= 0) return "critical"; // Out of Stock
+    if (stock < minQty) return "low";    // Low Stock
+    return "healthy"; // In Stock
+};
+
+// --- Main Dashboard Component ---
+function Dashboard() {
+    const { user } = useAuth();
+    const navigate = useNavigate();
+    const { addToCart } = useOrderCart();
+
+    // Data States
+    const [pendingOrders, setPendingOrders] = useState([]);
+    const [restockItems, setRestockItems] = useState([]);
+    const [topProducts, setTopProducts] = useState([]);
+    const [allInventory, setAllInventory] = useState([]); // For stock levels
+    const [deliveredOrders, setDeliveredOrders] = useState([]); // For purchase overview
+
+    // Derived State
+    const [stockLevelPercentages, setStockLevelPercentages] = useState({ healthy: 0, low: 0, critical: 0 });
+    const [purchaseTotals, setPurchaseTotals] = useState({ currentMonth: 0, lastMonth: 0 });
+    const [lastPlacedOrder, setLastPlacedOrder] = useState(null); // Using latest pending as proxy
+
+    // Loading/Error State
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                const [
+                    pendingData,
+                    restockData,
+                    summaryData,
+                    inventoryData, // Fetch inventory
+                    deliveredData // Fetch delivered orders
+                ] = await Promise.all([
+                    getPendingOrders(),
+                    getRestockRecommendations(),
+                    getReportSummary(),
+                    getInventory(),
+                    getDeliveredOrders()
+                ]);
+
+                // --- Process Raw Data ---
+                const currentPendingOrders = Array.isArray(pendingData) ? pendingData : [];
+                const currentRestockItems = Array.isArray(restockData) ? restockData : [];
+                const currentInventory = Array.isArray(inventoryData) ? inventoryData : [];
+                const currentDeliveredOrders = Array.isArray(deliveredData) ? deliveredData : [];
+
+                setPendingOrders(currentPendingOrders);
+                setRestockItems(currentRestockItems);
+                setTopProducts((summaryData?.topProductsByFrequency || []).sort((a, b) => b.count - a.count));
+                setAllInventory(currentInventory);
+                setDeliveredOrders(currentDeliveredOrders);
+
+                // --- Calculate Stock Level Percentages ---
+                const activeProducts = currentInventory.filter(item => item.is_active);
+                const totalActive = activeProducts.length;
+                if (totalActive > 0) {
+                    let healthyCount = 0;
+                    let lowCount = 0;
+                    let criticalCount = 0;
+                    activeProducts.forEach(item => {
+                        const status = getStockStatus(item.current_stock, item.min_quantity);
+                        if (status === 'healthy') healthyCount++;
+                        else if (status === 'low') lowCount++;
+                        else criticalCount++;
+                    });
+                    setStockLevelPercentages({
+                        healthy: Math.round((healthyCount / totalActive) * 100),
+                        low: Math.round((lowCount / totalActive) * 100),
+                        critical: Math.round((criticalCount / totalActive) * 100),
+                    });
+                } else {
+                     setStockLevelPercentages({ healthy: 0, low: 0, critical: 0 });
+                }
+
+                // --- Calculate Purchase Overview Totals ---
+                const now = new Date();
+                const currentMonth = now.getMonth();
+                const currentYear = now.getFullYear();
+                const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                const lastMonth = lastMonthDate.getMonth();
+                const lastMonthYear = lastMonthDate.getFullYear();
+
+                let currentMonthTotal = 0;
+                let lastMonthTotal = 0;
+
+                currentDeliveredOrders.forEach(order => {
+                    try {
+                         const orderDateStr = order.delivered_date || order.order_date;
+                         if (!orderDateStr) return; 
+
+                        const orderDate = new Date(orderDateStr);
+                        const orderMonth = orderDate.getMonth();
+                        const orderYear = orderDate.getFullYear();
+
+                        if (orderMonth === currentMonth && orderYear === currentYear) {
+                            currentMonthTotal += order.total_amount || 0;
+                        } else if (orderMonth === lastMonth && orderYear === lastMonthYear) {
+                            lastMonthTotal += order.total_amount || 0;
+                        }
+                    } catch(e) {
+                         console.warn(`Could not parse date for order ${order.orderid}: ${order.delivered_date || order.order_date}`);
+                    }
+                });
+                setPurchaseTotals({ currentMonth: currentMonthTotal, lastMonth: lastMonthTotal });
+                setLastPlacedOrder(currentPendingOrders.length > 0 ? currentPendingOrders[0] : null);
+
+
+            } catch (err) {
+                console.error("Failed to load dashboard data:", err);
+                setError("Could not load dashboard information. Please try again later.");
+                if (err.response?.status === 401 || err.message.includes("401")) {
+                    navigate("/login");
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, [navigate]); 
+
+    const formatDate = (dateStr, options = { month: 'short', day: 'numeric' }) => {
+        if (!dateStr) return 'N/A';
+        try { return new Date(dateStr).toLocaleDateString('en-US', options); }
+        catch (e) { return 'Invalid Date'; }
+    }
+
+    const handleRestockClick = (item) => {
+        const hasRequiredFields = 
+             item.productid !== undefined &&
+             item.product_name !== undefined &&
+             item.current_stock !== undefined &&
+             item.min_quantity !== undefined &&
+             item.case_price !== undefined && 
+             item.supplierid !== undefined;
+
+        if (hasRequiredFields) {
+            addToCart(item);
+            alert(`${item.product_name} added to order list!`);
+        } else {
+             console.warn(" Missing product fields for restock:", item);
+             alert("This item is missing data and cannot be added directly.");
+        }
+    };
+
+    if (loading) return <div className="p-6 text-center text-gray-500">Loading Dashboard...</div>;
+    if (error) return <div className="p-6 bg-red-100 border border-red-400 text-red-700 rounded">{error}</div>;
+
+    return (
+        <div className="p-4 md:p-6 space-y-6 min-h-screen">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+
+                {/* --- Pending Orders & Purchase Overview Column --- */}
+                 <div className="md:col-span-1 space-y-5">
+                     {/* Pending Orders (Count & Last Placed) */}
+                     <DashboardWidgetCard title="Pending Orders">
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="bg-slate-700 text-white rounded-lg p-4 flex flex-col items-center justify-center aspect-square">
+                                <span className="text-4xl font-bold">{pendingOrders.length}</span>
+                                <span className="text-xs mt-1 text-slate-300">Pending</span>
+                            </div>
+                             <div className="bg-[#697B5D] text-white rounded-lg p-3 flex flex-col justify-center aspect-square text-center">
+                                {lastPlacedOrder ? (
+                                    <>
+                                        <span className="text-2xl font-semibold block">{formatDate(lastPlacedOrder.order_date, {month: 'long', day: 'numeric'})}</span>
+                                        <span className="text-xs mt-1 block truncate" title={lastPlacedOrder.suppliers?.supplier_name || 'Order ' + lastPlacedOrder.orderid}>
+                                            {lastPlacedOrder.suppliers?.supplier_name || 'Order ' + lastPlacedOrder.orderid}
+                                        </span>
+                                    </>
+                                ) : (
+                                    <span className="text-xs text-emerald-200">No orders placed yet</span>
+                                )}
+                            </div>
+                        </div>
+                        {/* Link to view pending */}
+                         {pendingOrders.length > 0 && (
+                            <div className="text-center mt-3">
+                                <Link to="/orders/pending" className="text-sm text-blue-600 hover:underline">
+                                    View Pending List 
+                                </Link>
+                            </div>
+                         )}
+                    </DashboardWidgetCard>
+
+                     {/* Purchase Overview (Calculated) */}
+                    <DashboardWidgetCard title="Purchase Overview">
+                         <div className="space-y-3">
+                            <div className="bg-slate-600 text-white rounded-lg p-3 text-center">
+                                <span className="text-xs text-slate-300 block">This month Spend</span>
+                                <span className="text-xl font-semibold block">${purchaseTotals.currentMonth.toFixed(2)}</span>
+                            </div>
+                             <div className="bg-slate-600 text-white rounded-lg p-3 text-center">
+                                <span className="text-xs text-slate-300 block">Last month Spend</span>
+                                <span className="text-xl font-semibold block">${purchaseTotals.lastMonth.toFixed(2)}</span>
+                            </div>
+                        </div>
+                         <div className="text-right mt-3">
+                            <Link to="/orders/history" className="text-sm text-blue-600 hover:underline">
+                                View Order History 
+                            </Link>
+                        </div>
+                    </DashboardWidgetCard>
+                 </div>
+
+                {/* --- Restock Recommendations Widget --- */}
+                <DashboardWidgetCard title="Restock Recommendations" className="md:col-span-1">
+                    <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                         {restockItems.length > 0 ? (
+                            restockItems.map(item => (
+                                <div key={item.productid} className="bg-[#EAC9E7] p-3 rounded-lg flex justify-between items-center">
+                                    <div>
+                                        <p className="font-semibold text-sm text-purple-900">{item.product_name}</p>
+                                        <p className="text-xs text-purple-700">
+                                            {item.current_stock} left (Min: {item.min_quantity})
+                                        </p>
+                                    </div>
+                                    
+                                </div>
+                            ))
+                        ) : (
+                            <p className="text-gray-500 italic text-sm">Inventory levels look good!</p>
+                        )}
+                    </div>
+                     {restockItems.length > 0 && (
+                        <div className="text-center mt-4">
+                            <Link to="/orders/restock" className="text-sm text-blue-600 hover:underline">
+                                View Full Stock List 
+                            </Link>
+                        </div>
+                    )}
+                </DashboardWidgetCard>
+
+                {/* --- Most Used & Stock Levels Column --- */}
+                 <div className="md:col-span-1 space-y-5">
+                    {/* Most Used Inventory */}
+                    <DashboardWidgetCard title="Most Used Inventory">
+                         <div className="space-y-3">
+                            {topProducts.slice(0, 5).map(item => (
+                                <div key={item.id} className="text-sm">
+                                    <div className="flex justify-between items-end mb-1">
+                                        <span className="text-gray-700 font-medium">{item.name}</span>
+                                        <span className="text-xs text-gray-500">({item.count} orders)</span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div className="bg-[#EADBA0] h-2.5 rounded-full" style={{ width: `${Math.min(100, item.count > 0 ? (item.count / (topProducts[0]?.count || 1)) * 100 : 0)}%` }}></div>
+                                    </div>
+                                </div>
+                            ))}
+                             {topProducts.length === 0 && (
+                                <p className="text-gray-500 italic text-sm">No order data available.</p>
+                            )}
+                        </div>
+                         {topProducts.length > 0 && (
+                             <div className="text-right mt-4">
+                                <Link to="/reports" className="text-sm text-blue-600 hover:underline">
+                                    View Full Report 
+                                </Link>
+                            </div>
+                         )}
+                    </DashboardWidgetCard>
+
+                    {/* Stock Levels */}
+                    <DashboardWidgetCard title="Stock Levels">
+                        <div className="space-y-2">
+                             <div className="bg-[#C0E0AC] p-3 rounded-lg flex justify-between items-center">
+                                <div>
+                                    <span className="font-medium text-sm text-green-800">Healthy Stock</span>
+                                </div>
+                                <span className="font-semibold text-green-800"> {stockLevelPercentages.healthy}% </span>
+                             </div>
+                            <div className="bg-[#F9E3BF] p-3 rounded-lg flex justify-between items-center">
+                                <div>
+                                    <span className="font-medium text-sm text-yellow-800">Low Stock</span>
+
+                                </div>
+                                <span className="font-semibold text-yellow-800"> {stockLevelPercentages.low}% </span>
+                             </div>
+                             <div className="bg-[#D99292] p-3 rounded-lg flex justify-between items-center">
+                                <div>
+                                    <span className="font-medium text-sm text-red-800">Critical Stock</span>
+                                    {/* <span className="text-xs text-red-700 block">Items out of stock</span> */}
+                                </div>
+                                <span className="font-semibold text-red-800"> {stockLevelPercentages.critical}% </span>
+                             </div>
+                        </div>
+                        <div className="text-right mt-3">
+                            <Link to="/inventory" className="text-sm text-blue-600 hover:underline">
+                                View Inventory 
+                            </Link>
+                        </div>
+                    </DashboardWidgetCard>
+                 </div>
+
+            </div>
+        </div>
+    );
+}
+
+export default Dashboard;
+</file>
+
 <file path="client/src/Main/FilterModal.js">
 import React, { useState, useEffect } from 'react';
 
@@ -3018,13 +3524,13 @@ function Inventory() {
     availableStatuses,
     activeFilterCount,
     filterItems,
-    getStockStatusInfo
+    getStockStatusInfo,
   } = useInventoryFilter(allItems);
 
   // --- Data Fetching ---
   const fetchInventory = useCallback(async () => {
     // ... (fetchInventory logic remains the same) ...
-     if (!user) {
+    if (!user) {
       navigate("/login");
       return;
     }
@@ -3069,7 +3575,6 @@ function Inventory() {
     );
   }, [allItems, searchTerm, filterItems]);
 
-
   const handleOpenEditModal = (item) => {
     if (!item || typeof item !== "object") {
       console.error("handleOpenEditModal: Invalid item provided", item);
@@ -3083,7 +3588,7 @@ function Inventory() {
 
   const handleItemModalClose = () => {
     setIsItemModalOpen(false);
-    setCurrentItem(null); 
+    setCurrentItem(null);
   };
 
   // SIMPLIFIED handleFormSubmit for UPDATE ONLY
@@ -3091,16 +3596,21 @@ function Inventory() {
     const primaryKey = "productid";
     // Check if we are actually editing (currentItem should be set)
     if (!currentItem || !currentItem[primaryKey]) {
-        console.error("handleFormSubmit called without a currentItem for editing.");
-        setError("Cannot update item: No item selected for editing.");
-        return; // Exit if not in edit mode
+      console.error(
+        "handleFormSubmit called without a currentItem for editing."
+      );
+      setError("Cannot update item: No item selected for editing.");
+      return; // Exit if not in edit mode
     }
 
     try {
       setLoading(true);
       setError(null);
       // Prepare data for update
-      const updatedData = { ...formData, [primaryKey]: currentItem[primaryKey] };
+      const updatedData = {
+        ...formData,
+        [primaryKey]: currentItem[primaryKey],
+      };
       // Call the update API
       await updateItem(currentItem[primaryKey], updatedData);
 
@@ -3108,7 +3618,11 @@ function Inventory() {
       await fetchInventory(); // Refresh data
     } catch (err) {
       console.error(`Error updating item:`, err);
-      setError(`Failed to update item. ${ err.response?.data?.error || err.message || "" }`);
+      setError(
+        `Failed to update item. ${
+          err.response?.data?.error || err.message || ""
+        }`
+      );
       // Keep modal open on error
     } finally {
       // setLoading(false); // fetchInventory handles this
@@ -3122,7 +3636,13 @@ function Inventory() {
       setError("Item not found.");
       return;
     }
-    if ( window.confirm(`Are you sure you want to delete "${itemToDelete.product_name || "this item"}"?`) ) {
+    if (
+      window.confirm(
+        `Are you sure you want to delete "${
+          itemToDelete.product_name || "this item"
+        }"?`
+      )
+    ) {
       try {
         setLoading(true);
         setError(null);
@@ -3156,9 +3676,8 @@ function Inventory() {
         // onOpenAddModal prop removed
         activeFilterCount={activeFilterCount}
       />
-
       {/* Error display logic) */}
-       {error && !isItemModalOpen && !isFilterModalOpen && (
+      {error && !isItemModalOpen && !isFilterModalOpen && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 relative text-sm">
           {error}
           <button
@@ -3170,93 +3689,142 @@ function Inventory() {
           </button>
         </div>
       )}
-
       {/* Loading indicator logic */}
-       {loading && allItems.length > 0 && (
-        <div className="text-center py-4 text-gray-500 text-sm italic">Updating list...</div>
+      {loading && allItems.length > 0 && (
+        <div className="text-center py-4 text-gray-500 text-sm italic">
+          Updating list...
+        </div>
       )}
-
       {/* Inventory Table rendering logic remains the same) */}
       <div className="overflow-x-auto bg-white p-4 rounded-lg shadow-md">
-          <table className="min-w-full text-left text-sm">
-             <thead className="bg-gray-50">
-                 <tr className="text-gray-600 uppercase text-xs">
-                     <th className="px-4 py-2 font-medium" style={{ backgroundColor: "#EAE0D5" }}>Product</th>
-                     <th className="px-4 py-2 font-medium" style={{ backgroundColor: "#EAE0D5" }}>Quantity</th>
-                     <th className="px-4 py-2 font-medium" style={{ backgroundColor: "#EAE0D5" }}>Price/Unit</th>
-                     <th className="px-4 py-2 font-medium" style={{ backgroundColor: "#EAE0D5" }}>Stock Status</th>
-                     <th className="px-4 py-2 font-medium" style={{ backgroundColor: "#EAE0D5" }}>Supplier</th>
-                     {user?.role === "admin" && (
-                       <th className="px-4 py-2 font-medium" style={{ backgroundColor: "#EAE0D5" }}>Action</th>
-                     )}
-                 </tr>
-             </thead>
-             <tbody className="divide-y divide-gray-200">
-                 {displayItems.length > 0 ? (
-                     displayItems.map((item) => {
-                         const { text: statusText, color: statusColor } =
-                           getStockStatusInfo(item.current_stock, item.min_quantity);
-                         return (
-                             <tr key={item.productid} className="hover:bg-gray-50">
-                                 <td className="px-4 py-2 whitespace-nowrap font-medium text-gray-900">{item.product_name}</td>
-                                 <td className="px-4 py-2 text-gray-700">{item.current_stock}</td>
-                                 <td className="px-4 py-2 text-gray-700">
-                                     {item.case_price != null ? `$${item.case_price.toFixed(2)}` : 'N/A'}
-                                     {item.order_unit ? ` / ${item.order_unit}` : ''}
-                                 </td>
-                                 <td className="px-4 py-2">
-                                     <span className={`px-2 py-1 rounded-full text-xs font-semibold ${statusColor}`}>
-                                       {statusText}
-                                     </span>
-                                 </td>
-                                 <td className="px-4 py-2 text-gray-700 whitespace-nowrap">{item.supplier?.supplier_name || "N/A"}</td>
-                                 {user?.role === "admin" && (
-                                     <td className="px-4 py-2 flex space-x-2">
-                                         {/* Edit button triggers handleOpenEditModal */}
-                                         <button
-                                           onClick={() => handleOpenEditModal(item)}
-                                           className="text-white text-xs font-semibold px-3 py-1 rounded hover:opacity-80 transition-opacity"
-                                           style={{ backgroundColor: "#7E82A4" }}
-                                           aria-label={`Edit ${item.product_name}`}
-                                         > Edit </button>
-                                         {/* Delete button triggers handleDelete */}
-                                         <button
-                                           onClick={() => handleDelete(item.productid)}
-                                           className="text-white text-xs font-semibold px-3 py-1 rounded hover:opacity-80 transition-opacity"
-                                           style={{ backgroundColor: "#D99292" }}
-                                           aria-label={`Delete ${item.product_name}`}
-                                         > Delete </button>
-                                     </td>
-                                 )}
-                             </tr>
-                         );
-                     })
-                 ) : (
-                     <tr>
-                         <td colSpan={user?.role === "admin" ? 6 : 5} className="text-center py-6 text-gray-500 italic">
-                           {loading ? "Loading..." : (searchTerm || activeFilterCount > 0
-                             ? "No products found matching your search/filters."
-                             : "No products in inventory.")}
-                         </td>
-                     </tr>
-                 )}
-             </tbody>
-          </table>
+        <table className="min-w-full text-left text-sm">
+          <thead className="bg-gray-50">
+            <tr className="text-gray-600 uppercase text-xs">
+              <th
+                className="px-4 py-2 font-medium"
+                style={{ backgroundColor: "#EAE0D5" }}
+              >
+                Product
+              </th>
+              <th
+                className="px-4 py-2 font-medium"
+                style={{ backgroundColor: "#EAE0D5" }}
+              >
+                Quantity
+              </th>
+              <th
+                className="px-4 py-2 font-medium"
+                style={{ backgroundColor: "#EAE0D5" }}
+              >
+                Price/Unit
+              </th>
+              <th
+                className="px-4 py-2 font-medium"
+                style={{ backgroundColor: "#EAE0D5" }}
+              >
+                Stock Status
+              </th>
+              <th
+                className="px-4 py-2 font-medium"
+                style={{ backgroundColor: "#EAE0D5" }}
+              >
+                Supplier
+              </th>
+              {user?.role === "admin" && (
+                <th
+                  className="px-4 py-2 font-medium"
+                  style={{ backgroundColor: "#EAE0D5" }}
+                >
+                  Action
+                </th>
+              )}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {displayItems.length > 0 ? (
+              displayItems.map((item) => {
+                const { text: statusText, color: statusColor } =
+                  getStockStatusInfo(item.current_stock, item.min_quantity);
+                return (
+                  <tr key={item.productid} className="hover:bg-gray-50">
+                    <td className="px-4 py-2 whitespace-nowrap font-medium text-gray-900">
+                      {item.product_name}
+                    </td>
+                    <td className="px-4 py-2 text-gray-700">
+                      {item.current_stock}
+                    </td>
+                    <td className="px-4 py-2 text-gray-700">
+                      {item.case_price != null
+                        ? `$${item.case_price.toFixed(2)}`
+                        : "N/A"}
+                      {item.order_unit ? ` / ${item.order_unit}` : ""}
+                    </td>
+                    <td className="px-4 py-2">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-semibold ${statusColor}`}
+                      >
+                        {statusText}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2 text-gray-700 whitespace-nowrap">
+                      {item.supplier?.supplier_name || "N/A"}
+                    </td>
+                    {user?.role === "admin" && (
+                      <td className="px-4 py-2 flex space-x-2">
+                        {/* Edit button triggers handleOpenEditModal */}
+                        <button
+                          onClick={() => handleOpenEditModal(item)}
+                          className="text-white text-xs font-semibold px-3 py-1 rounded hover:opacity-80 transition-opacity"
+                          style={{ backgroundColor: "#7E82A4" }}
+                          aria-label={`Edit ${item.product_name}`}
+                        >
+                          {" "}
+                          Edit{" "}
+                        </button>
+                        {/* Delete button triggers handleDelete */}
+                        <button
+                          onClick={() => handleDelete(item.productid)}
+                          className="text-white text-xs font-semibold px-3 py-1 rounded hover:opacity-80 transition-opacity"
+                          style={{ backgroundColor: "#D99292" }}
+                          aria-label={`Delete ${item.product_name}`}
+                        >
+                          {" "}
+                          Delete{" "}
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td
+                  colSpan={user?.role === "admin" ? 6 : 5}
+                  className="text-center py-6 text-gray-500 italic"
+                >
+                  {loading
+                    ? "Loading..."
+                    : searchTerm || activeFilterCount > 0
+                    ? "No products found matching your search/filters."
+                    : "No products in inventory."}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
-
-
       {/* Modals */}
       {/* InventoryItemModal */}
-      {isItemModalOpen && currentItem && ( 
+      {isItemModalOpen && currentItem && (
         <InventoryItemModal
           item={currentItem} // Pass the item to be edited
           onClose={handleItemModalClose}
           onSubmit={handleFormSubmit} // Submits only updates now
-          initialError={ error && isItemModalOpen ? error : null }
+          initialError={error && isItemModalOpen ? error : null}
+          //suppliers={availableSuppliers}
           isQuickAdd={false} // Explicitly false for editing
         />
       )}
-
       {/* Filter Modal */}
       <FilterModal
         isOpen={isFilterModalOpen}
@@ -3266,7 +3834,6 @@ function Inventory() {
         availableSuppliers={availableSuppliers}
         availableStatuses={availableStatuses}
       />
-
     </div>
   );
 }
@@ -3373,12 +3940,13 @@ export default InventoryHeader;
 import React, { useState, useEffect } from "react";
 
 function InventoryItemModal({
-  item,       
+  item,
   onClose,
-  onSubmit,  
+  onSubmit,
   initialError,
+  suppliers = [],
+  categories = [],
 }) {
-
   const isEditing = item !== null;
 
   // Full state definition including fields used for editing
@@ -3400,27 +3968,29 @@ function InventoryItemModal({
     setError(initialError);
   }, [initialError]);
 
-   useEffect(() => {
-     // Reset form when item changes (for both editing and switching to add mode)
-     setFormData({
-        product_name: item?.product_name || "",
-        current_stock: item?.current_stock ?? 0, // Use existing stock if editing, else 0
-        min_quantity: item?.min_quantity ?? "",
-        max_quantity: item?.max_quantity ?? "",
-        expiration: item?.expiration ? new Date(item.expiration).toISOString().split("T")[0] : "",
-        categoryid: item?.categoryid ?? "",
-        // These might be relevant if editing an existing item
-        supplierid: item?.supplierid ?? "",
-        case_price: item?.case_price ?? "",
-        order_unit: item?.order_unit || "",
-     });
-     setError(null); // Clear errors when item changes
-   }, [item]);
-
+  useEffect(() => {
+    // Reset form when item changes (for both editing and switching to add mode)
+    setFormData({
+      product_name: item?.product_name || "",
+      current_stock: item?.current_stock ?? 0, // Use existing stock if editing, else 0
+      min_quantity: item?.min_quantity ?? "",
+      max_quantity: item?.max_quantity ?? "",
+      expiration: item?.expiration
+        ? new Date(item.expiration).toISOString().split("T")[0]
+        : "",
+      categoryid: item?.categoryid ?? "",
+      // These might be relevant if editing an existing item
+      supplierid: item?.supplierid ?? "",
+      case_price: item?.case_price ?? "",
+      order_unit: item?.order_unit || "",
+    });
+    setError(null); // Clear errors when item changes
+  }, [item]);
 
   const handleChange = (e) => {
     const { name, value, type } = e.target;
-    const val = type === "number" ? (value === "" ? "" : parseFloat(value)) : value;
+    const val =
+      type === "number" ? (value === "" ? "" : parseFloat(value)) : value;
     setFormData((prev) => ({ ...prev, [name]: val }));
     setError(null);
   };
@@ -3431,72 +4001,177 @@ function InventoryItemModal({
 
     // --- Field Validations ---
     if (!formData.product_name) {
-      setError("Product Name is required."); return;
+      setError("Product Name is required.");
+      return;
     }
-    if (formData.current_stock === "" || formData.current_stock === null || isNaN(formData.current_stock) || parseFloat(formData.current_stock) < 0) {
-         setError("Current Stock is required and cannot be negative."); return;
+    if (
+      formData.current_stock === "" ||
+      formData.current_stock === null ||
+      isNaN(formData.current_stock) ||
+      parseFloat(formData.current_stock) < 0
+    ) {
+      setError("Current Stock is required and cannot be negative.");
+      return;
     }
-    if (formData.min_quantity === "" || formData.min_quantity === null || isNaN(formData.min_quantity) || parseFloat(formData.min_quantity) < 0) {
-        setError("Minimum Quantity is required and cannot be negative."); return;
+    if (
+      formData.min_quantity === "" ||
+      formData.min_quantity === null ||
+      isNaN(formData.min_quantity) ||
+      parseFloat(formData.min_quantity) < 0
+    ) {
+      setError("Minimum Quantity is required and cannot be negative.");
+      return;
     }
-    if (formData.max_quantity !== null && formData.max_quantity !== "" && (isNaN(formData.max_quantity) || parseFloat(formData.max_quantity) < 0)) {
-         setError("Max Quantity must be a non-negative number if provided."); return;
-     }
-     if (formData.max_quantity !== null && formData.max_quantity !== "" && parseFloat(formData.max_quantity) < parseFloat(formData.min_quantity)) {
-        setError("Max Quantity cannot be less than Min Quantity."); return;
-     }
-     if (formData.categoryid !== null && formData.categoryid !== "" && isNaN(formData.categoryid)) {
-         setError("Category ID must be a number if provided."); return;
-     }
+    if (
+      formData.max_quantity !== null &&
+      formData.max_quantity !== "" &&
+      (isNaN(formData.max_quantity) || parseFloat(formData.max_quantity) < 0)
+    ) {
+      setError("Max Quantity must be a non-negative number if provided.");
+      return;
+    }
+    if (
+      formData.max_quantity !== null &&
+      formData.max_quantity !== "" &&
+      parseFloat(formData.max_quantity) < parseFloat(formData.min_quantity)
+    ) {
+      setError("Max Quantity cannot be less than Min Quantity.");
+      return;
+    }
+    if (
+      formData.categoryid !== null &&
+      formData.categoryid !== "" &&
+      isNaN(formData.categoryid)
+    ) {
+      setError("Category ID must be a number if provided.");
+      return;
+    }
 
     const coreData = {
       product_name: formData.product_name,
       current_stock: parseFloat(formData.current_stock),
       min_quantity: parseFloat(formData.min_quantity),
-      max_quantity: formData.max_quantity === "" || formData.max_quantity === null ? null : parseFloat(formData.max_quantity),
+      max_quantity:
+        formData.max_quantity === "" || formData.max_quantity === null
+          ? null
+          : parseFloat(formData.max_quantity),
       expiration: formData.expiration === "" ? null : formData.expiration,
-      categoryid: formData.categoryid === "" || formData.categoryid === null ? null : parseInt(formData.categoryid, 10),
+      categoryid:
+        formData.categoryid === "" || formData.categoryid === null
+          ? null
+          : parseInt(formData.categoryid, 10),
     };
 
-    let dataToSubmit = coreData;
+    let dataToSubmit = {
+      ...coreData,
+      supplierid:
+        formData.supplierid === "" || formData.supplierid === null
+          ? null
+          : parseInt(formData.supplierid, 10),
+    };
 
-    // If editing, add productid and potentially other fields if they were edited
     if (isEditing && item?.productid) {
-      dataToSubmit = {
-          ...dataToSubmit, // Start with core data
-          productid: item.productid,
-          // Include other fields from formData if they are part of the PUT /inventory/:id expected payload
-          supplierid: formData.supplierid === "" || formData.supplierid === null ? null : parseInt(formData.supplierid, 10),
-          case_price: formData.case_price === "" || formData.case_price === null ? null : parseFloat(formData.case_price),
-          order_unit: formData.order_unit || null,
-      };
+      dataToSubmit.productid = item.productid;
     }
 
-    console.log(`Data being submitted (${isEditing ? 'edit' : 'add'}):`, dataToSubmit);
+    // If editing, add productid and potentially other fields if they were edited
+    // if (isEditing && item?.productid) {
+    //   dataToSubmit = {
+    //     ...dataToSubmit, // Start with core data
+    //     productid: item.productid,
+    //     // Include other fields from formData if they are part of the PUT /inventory/:id expected payload
+    //     supplierid:
+    //       formData.supplierid === "" || formData.supplierid === null
+    //         ? null
+    //         : parseInt(formData.supplierid, 10),
+    //     //case_price: formData.case_price === "" || formData.case_price === null ? null : parseFloat(formData.case_price),
+    //     //order_unit: formData.order_unit || null,
+    //   };
+    // }
+
+    console.log(
+      `Data being submitted (${isEditing ? "edit" : "add"}):`,
+      dataToSubmit
+    );
 
     try {
       await onSubmit(dataToSubmit);
     } catch (err) {
-      setError(err.response?.data?.error || err.message || "Submission failed.");
+      setError(
+        err.response?.data?.error || err.message || "Submission failed."
+      );
       console.error("Modal Submit Prop Error:", err);
     }
   };
 
   const allFields = [
-    { label: "Product Name", name: "product_name", type: "text", required: true },
-    { label: "Current Stock", name: "current_stock", type: "number", required: true, min: "0" },
-    { label: "Min Quantity", name: "min_quantity", type: "number", required: true, min: "0" },
-    { label: "Max Quantity", name: "max_quantity", type: "number", required: false, min: "0" },
-    { label: "Category ID", name: "categoryid", type: "number", required: false },
-    { label: "Expiration Date", name: "expiration", type: "date", required: false },
-    { label: "Supplier ID", name: "supplierid", type: "number", required: false, showInAddMode: false },
-    { label: "Price per Unit", name: "case_price", type: "number", required: false, step: "0.01", min: "0", showInAddMode: false },
-    { label: "Order Unit", name: "order_unit", type: "text", required: false, showInAddMode: false },
+    {
+      label: "Product Name",
+      name: "product_name",
+      type: "text",
+      required: true,
+    },
+    {
+      label: "Current Stock",
+      name: "current_stock",
+      type: "number",
+      required: true,
+      min: "0",
+    },
+    {
+      label: "Min Quantity",
+      name: "min_quantity",
+      type: "number",
+      required: true,
+      min: "0",
+    },
+    {
+      label: "Max Quantity",
+      name: "max_quantity",
+      type: "number",
+      required: false,
+      min: "0",
+    },
+    {
+      label: "Category ID",
+      name: "categoryid",
+      type: "number",
+      required: false,
+    },
+    {
+      label: "Expiration Date",
+      name: "expiration",
+      type: "date",
+      required: false,
+    },
+    {
+      label: "Supplier ID",
+      name: "supplierid",
+      type: "number",
+      required: false,
+      //showInAddMode: false,
+    },
+    {
+      label: "Price per Unit",
+      name: "case_price",
+      type: "number",
+      required: false,
+      step: "0.01",
+      min: "0",
+      showInAddMode: false,
+    },
+    {
+      label: "Order Unit",
+      name: "order_unit",
+      type: "text",
+      required: false,
+      showInAddMode: false,
+    },
   ];
 
   const fieldsToShow = isEditing
-    ? allFields 
-    : allFields.filter(field => field.showInAddMode !== false); 
+    ? allFields
+    : allFields.filter((field) => field.showInAddMode !== false);
 
   return (
     <div
@@ -3510,16 +4185,28 @@ function InventoryItemModal({
         {/* Header */}
         <div className="flex justify-between items-center border-b pb-2">
           <h3 className="text-xl font-semibold text-gray-800">
-             {isEditing ? "Edit Product Details" : "Add New Product"}
+            {isEditing ? "Edit Product Details" : "Add New Product"}
           </h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl font-bold" aria-label="Close modal">×</button>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+            aria-label="Close modal"
+          >
+            ×
+          </button>
         </div>
 
         {/* Error Display */}
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded relative text-sm">
             <span className="block sm:inline">{error}</span>
-            <button onClick={() => setError(null)} className="absolute top-0 bottom-0 right-0 px-3 py-1 text-red-500 hover:text-red-700 font-bold" aria-label="Dismiss error">×</button>
+            <button
+              onClick={() => setError(null)}
+              className="absolute top-0 bottom-0 right-0 px-3 py-1 text-red-500 hover:text-red-700 font-bold"
+              aria-label="Dismiss error"
+            >
+              ×
+            </button>
           </div>
         )}
 
@@ -3530,32 +4217,75 @@ function InventoryItemModal({
           noValidate
         >
           {/* Render filtered fields */}
-          {fieldsToShow.map(({ label, name, type, required, placeholder, step, min }) => (
-             // Adjust layout - make product name span full width
-            <div key={name} className={name === 'product_name' ? 'md:col-span-2' : ''}>
-              <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">
-                {label}
+          {fieldsToShow.map(
+            ({ label, name, type, required, placeholder, step, min }) => (
+              // Adjust layout - make product name span full width
+              <div
+                key={name}
+                className={name === "product_name" ? "md:col-span-2" : ""}
+              >
+                <label
+                  htmlFor={name}
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  {label}
+                </label>
+                <input
+                  id={name}
+                  className="border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  placeholder={placeholder || label.replace(" *", "")}
+                  name={name}
+                  type={type}
+                  value={formData[name] ?? ""}
+                  onChange={handleChange}
+                  required={required}
+                  step={step}
+                  min={min}
+                />
+              </div>
+            )
+          )}
+
+          {/* {(!isEditing || true) && (
+            <div className="md:col-span-2">
+              <label
+                htmlFor="supplierid"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Supplier
               </label>
-              <input
-                id={name}
-                className="border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                placeholder={placeholder || label.replace(" *", "")}
-                name={name}
-                type={type}
-                value={formData[name] ?? ''} 
+              <select
+                id="supplierid"
+                name="supplierid"
+                value={String(formData.supplierid || "")}
                 onChange={handleChange}
-                required={required}
-                step={step}
-                min={min}
-              />
+                required
+                className="border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              >
+                <option value="">Select a supplier</option>
+                {suppliers?.map((s) => (
+                  <option key={s.supplierid} value={String(s.supplierid)}>
+                    {s.supplier_name}
+                  </option>
+                ))}
+              </select>
             </div>
-          ))}
+          )} */}
 
           {/* Action Buttons */}
           <div className="col-span-1 md:col-span-2 flex justify-end gap-3 pt-4 mt-2 border-t">
-            <button type="button" onClick={onClose} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-gray-400">Cancel</button>
-            <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-               {isEditing ? "Update Details" : "Add Product"}
+            <button
+              type="button"
+              onClick={onClose}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {isEditing ? "Update Details" : "Add Product"}
             </button>
           </div>
         </form>
@@ -3584,22 +4314,24 @@ const Order = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <div className="flex gap-8 border-b border-gray-200 pb-4">
-        {tabs.map(({ path, label }) => (
-          <NavLink
-            key={path}
-            to={path}
-            className={({ isActive }) =>
-              `text-md font-semibold px-4 py-2 transition-colors ${
-                isActive || activePath === path
-                  ? 'bg-[#8DACE5] text-white rounded'
-                  : 'text-gray-700 hover:text-black'
-              }`
-            }
-          >
-            {label}
-          </NavLink>
-        ))}
+      <div className="border-b border-gray-200 pb-4">
+        <div className="flex gap-8 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          {tabs.map(({ path, label }) => (
+            <NavLink
+              key={path}
+              to={path}
+              className={({ isActive }) =>
+                `text-md font-semibold px-4 py-2 transition-colors whitespace-nowrap ${
+                  isActive || activePath === path
+                    ? 'bg-[#8DACE5] text-white rounded'
+                    : 'text-gray-700 hover:text-black'
+                }`
+              }
+            >
+              {label}
+            </NavLink>
+          ))}
+        </div>
       </div>
       <div className="mt-6">
         <Outlet />
@@ -4223,6 +4955,7 @@ import AdminUserListPage from "./Login/AdminUserList";
 import Inventory from "./Main/Inventory";
 import Order from "./Main/Order"; // Parent layout for /orders/*
 import Reports from "./Main/Reports";
+import Dashboard from "./Main/Dashboard";
 
 // Order Child Components
 import OrderRestock from "./Main/Order/Restock";
@@ -4304,7 +5037,7 @@ const Navigation = () => {
     <nav className="bg-gray-800 shadow-md sticky top-0 z-40">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          {/* Left Side: Logo (optional) & Desktop Links */}
+          {/* Left Side */}
           <div className="flex items-center">
             <div className="flex-shrink-0">
                <span className="text-white font-bold text-lg">471Cafe</span>
@@ -4315,6 +5048,7 @@ const Navigation = () => {
                     <StyledLink to="/" end onClick={closeMobileMenu}>Home</StyledLink>
                 )}
                 {/* ====================================== */}
+                {user && <StyledLink to="/dashboard" onClick={closeMobileMenu}>Dashboard</StyledLink>}
                 {user && <StyledLink to="/inventory" onClick={closeMobileMenu}>Inventory</StyledLink>}
                 {user && <StyledLink to="/orders" onClick={closeMobileMenu}>Orders</StyledLink>}
                 {user && <StyledLink to="/reports" onClick={closeMobileMenu}>Reports</StyledLink>} 
@@ -4378,11 +5112,12 @@ const Navigation = () => {
       <div className={`md:hidden transition-max-height duration-300 ease-in-out overflow-hidden ${isMobileMenuOpen ? 'max-h-screen' : 'max-h-0'}`} id="mobile-menu">
         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
           {/* Mobile Navigation Links */}
-          {/* === Conditionally Render Home Link === */}
+          {/* Conditionally Render Home Link === */}
           {!user && (
             <StyledMobileLink to="/" end onClick={closeMobileMenu}>Home</StyledMobileLink>
           )}
           {/* ====================================== */}
+          {user && <StyledMobileLink to="/dashboard" onClick={closeMobileMenu}>Dashboard</StyledMobileLink>}
           {user && <StyledMobileLink to="/inventory" onClick={closeMobileMenu}>Inventory</StyledMobileLink>}
           {user && <StyledMobileLink to="/orders" onClick={closeMobileMenu}>Orders</StyledMobileLink>}
           {user && <StyledMobileLink to="/reports" onClick={closeMobileMenu}>Reports</StyledMobileLink>}
@@ -4453,6 +5188,7 @@ function App() {
 
               {/* Protected Routes */}
               <Route element={<ProtectedRoute />}>
+                <Route path="/dashboard" element={<Dashboard />} /> 
                 <Route path="/inventory" element={<Inventory />} />
                 <Route path="/orders" element={<Order />}>
                   <Route index element={<Navigate replace to="restock" />} />
@@ -4829,7 +5565,8 @@ const { authenticateToken, isAdmin } = require("../middleware/auth");
 router.get("/", authenticateToken, async (req, res) => {
   const { data, error } = await supabase
     .from("products")
-    .select(`
+    .select(
+      `
       *,
       supplier: supplierid (supplier_name),
       order_detail (
@@ -4838,24 +5575,26 @@ router.get("/", authenticateToken, async (req, res) => {
         order_unit,
         orders (order_status, delivered_date)
       )
-    `)
-  .eq("is_active", true);
+    `
+    )
+    .eq("is_active", true);
 
   if (error) return res.status(500).json({ error: error.message });
 
-  const updated = data.map(product => {
+  const updated = data.map((product) => {
     const delivered = (product.order_detail || []).filter(
-      od => od.orders?.order_status === "delivered"
+      (od) => od.orders?.order_status === "delivered"
     );
     const latest = delivered.sort(
-      (a, b) => new Date(b.orders?.delivered_date) - new Date(a.orders?.delivered_date)
+      (a, b) =>
+        new Date(b.orders?.delivered_date) - new Date(a.orders?.delivered_date)
     )[0];
 
     return {
       ...product,
       case_price: latest?.unit_price ?? null,
       case_quantity: latest?.requested_quantity ?? null,
-      order_unit: latest?.order_unit ?? null
+      order_unit: latest?.order_unit ?? null,
     };
   });
 
@@ -4863,17 +5602,19 @@ router.get("/", authenticateToken, async (req, res) => {
 });
 
 router.post("/", authenticateToken, isAdmin, async (req, res) => {
-  const { data, error } = await supabase
-    .from("products")
-    .insert([req.body])
-    .select();
+  console.log("Incoming product payload:", req.body);
+  const { data, error } = await supabase.from("products").insert([req.body])
+    .select(`
+      *,
+      supplier: supplierid (supplier_name)
+    `);
   if (error) return res.status(500).json({ error: error.message });
   res.status(201).json(data);
 });
 
 router.put("/:id", authenticateToken, isAdmin, async (req, res) => {
   const productid = parseInt(req.params.id, 10);
-  const updatedFields = req.body; 
+  const updatedFields = req.body;
   const userid = req.user.userid; // Get userid from authenticated user
 
   if (isNaN(productid)) {
@@ -4890,7 +5631,9 @@ router.put("/:id", authenticateToken, isAdmin, async (req, res) => {
 
     if (fetchError) {
       console.error("Error fetching current stock:", fetchError);
-      return res.status(500).json({ error: "Failed to fetch product before update." });
+      return res
+        .status(500)
+        .json({ error: "Failed to fetch product before update." });
     }
     if (!currentProduct) {
       return res.status(404).json({ error: "Product not found." });
@@ -4900,9 +5643,9 @@ router.put("/:id", authenticateToken, isAdmin, async (req, res) => {
     // ---  Perform the Stock Update ---
     const { data: updatedData, error: updateError } = await supabase
       .from("products")
-      .update(updatedFields) 
+      .update(updatedFields)
       .eq("productid", productid)
-      .select() 
+      .select()
       .single();
 
     if (updateError) {
@@ -4910,14 +5653,19 @@ router.put("/:id", authenticateToken, isAdmin, async (req, res) => {
       return res.status(500).json({ error: updateError.message });
     }
     if (!updatedData) {
-        return res.status(404).json({ error: "Product not found after update attempt." });
+      return res
+        .status(404)
+        .json({ error: "Product not found after update attempt." });
     }
 
-    // 
-    const new_quantity = updatedData.current_stock; 
+    //
+    const new_quantity = updatedData.current_stock;
 
     //
-    if (updatedFields.hasOwnProperty('current_stock') && new_quantity !== old_quantity) {
+    if (
+      updatedFields.hasOwnProperty("current_stock") &&
+      new_quantity !== old_quantity
+    ) {
       const quantity_changed = new_quantity - old_quantity;
 
       const { error: transactionError } = await supabase
@@ -4929,7 +5677,7 @@ router.put("/:id", authenticateToken, isAdmin, async (req, res) => {
           quantity_changed: quantity_changed,
           old_quantity: old_quantity,
           new_quantity: new_quantity,
-          transaction_type: 'manual_update' 
+          transaction_type: "manual_update",
         });
 
       if (transactionError) {
@@ -4938,10 +5686,9 @@ router.put("/:id", authenticateToken, isAdmin, async (req, res) => {
     }
 
     res.json(updatedData); // Return the updated product data
-
   } catch (err) {
-      console.error("Unexpected error in PUT /inventory/:id:", err);
-      res.status(500).json({ error: "An unexpected server error occurred." });
+    console.error("Unexpected error in PUT /inventory/:id:", err);
+    res.status(500).json({ error: "An unexpected server error occurred." });
   }
 });
 
@@ -4978,11 +5725,11 @@ router.delete("/:id", authenticateToken, isAdmin, async (req, res) => {
   res.json({ message: "Product archived successfully" });
 });
 
-
 router.get("/restock", authenticateToken, async (req, res) => {
   const { data, error } = await supabase
-  .from("products")
-  .select(`
+    .from("products")
+    .select(
+      `
     *,
     supplier: supplierid (supplier_name),
     order_detail (
@@ -4991,93 +5738,110 @@ router.get("/restock", authenticateToken, async (req, res) => {
       order_unit,
       orders (order_status, delivered_date)
     )
-  `)
-  .eq("is_active", true); 
-
+  `
+    )
+    .eq("is_active", true);
 
   if (error) {
-    console.error("Error fetching restock recommendations:", error); 
+    console.error("Error fetching restock recommendations:", error);
     return res.status(500).json({ error: error.message });
   }
 
   const filtered = data.filter(
-    product => product.current_stock < product.min_quantity
+    (product) => product.current_stock < product.min_quantity
   );
 
   res.json(filtered);
 });
 
-router.post("/:productid/add-stock", authenticateToken, isAdmin, async (req, res) => {
-  const productid = parseInt(req.params.productid, 10);
-  const { quantity: quantityToAdd } = req.body; // Rename for clarity
-  const userid = req.user.userid; // Get userid
+router.post(
+  "/:productid/add-stock",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    const productid = parseInt(req.params.productid, 10);
+    const { quantity: quantityToAdd } = req.body; // Rename for clarity
+    const userid = req.user.userid; // Get userid
 
-  if (isNaN(productid)) {
-    return res.status(400).json({ error: "Invalid product ID" });
-  }
-  if (typeof quantityToAdd !== 'number' || quantityToAdd <= 0) { // Ensure quantity is positive
-    return res.status(400).json({ error: "Invalid or missing quantity (must be a positive number)" });
-  }
+    if (isNaN(productid)) {
+      return res.status(400).json({ error: "Invalid product ID" });
+    }
+    if (typeof quantityToAdd !== "number" || quantityToAdd <= 0) {
+      // Ensure quantity is positive
+      return res.status(400).json({
+        error: "Invalid or missing quantity (must be a positive number)",
+      });
+    }
 
-  try {
-    // Fetch the Old Quantity ---
-    const { data: currentProduct, error: fetchError } = await supabase
-      .from("products")
-      .select("current_stock")
-      .eq("productid", productid)
-      .single();
+    try {
+      // Fetch the Old Quantity ---
+      const { data: currentProduct, error: fetchError } = await supabase
+        .from("products")
+        .select("current_stock")
+        .eq("productid", productid)
+        .single();
 
-    if (fetchError) {
+      if (fetchError) {
         console.error("Error fetching current stock:", fetchError);
-        return res.status(500).json({ error: "Failed to fetch product before adding stock." });
-    }
-    if (!currentProduct) {
+        return res
+          .status(500)
+          .json({ error: "Failed to fetch product before adding stock." });
+      }
+      if (!currentProduct) {
         return res.status(404).json({ error: "Product not found." });
-    }
-    const old_quantity = currentProduct.current_stock;
+      }
+      const old_quantity = currentProduct.current_stock;
 
-    // Perform the Stock Update ---
-    const new_quantity = old_quantity + quantityToAdd; // Calculate new stock
+      // Perform the Stock Update ---
+      const new_quantity = old_quantity + quantityToAdd; // Calculate new stock
 
-    const { data: updatedData, error: updateError } = await supabase
-      .from("products")
-      .update({ current_stock: new_quantity }) // Update with calculated value
-      .eq("productid", productid)
-      .select()
-      .single();
+      const { data: updatedData, error: updateError } = await supabase
+        .from("products")
+        .update({ current_stock: new_quantity }) // Update with calculated value
+        .eq("productid", productid)
+        .select()
+        .single();
 
-    if (updateError) {
+      if (updateError) {
         console.error("Error adding stock:", updateError);
         return res.status(500).json({ error: updateError.message });
-    }
-     if (!updatedData) {
-        return res.status(404).json({ error: "Product not found after stock update attempt." });
-    }
+      }
+      if (!updatedData) {
+        return res
+          .status(404)
+          .json({ error: "Product not found after stock update attempt." });
+      }
 
-    // Log Transaction ---
-    const { error: transactionError } = await supabase
-      .from("inventory_transaction")
-      .insert({
-        userid: userid,
-        productid: productid,
-        transaction_date: new Date(),
-        quantity_changed: quantityToAdd,
-        old_quantity: old_quantity,
-        new_quantity: new_quantity,
-        transaction_type: 'order_received' 
-      });
+      // Log Transaction ---
+      const { error: transactionError } = await supabase
+        .from("inventory_transaction")
+        .insert({
+          userid: userid,
+          productid: productid,
+          transaction_date: new Date(),
+          quantity_changed: quantityToAdd,
+          old_quantity: old_quantity,
+          new_quantity: new_quantity,
+          transaction_type: "order_received",
+        });
 
-    if (transactionError) {
-      console.error("Failed to log inventory transaction for stock add:", transactionError);
-    }
+      if (transactionError) {
+        console.error(
+          "Failed to log inventory transaction for stock add:",
+          transactionError
+        );
+      }
 
-    res.json(updatedData); 
-
-  } catch (err) {
-      console.error("Unexpected error in POST /inventory/:productid/add-stock:", err);
+      res.json(updatedData);
+    } catch (err) {
+      console.error(
+        "Unexpected error in POST /inventory/:productid/add-stock:",
+        err
+      );
       res.status(500).json({ error: "An unexpected server error occurred." });
+    }
   }
-});
+);
 
 module.exports = router;
 </file>
@@ -5199,6 +5963,7 @@ const router = express.Router();
 const { supabase } = require("../utils/supabase");
 const { authenticateToken } = require("../middleware/auth");
 
+// GET /api/orders/pending
 router.get("/pending", authenticateToken, async (req, res) => {
   const { data, error } = await supabase
     .from("orders")
@@ -5210,6 +5975,7 @@ router.get("/pending", authenticateToken, async (req, res) => {
         total_amount,
         suppliers (supplier_name),
         order_detail (
+          productid,
           requested_quantity,
           unit_price,
           products (productid, product_name)
@@ -5230,25 +5996,28 @@ router.get("/pending", authenticateToken, async (req, res) => {
 // GET /api/orders/processing
 router.get("/processing", authenticateToken, async (req, res) => {
   const { data, error } = await supabase
-      .from("orders")
-      .select(
-          `
+    .from("orders")
+    .select(
+      `
             orderid, order_date, order_status, total_amount,
             order_detail (
               requested_quantity, unit_price,
               products (
+                productid,
                 product_name,
                 supplier:suppliers!supplierid ( supplier_name )
               )
             )
           `
-      )
-      .eq("order_status", "processing")
-      .order("order_date", { ascending: false });
+    )
+    .eq("order_status", "processing")
+    .order("order_date", { ascending: false });
 
   if (error) {
-      console.error("Error fetching processing orders:", error.message);
-      return res.status(500).json({ error: error.message || "Failed to fetch processing orders" });
+    console.error("Error fetching processing orders:", error.message);
+    return res
+      .status(500)
+      .json({ error: error.message || "Failed to fetch processing orders" });
   }
   res.json(data);
 });
@@ -5256,26 +6025,28 @@ router.get("/processing", authenticateToken, async (req, res) => {
 // GET /api/orders/delivered
 router.get("/delivered", authenticateToken, async (req, res) => {
   const { data, error } = await supabase
-      .from("orders")
-      .select(
-          `
+    .from("orders")
+    .select(
+      `
             orderid, order_date, delivered_date, total_amount,
             order_detail (
               requested_quantity, unit_price,
               products (               
                 product_name,
-                supplier:suppliers!supplierid ( supplier_name ) 
+                supplier:supplierid (supplier_name)
               )
             )
           `
-      )
-      .eq("order_status", "delivered")
-      .order("delivered_date", { ascending: false, nullsFirst: false })
-      .order("orderid", { ascending: false });
+    )
+    .eq("order_status", "delivered")
+    .order("delivered_date", { ascending: false, nullsFirst: false })
+    .order("orderid", { ascending: false });
 
   if (error) {
-      console.error("Error fetching delivered orders:", error.message);
-      return res.status(500).json({ error: error.message || "Failed to fetch delivered orders" });
+    console.error("Error fetching delivered orders:", error.message);
+    return res
+      .status(500)
+      .json({ error: error.message || "Failed to fetch delivered orders" });
   }
 
   res.json(data);
@@ -5934,6 +6705,7 @@ app.listen(PORT, () => {
 
 A full-stack web application for managing inventory with user authentication.
 
+
 ## Technology Stack
 
 ### Frontend
@@ -5969,7 +6741,7 @@ cpsc471project/
 ### Installation & Setup
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/cpsc471project.git
+   git clone https://github.com/paulhuii/CPSC471-InventoryManagement.git
    cd cpsc471project
    
 2. Install dependencies and start the application:
@@ -5988,22 +6760,15 @@ cpsc471project/
     ```
     This starts both client and server without reinstalling dependencies.
 
-## Features
-- User Authentication : Register, login, and protected routes
-- Inventory Management : View, add, update, and delete inventory items
-- Responsive Design : Works across different screen sizes
-
 ## Access Points
 - Frontend : http://localhost:3000
-- Backend API : http://localhost:5000/api
+- Backend API : http://localhost:5000
 
-## API Endpoints
-- POST /api/auth/register - Register a new user
-- POST /api/auth/login - Login existing user
-- GET /api/inventory - Get all inventory items (requires authentication)
-- POST /api/inventory - Add new inventory item
-- PUT /api/inventory/:id - Update an inventory item
-- DELETE /api/inventory/:id - Delete an inventory item
+## Group Members
+- Angie Shin
+- Phuong Le
+- Paul Hui
+- Ananya Jain
 </file>
 
 </files>
