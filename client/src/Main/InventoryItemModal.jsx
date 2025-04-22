@@ -19,9 +19,6 @@ function InventoryItemModal({
     max_quantity: "",
     expiration: "",
     categoryid: "",
-    supplierid: "",
-    case_price: "",
-    order_unit: "",
   });
 
   const [error, setError] = useState(initialError);
@@ -41,10 +38,6 @@ function InventoryItemModal({
         ? new Date(item.expiration).toISOString().split("T")[0]
         : "",
       categoryid: item?.categoryid ?? "",
-      // These might be relevant if editing an existing item
-      supplierid: item?.supplierid ?? "",
-      case_price: item?.case_price ?? "",
-      order_unit: item?.order_unit || "",
     });
     setError(null); // Clear errors when item changes
   }, [item]);
@@ -136,21 +129,6 @@ function InventoryItemModal({
       dataToSubmit.productid = item.productid;
     }
 
-    // If editing, add productid and potentially other fields if they were edited
-    // if (isEditing && item?.productid) {
-    //   dataToSubmit = {
-    //     ...dataToSubmit, // Start with core data
-    //     productid: item.productid,
-    //     // Include other fields from formData if they are part of the PUT /inventory/:id expected payload
-    //     supplierid:
-    //       formData.supplierid === "" || formData.supplierid === null
-    //         ? null
-    //         : parseInt(formData.supplierid, 10),
-    //     //case_price: formData.case_price === "" || formData.case_price === null ? null : parseFloat(formData.case_price),
-    //     //order_unit: formData.order_unit || null,
-    //   };
-    // }
-
     console.log(
       `Data being submitted (${isEditing ? "edit" : "add"}):`,
       dataToSubmit
@@ -206,29 +184,7 @@ function InventoryItemModal({
       type: "date",
       required: false,
     },
-    {
-      label: "Supplier ID",
-      name: "supplierid",
-      type: "number",
-      required: false,
-      //showInAddMode: false,
-    },
-    {
-      label: "Price per Unit",
-      name: "case_price",
-      type: "number",
-      required: false,
-      step: "0.01",
-      min: "0",
-      showInAddMode: false,
-    },
-    {
-      label: "Order Unit",
-      name: "order_unit",
-      type: "text",
-      required: false,
-      showInAddMode: false,
-    },
+    
   ];
 
   const fieldsToShow = isEditing
@@ -308,32 +264,7 @@ function InventoryItemModal({
             )
           )}
 
-          {/* {(!isEditing || true) && (
-            <div className="md:col-span-2">
-              <label
-                htmlFor="supplierid"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Supplier
-              </label>
-              <select
-                id="supplierid"
-                name="supplierid"
-                value={String(formData.supplierid || "")}
-                onChange={handleChange}
-                required
-                className="border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              >
-                <option value="">Select a supplier</option>
-                {suppliers?.map((s) => (
-                  <option key={s.supplierid} value={String(s.supplierid)}>
-                    {s.supplier_name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )} */}
-
+         
           {/* Action Buttons */}
           <div className="col-span-1 md:col-span-2 flex justify-end gap-3 pt-4 mt-2 border-t">
             <button
