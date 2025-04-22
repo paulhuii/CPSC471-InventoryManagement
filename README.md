@@ -2,6 +2,7 @@
 
 A full-stack web application for managing inventory with user authentication.
 
+
 ## Technology Stack
 
 ### Frontend
@@ -60,3 +61,8 @@ cpsc471project/
 - Frontend : http://localhost:3000
 - Backend API : http://localhost:5000
 
+## Group Members
+- Angie Shin
+- Phuong Le
+- Paul Hui
+- Ananya Jain
