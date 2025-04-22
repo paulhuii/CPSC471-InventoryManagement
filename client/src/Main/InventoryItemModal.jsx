@@ -1,7 +1,14 @@
 // client/src/Main/InventoryItemModal.jsx
 import React, { useState, useEffect } from "react";
 
-function InventoryItemModal({ item, onClose, onSubmit, initialError }) {
+function InventoryItemModal({
+  item,
+  onClose,
+  onSubmit,
+  initialError,
+  suppliers = [],
+  categories = [],
+}) {
   const isEditing = item !== null;
 
   // Full state definition including fields used for editing
@@ -117,22 +124,32 @@ function InventoryItemModal({ item, onClose, onSubmit, initialError }) {
           : parseInt(formData.categoryid, 10),
     };
 
-    let dataToSubmit = coreData;
+    let dataToSubmit = {
+      ...coreData,
+      supplierid:
+        formData.supplierid === "" || formData.supplierid === null
+          ? null
+          : parseInt(formData.supplierid, 10),
+    };
+
+    if (isEditing && item?.productid) {
+      dataToSubmit.productid = item.productid;
+    }
 
     // If editing, add productid and potentially other fields if they were edited
-    if (isEditing && item?.productid) {
-      dataToSubmit = {
-        ...dataToSubmit, // Start with core data
-        productid: item.productid,
-        // Include other fields from formData if they are part of the PUT /inventory/:id expected payload
-        supplierid:
-          formData.supplierid === "" || formData.supplierid === null
-            ? null
-            : parseInt(formData.supplierid, 10),
-        //case_price: formData.case_price === "" || formData.case_price === null ? null : parseFloat(formData.case_price),
-        //order_unit: formData.order_unit || null,
-      };
-    }
+    // if (isEditing && item?.productid) {
+    //   dataToSubmit = {
+    //     ...dataToSubmit, // Start with core data
+    //     productid: item.productid,
+    //     // Include other fields from formData if they are part of the PUT /inventory/:id expected payload
+    //     supplierid:
+    //       formData.supplierid === "" || formData.supplierid === null
+    //         ? null
+    //         : parseInt(formData.supplierid, 10),
+    //     //case_price: formData.case_price === "" || formData.case_price === null ? null : parseFloat(formData.case_price),
+    //     //order_unit: formData.order_unit || null,
+    //   };
+    // }
 
     console.log(
       `Data being submitted (${isEditing ? "edit" : "add"}):`,
@@ -194,7 +211,7 @@ function InventoryItemModal({ item, onClose, onSubmit, initialError }) {
       name: "supplierid",
       type: "number",
       required: false,
-      showInAddMode: false,
+      //showInAddMode: false,
     },
     {
       label: "Price per Unit",
@@ -290,6 +307,32 @@ function InventoryItemModal({ item, onClose, onSubmit, initialError }) {
               </div>
             )
           )}
+
+          {/* {(!isEditing || true) && (
+            <div className="md:col-span-2">
+              <label
+                htmlFor="supplierid"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Supplier
+              </label>
+              <select
+                id="supplierid"
+                name="supplierid"
+                value={String(formData.supplierid || "")}
+                onChange={handleChange}
+                required
+                className="border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              >
+                <option value="">Select a supplier</option>
+                {suppliers?.map((s) => (
+                  <option key={s.supplierid} value={String(s.supplierid)}>
+                    {s.supplier_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )} */}
 
           {/* Action Buttons */}
           <div className="col-span-1 md:col-span-2 flex justify-end gap-3 pt-4 mt-2 border-t">

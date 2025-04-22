@@ -74,7 +74,7 @@ router.get("/delivered", authenticateToken, async (req, res) => {
               requested_quantity, unit_price,
               products (               
                 product_name,
-                supplier:suppliers!supplierid ( supplier_name ) 
+                supplier:supplierid (supplier_name)
               )
             )
           `

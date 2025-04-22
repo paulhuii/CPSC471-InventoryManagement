@@ -174,6 +174,7 @@ const OrderList = () => {
 
       if (addedSupplier?.supplierid) {
         await fetchSuppliers(); // Refresh the suppliers list
+        await fetchProducts();
         handleCloseAddSupplierModal();
         alert(`Supplier "${addedSupplier.supplier_name}" added successfully!`);
 
@@ -234,11 +235,10 @@ const OrderList = () => {
   };
 
   // --- Main "Add Item" Button Handler (from AddItemForm) ---
-  const handleAddItem = (formDataFromForm, resetFormCallback) => {
-    const { productid, quantity, price, order_unit, supplier_name } =
-      formDataFromForm;
+  const handleAddItem = (formData, resetCallback) => {
+    const { productid, quantity, price, order_unit, supplier_name } = formData;
 
-    // Basic validation for required fields
+    // Basic validation
     if (!productid || !quantity || !price || !order_unit || !supplier_name) {
       alert(
         "Please fill in all fields (Product, Quantity, Price, Order Unit, Supplier) to add an item."
@@ -246,22 +246,42 @@ const OrderList = () => {
       return;
     }
 
-    // Check if the selected/typed supplier exists in our current list (case-insensitive)
-    const supplierInfo = suppliers.find(
+    // --- NEW: Validate product-supplier match ---
+    const selectedSupplier = suppliers.find(
       (s) => s.supplier_name.toLowerCase() === supplier_name.toLowerCase()
     );
+    const selectedSupplierId = selectedSupplier?.supplierid;
 
-    if (supplierInfo) {
-      // Supplier EXISTS: Add the item using the exact name from the database
-      addConfirmedItemToGroup(formDataFromForm, supplierInfo.supplier_name);
-      resetFormCallback(); // Clear the form fields in AddItemForm
-    } else {
-      // Supplier DOES NOT EXIST: Guide the user
+    const matchedProduct = products.find(
+      (p) => Number(p.productid) === Number(productid)
+    );
+    const productSupplierId = matchedProduct?.supplierid;
+
+    if (
+      selectedSupplierId &&
+      productSupplierId &&
+      selectedSupplierId !== productSupplierId
+    ) {
+      const currentSupplierName =
+        suppliers.find((s) => s.supplierid === productSupplierId)
+          ?.supplier_name || "another supplier";
+
       alert(
-        `Supplier "${supplier_name}" not found. Please add the supplier using the '+' button next to the supplier field before adding this item.`
+        `The product "${matchedProduct.product_name}" is registered under "${currentSupplierName}". Please add it under "${supplier_name}" first before placing an order.`
       );
-      // Do NOT add the item. Do NOT open the modal automatically.
-      // Do NOT reset the form.
+      return;
+    }
+
+    // --- Supplier exists check ---
+    if (selectedSupplier) {
+      // Supplier EXISTS: add with confirmed name
+      addConfirmedItemToGroup(formData, selectedSupplier.supplier_name);
+      resetCallback();
+    } else {
+      // Supplier DOES NOT EXIST: block action
+      alert(
+        `Supplier "${supplier_name}" not found. Please add it using the '+' button next to the supplier field.`
+      );
     }
   };
 
@@ -453,6 +473,7 @@ const OrderList = () => {
           onClose={handleCloseAddProductModal}
           onSubmit={handleAddProductSubmit}
           initialError={addProductError}
+          suppliers={suppliers}
           isQuickAdd={false} // Not relevant here
         />
       )}
