@@ -37,7 +37,7 @@ cpsc471project/
 ### Installation & Setup
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/cpsc471project.git
+   git clone https://github.com/paulhuii/CPSC471-InventoryManagement.git
    cd cpsc471project
    
 2. Install dependencies and start the application:
@@ -56,20 +56,7 @@ cpsc471project/
     ```
     This starts both client and server without reinstalling dependencies.
 
-## Features
-- User Authentication : Register, login, and protected routes
-- Inventory Management : View, add, update, and delete inventory items
-- Responsive Design : Works across different screen sizes
-
 ## Access Points
 - Frontend : http://localhost:3000
-- Backend API : http://localhost:5000/api
-
-## API Endpoints
-- POST /api/auth/register - Register a new user
-- POST /api/auth/login - Login existing user
-- GET /api/inventory - Get all inventory items (requires authentication)
-- POST /api/inventory - Add new inventory item
-- PUT /api/inventory/:id - Update an inventory item
-- DELETE /api/inventory/:id - Delete an inventory item
+- Backend API : http://localhost:5000
 
